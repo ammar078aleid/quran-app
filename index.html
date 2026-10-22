@@ -118,6 +118,20 @@ button.g{border-color:color-mix(in srgb,var(--pri) 45%,transparent)}
 input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--pri) 55%,transparent);border-color:transparent}
 .awm.ok{color:#2e7d32}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.exb{font-size:12px;padding:3px 10px;border-radius:20px;background:color-mix(in srgb,var(--pri) 12%,transparent);color:var(--pri)}.exb.ok{background:#2e7d3222;color:#2e7d32;font-weight:700}.exb.mu{opacity:.7}
+.exg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.exj{border:1px solid var(--bd);border-radius:12px;padding:12px 0;text-align:center;font-weight:700;background:var(--card);cursor:pointer;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.exj.on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,transparent);cursor:default}.exs{display:flex;align-items:center;gap:4px;margin-top:4px}.exs button{padding:0 6px;min-width:24px;height:24px;font-size:14px;line-height:1}
+.exh{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a237e,#303f9f);color:#fff;padding:12px 14px;border-radius:0 0 20px 20px;margin-bottom:8px;position:sticky;top:0;z-index:3}.exh .g{background:#ffffff22;color:#fff;border-color:transparent}
+.exr{margin:8px 14px;padding:10px 12px;border-radius:16px;background:color-mix(in srgb,var(--ec) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ec) 35%,transparent)}
+.exq{min-width:42px;height:42px;font-size:20px;border-radius:12px;padding:0}.exn{font-size:26px;min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.exm{direction:rtl;margin:6px 0;padding:10px 8px;border:2px solid var(--pri);border-radius:12px;background:var(--card);font-family:'Amiri Quran','Amiri',serif}
+.exl{text-align:justify;text-align-last:justify;font-size:clamp(15px,4.6vw,23px);line-height:2.15;color:var(--tx)}.exl.sh{text-align-last:center}
+.exl .hw,.hw{background:#f9a82547;border-radius:5px}.ay{font-size:.8em;color:var(--pri)}
+.exsn{margin:6px 0;padding:6px;text-align:center;font-weight:700;font-size:clamp(16px,4.8vw,22px);color:var(--pri);border:1.5px solid var(--pri);border-radius:8px;background:color-mix(in srgb,var(--pri) 8%,transparent)}
+.exbs{text-align:center;font-size:clamp(15px,4.4vw,21px);line-height:2;color:var(--tx)}
+.exim{position:relative;line-height:0;direction:ltr;border-radius:10px;overflow:hidden;background:#fff}.exim img{display:block;width:100%;height:auto}
+.exim.crop{width:100%}.exim.crop img{position:absolute;max-width:none}
+.exhl{position:absolute;box-sizing:border-box;background:rgba(255,193,7,.32);border:2px solid #e0a100;border-radius:6px;pointer-events:none}
 @media print{@page{size:A4;margin:12mm}#pv,#pv *{-webkit-print-color-adjust:exact;print-color-adjust:exact}body>*:not(#pv){display:none!important}#pv{display:block!important}body{background:#fff!important;padding:0!important}:root{padding:0!important}}
 
 /* ===== قوالب الدفتر الجديدة: حواف ناعمة بلا سلك ===== */
@@ -200,12 +214,12 @@ const hij=d=>d.toLocaleDateString(S.lang=='en'?'en-u-ca-islamic-umalqura':'ar-SA
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='home',qz=null,rev=false,qn=0,qok=0,addDays=[0,1,2,3,4,6];
 const tabs=[['home','📖','اليوم'],['pr','🌙','الصلاة'],['td','✅','المهمات'],['ar','🗂','الأرشيف'],['nb','📓','الدفتر']];
-function go(t){if(t=='se'&&fbOK&&!fu){tab='home';draw();awMode='in';awShow();return}if(tab=='pv'&&t!='pv')pvOk=false;if(tab=='ar'&&t!='ar'){pvOk=false;arPvOpen=false}if(t=='gl'&&tab!='gl'){glOpen=0;glDr=null;glOrd=false}tab=t;draw()}
+function go(t){if(typeof exStop=='function'&&t!='ex')exStop();if(t=='se'&&fbOK&&!fu){tab='home';draw();awMode='in';awShow();return}if(tab=='pv'&&t!='pv')pvOk=false;if(tab=='ar'&&t!='ar'){pvOk=false;arPvOpen=false}if(t=='gl'&&tab!='gl'){glOpen=0;glDr=null;glOrd=false}tab=t;draw()}
 let drawnTab=null;
 function draw(){
  $('#nav').innerHTML=tabs.map(([k,i,n])=>`<button class="${k==tab||(k=='td'&&tab=='gl')?'on':''}" onclick="go('${k}')">${i}<br>${n}</button>`).join('');
  const vm=$('#v'),chg=tab!==drawnTab,y0=window.scrollY;drawnTab=tab;vm.classList.toggle('na',!chg);
- vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage}[tab]();
+ vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage}[tab]();
  if(!chg&&Math.abs(window.scrollY-y0)>1){try{window.scrollTo({top:y0,behavior:'instant'})}catch(e){window.scrollTo(0,y0)}}
 }
 /* ---------- المهام ---------- */
@@ -1011,9 +1025,138 @@ function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
  <div class="dsec">الحساب والتنبيهات</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}${R("go2('jz')",'calendar','الجداول','جداول المراجعة والحفظ')}
  <div class="dsec">الحفظ والمراجعة</div>${R("go2('st')",'chart','الإحصائيات','تقدّمك وسجل جلساتك')}
- <div class="dsec">المسابقات</div>${R("go2('ct')",'trophy','المتسابقون','الأجزاء والتايمر والإحصائيات')}
+ <div class="dsec">المسابقات</div>${R("go2('ct')",'trophy','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'target','اختبار تجريبي','سحب المواضع وتقييم الأخطاء')}
  <div class="dsec">اللغة والمظهر</div>${R("go2('ap')",'palette','اللغة والمظهر','الوضع الليلي والألوان واللغة')}</aside></div>`}
 function go2(t){$('#sh').innerHTML='';if(t=='nb')nbCur=0;go(t)}
+
+/* ---------- اختبار تجريبي: سحب المواضع وتقييم الأخطاء ---------- */
+const EXJ=[1,22,42,62,82,102,122,142,162,182,202,222,242,262,282,302,322,342,362,382,402,422,442,462,482,502,522,542,562,582];
+const EXS=[1,2,50,77,106,128,151,177,187,208,221,235,249,255,262,267,282,293,305,312,322,332,342,350,359,367,377,385,396,404,411,415,418,428,434,440,446,453,458,467,477,483,489,496,499,502,507,511,515,518,520,523,526,528,531,534,537,542,545,549,551,553,554,556,558,560,562,564,566,568,570,572,574,575,577,578,580,582,583,585,586,587,587,589,590,591,591,592,593,594,595,595,596,596,597,597,598,598,599,599,600,600,601,601,601,602,602,603,603,603,604,604,604,604];
+const EXT=[['h','خطأ الحفظ',2,'#2e7d32'],['l','خطأ اللغة',2,'#1565c0'],['t','خطأ التجويد',1,'#f9a825'],['r','التردد',.2,'#6a1b9a'],['c','تغيير الموضع',10,'#c62828']];
+let exCur=0,exDid=0,exSel={},exTm=null,exLeft=20,exRun=false,exDur=20;
+const exRnd=n=>{const b=new Uint32Array(1),lim=4294967296-4294967296%n;do crypto.getRandomValues(b);while(b[0]>=lim);return b[0]%n};
+const exRound=x=>Math.round(x*100)/100;
+const exLo=j=>EXJ[j-1],exHi=j=>j<30?EXJ[j]-1:604,exPages=j=>exHi(j)-exLo(j)+1;
+const exSur=p=>{let k=0;for(let i=0;i<114;i++)if(EXS[i]<=p)k=i;return SUR[k]};
+function exPick(j,used){const lo=exLo(j),n=exPages(j);let p,g=0;do{p=lo+exRnd(n)}while(used.has(p)&&used.size<n&&++g<500);used.add(p);return p}
+const exCache=new Map();
+async function exPage(p){if(exCache.has(p))return exCache.get(p);
+ const r=await fetch('https://api.quran.com/api/v4/verses/by_page/'+p+'?words=true&word_fields=text_uthmani,line_number,page_number&per_page=50');if(!r.ok)throw new Error('net');
+ const j=await r.json(),vs=(j.verses||[]).map(v=>{const k=String(v.verse_key).split(':'),all=v.words||[];
+  return{c:+k[0],n:+k[1],st:!all.length||all[0].page_number==null||all[0].page_number==p,w:all.filter(w=>w.page_number==null||w.page_number==p).map(w=>({t:w.text_uthmani,l:w.line_number,e:w.char_type_name==='end'}))}}).filter(v=>v.w.length);
+ if(!vs.length)throw new Error('empty');
+ const ls=[...new Set(vs.flatMap(v=>v.w.map(w=>w.l)))].sort((a,b)=>a-b);
+ if(!(ls.some((l,i)=>i&&l>ls[i-1]+1)||ls[0]>1)){let off=0;const map={};ls.forEach(l=>{vs.forEach(v=>{if(v.st&&v.n===1&&v.w[0].l===l)off+=1+(v.c!=1&&v.c!=9?1:0)});map[l]=l+off});vs.forEach(v=>v.w.forEach(w=>w.l=map[w.l]))}
+ exCache.set(p,vs);return vs}
+/* موضع دقيق: يبدأ عند أول آية تبدأ في الصفحة وينتهي عند نهاية آية، بطول نحو 8 أسطر */
+function exRange(vs){const maxL=Math.max(...vs.flatMap(v=>v.w.map(w=>w.l))),first=v=>v.w[0].l;
+ let st=vs.map((v,i)=>i).filter(i=>vs[i].st&&first(vs[i])<=maxL-7);if(!st.length)st=vs.map((v,i)=>i).filter(i=>vs[i].st);if(!st.length)return null;
+ const a=st[exRnd(st.length)];let b=a;for(let i=a;i<vs.length;i++){b=i;if(vs[i].w[vs[i].w.length-1].l-first(vs[a])+1>=8)break}
+ return{fc:vs[a].c,fv:vs[a].n,tc:vs[b].c,tv:vs[b].n,l1:first(vs[a]),l2:vs[b].w[vs[b].w.length-1].l}}
+async function exMake(j,used,tries){for(let k=0;k<(tries||8);k++){const p=exPick(j,used),vs=await exPage(p),r=exRange(vs);if(r)return{j,p,...r,m:{h:0,l:0,t:0,r:0,c:0},n:'',d:0}}return null}
+const exLbl=p=>!p.fc?'سورة '+exSur(p.p):p.fc==p.tc?`سورة ${SUR[p.fc-1]} · من الآية ${p.fv} إلى الآية ${p.tv}`:`من ${SUR[p.fc-1]} آية ${p.fv} إلى ${SUR[p.tc-1]} آية ${p.tv}`;
+function exShuf(a){for(let i=a.length-1;i>0;i--){const k=exRnd(i+1);[a[i],a[k]]=[a[k],a[i]]}return a}
+const exDed=m=>exRound(m.h*2+m.l*2+m.t*1+m.r*.2+m.c*10);
+const exTot=e=>exRound((e.pos||[]).reduce((s,x)=>s+exDed(x.m),0));
+const exMark=e=>Math.max(0,exRound(100-exTot(e)));
+const exD=()=>S.ex=S.ex||{list:[],seat:1};
+const exGet=id=>exD().list.find(x=>x.id==id);
+function exStop(){clearInterval(exTm);exTm=null;exRun=false}
+function examPage(){return exCur&&exGet(exCur)&&exGet(exCur).pos?exView(exGet(exCur)):exList()}
+function exList(){const D=exD();
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">اختبار تجريبي</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="m" style="padding:0 16px 8px;line-height:1.7">قسم تدريبي مستقل: أضف متسابقاً، اختر أجزاءه وعدد المواضع، ثم قيّمه واعتمد علامته. بعد الاعتماد تُحذف تفاصيل السحب والتقييم ويبقى الاسم والمستوى والعلامة فقط.</div>
+ ${exPgBox()}
+ <div style="padding:0 14px"><button style="width:100%" onclick="exAddOpen()">${svg('plus')} متسابق جديد</button></div>
+ ${D.list.length?D.list.map(e=>{const st=e.done?`<span class="exb ok">العلامة ${exRound(e.score)}</span>`:e.pos?`<span class="exb">قيد الاختبار · ${e.pos.length} مواضع</span>`:`<span class="exb mu">لم يُسحب بعد</span>`;
+  return `<div class="c"><div class="row sp"><b style="font-size:17px">${esc(e.name)}</b>${st}</div><div class="m">رقم الجلوس ${esc(e.seat)}${e.level?' · المستوى: '+esc(e.level):''}</div>
+  <div class="row" style="margin-top:8px;gap:6px">${e.done?`<button class="g" onclick="exRedo(${e.id})">↺ إعادة اختبار</button>`:e.pos?`<button onclick="exOpen(${e.id})">متابعة الاختبار</button><button class="g" onclick="exDrawOpen(${e.id})">سحب جديد</button>`:`<button onclick="exDrawOpen(${e.id})">${svg('target')} سحب الأجزاء والمواضع</button>`}<button class="g" style="color:var(--bad)" onclick="exDel(${e.id})">حذف</button></div></div>`}).join(''):'<div class="m" style="text-align:center;padding:30px">لا يوجد متسابقون بعد</div>'}`}
+function exAddOpen(){const D=exD();$('#sh').innerHTML=shW(`<b>إضافة متسابق تجريبي</b><div class="m" style="margin-top:8px">اسم المتسابق</div><input id="exN" autocomplete="off"><div class="m">رقم الجلوس</div><input id="exSt" value="${String(D.seat).padStart(3,'0')}" autocomplete="off"><div class="m">المستوى</div><input id="exLv" placeholder="مثال: 10 أجزاء" autocomplete="off"><div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exAdd()">حفظ المتسابق</button></div>`);setTimeout(()=>{const i=$('#exN');i&&i.focus()},60)}
+function exAdd(){const n=$('#exN').value.trim();if(!n){toast('اكتب اسم المتسابق');return}const D=exD();D.list.unshift({id:S.id++,name:n,seat:$('#exSt').value.trim()||String(D.seat).padStart(3,'0'),level:$('#exLv').value.trim()});D.seat++;save();$('#sh').innerHTML='';draw()}
+function exDel(id){if(!confirm('حذف هذا المتسابق؟'))return;const D=exD();D.list=D.list.filter(x=>x.id!=id);save();draw()}
+function exRedo(id){if(!confirm('إعادة الاختبار ستمسح العلامة المعتمدة. متابعة؟'))return;const e=exGet(id);delete e.done;delete e.score;delete e.pos;delete e.cur;save();draw()}
+function exDrawOpen(id){exDid=id;exSel={};$('#sh').innerHTML=shW(`<b>إعداد سحب تجريبي — ${esc(exGet(id).name)}</b><div class="m" style="margin:8px 0">اختر الأجزاء المطلوبة وحدّد عدد المواضع داخل كل جزء — يمكن اختيار أكثر من موضع بنفس الجزء.</div><div id="exDw"></div>`);exDw()}
+function exDw(){const ks=Object.keys(exSel).map(Number),tot=ks.reduce((s,k)=>s+exSel[k],0);
+ $('#exDw').innerHTML=`<div class="exg">${[...Array(30)].map((_,i)=>{const j=i+1,c=exSel[j];return c?`<div class="exj on"><b>${j}</b><div class="exs"><button onclick="exAdj(${j},1)">+</button><span>${c}</span><button onclick="exAdj(${j},-1)">−</button></div></div>`:`<div class="exj" onclick="exTog(${j})">${j}</div>`}).join('')}</div>
+ <div style="margin:10px 0;padding:10px;border:1px dashed var(--bd);border-radius:12px"><b>توحيد عدد المواضع لكل الأجزاء المختارة</b><div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:6px"><input id="exU" type="number" min="1" placeholder="مثال: 3" style="margin:0"><button class="g" onclick="exUni()">تطبيق</button></div></div>
+ <div class="m">${ks.length} جزء مختار · ${tot} موضعاً بالمجموع</div>
+ <div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exRun_()">✨ تنفيذ السحب</button></div>`}
+function exTog(j){exSel[j]=1;exDw()}
+function exAdj(j,d){const n=(exSel[j]||1)+d;if(n<1)delete exSel[j];else exSel[j]=Math.min(n,exPages(j));exDw()}
+function exUni(){const v=Math.floor(+$('#exU').value);if(!v||v<1){toast('اكتب رقماً صحيحاً');return}Object.keys(exSel).forEach(j=>exSel[j]=Math.min(v,exPages(+j)));exDw()}
+let exBusy=0;
+async function exRun_(){const ks=Object.keys(exSel).map(Number).sort((a,b)=>a-b);if(!ks.length){toast('اختر جزءاً واحداً على الأقل');return}if(exBusy)return;exBusy=1;
+ const tot=ks.reduce((s,k)=>s+exSel[k],0);let pos=[],done=0;
+ try{for(const j of ks){const u=new Set();for(let i=0;i<exSel[j];i++){const p=await exMake(j,u);if(p)pos.push(p);toast('جارٍ السحب… '+(++done)+' / '+tot)}}}catch(e){exBusy=0;toast('تعذّر تحميل بيانات المصحف — تأكد من الإنترنت وأعد المحاولة');return}
+ exBusy=0;if(!pos.length){toast('تعذّر السحب، أعد المحاولة');return}exShuf(pos);
+ const e=exGet(exDid);e.pos=pos;e.cur=0;delete e.done;delete e.score;save();$('#sh').innerHTML='';exCur=e.id;exStop();exLeft=exDur;draw();window.scrollTo({top:0})}
+function exOpen(id){exCur=id;exStop();exLeft=exDur;draw();window.scrollTo({top:0})}
+function exView(e){const i=Math.min(e.cur||0,e.pos.length-1),p=e.pos[i],tot=exTot(e);
+ const rows=EXT.map(([k,n,w,c])=>`<div class="exr" style="--ec:${c}"><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center"><button class="g exq" onclick="exBump('${k}',-1)">−</button><b class="exn">${p.m[k]}</b>${k=='c'?`<button class="exq" onclick="exChange()">↻</button>`:`<button class="exq" onclick="exBump('${k}',1)">+</button>`}<div style="flex:1;text-align:start"><b>${n}</b><div class="m" style="font-size:12px">الواحدة: ${w} · الخصم: ${exRound(p.m[k]*w)}</div></div></div></div>`).join('');
+ return `<div class="exh"><button class="g" style="padding:6px 12px" onclick="exClose()">✕</button><div style="flex:1"><b>${esc(e.name)}</b><div style="font-size:12px;opacity:.85">${e.level?esc(e.level)+' · ':''}رقم الجلوس ${esc(e.seat)} · ${e.pos.length} مواضع</div></div><div style="text-align:center"><div style="font-size:11px;opacity:.85">العلامة</div><b id="exMk" style="font-size:30px">${exMark(e)}</b></div></div>
+ <div class="c"><div class="row sp"><b>الموضع ${i+1} من ${e.pos.length}</b><span class="m">خصم الموضع: ${exDed(p.m)}</span></div>
+  <div style="text-align:center;padding:8px 4px"><div style="font-size:19px;font-weight:700;font-family:'Amiri Quran','Amiri',serif;line-height:1.6">${exLbl(p)}</div><div class="m" style="margin-top:4px">الجزء ${p.j} · الصفحة ${p.p}${p.l1?' · الأسطر '+p.l1+'–'+p.l2:''}</div></div>${exImg(p)}${(setTimeout(exPics,0),'')}
+  <div class="row sp" style="margin-top:6px"><button class="g" ${i<1?'disabled':''} onclick="exGo(${i-1})">→ السابق</button><button class="g" ${i>=e.pos.length-1?'disabled':''} onclick="exGo(${i+1})">التالي ←</button></div></div>
+ ${rows}
+ <div class="c"><div class="row sp" style="flex-wrap:nowrap"><b id="exT" style="font-size:28px;font-variant-numeric:tabular-nums">${exLeft}</b><span class="m">ثانية</span><div class="row" style="gap:6px"><button onclick="exTimer()">${exRun?'⏸ إيقاف':'▶ تشغيل'}</button><button class="g" onclick="exReset()">↺</button><button class="g" onclick="exDurSet()">⏱</button></div></div></div>
+ <div class="c"><b>ملاحظات الموضع</b><textarea rows="3" placeholder="ملاحظة اختيارية عن أداء المتسابق" oninput="exNote(this.value)" style="width:100%;margin-top:6px">${esc(p.n||'')}</textarea><button class="g" style="width:100%;margin-top:8px" onclick="exFinPos()">${p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع'}</button></div>
+ <div class="c row sp"><span class="m">إجمالي الخصم</span><b style="font-size:22px;color:var(--bad)">${tot}</b></div>
+ <div style="padding:0 14px 20px"><button style="width:100%;padding:14px" onclick="exApprove()">اعتماد العلامة النهائية</button></div>`}
+let exZoom=100,exCrop=0,exURL={};
+/* مصحف محفوظ على الجهاز (IndexedDB): الصفحات تُرفع مرة واحدة من ملف zip ثم تعمل دون إنترنت ودون استضافة */
+const exDB=()=>new Promise((ok,no)=>{const r=indexedDB.open('qmrm_pages',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+async function exGetBlob(n){try{const db=await exDB();return await new Promise(ok=>{const q=db.transaction('p').objectStore('p').get(n);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch(e){return null}}
+async function exPics(){const imgs=[...document.querySelectorAll('#exMs img[data-pg]')];for(const im of imgs){const n=+im.dataset.pg,b=await exGetBlob(n);
+ if(b){if(exURL[n])URL.revokeObjectURL(exURL[n]);exURL[n]=URL.createObjectURL(b);im.src=exURL[n]}else im.src='quran-pages/'+String(n).padStart(3,'0')+'.webp'}}
+const exPgN=()=>+(localStorage.getItem('qmrm_pgn')||0);
+function exPgBox(){const n=exPgN();return `<div class="c"><div class="row sp"><b>مصحف الصفحات</b><span class="exb ${n?'ok':'mu'}">${n?'محفوظ · '+n+' صفحة':'غير مرفوع'}</span></div>
+ <div class="m" style="margin:6px 0;line-height:1.7">${n?'صور المصحف محفوظة على جهازك وتعمل دون إنترنت.':'ارفع ملف المصحف (quran-pages.zip) مرة واحدة ليحفظه التطبيق على جهازك وتظهر الصفحة مع تظليل الموضع.'}</div>
+ <input id="exZip" type="file" accept=".zip,image/*" multiple hidden onchange="exUpload(this.files)"><div class="row" style="gap:6px"><button style="flex:1" onclick="$('#exZip').click()">${n?'استبدال ملف المصحف':'رفع ملف المصحف'}</button>${n?'<button class="g" style="color:var(--bad)" onclick="exPgDel()">حذف</button>':''}</div></div>`}
+function exJZ(){return window.JSZip?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=ok;s.onerror=()=>no(new Error('jszip'));document.head.appendChild(s)})}
+async function exUpload(files){files=[...files||[]];if(!files.length)return;let db,items=[];
+ try{for(const f of files){if(/\.zip$/i.test(f.name)){await exJZ();const z=await JSZip.loadAsync(f);for(const e of Object.values(z.files)){const m=!e.dir&&e.name.match(/(\d{1,3})\.(webp|jpe?g|png)$/i);if(m&&+m[1]>=1&&+m[1]<=604)items.push({n:+m[1],get:async()=>new Blob([await e.async('arraybuffer')],{type:'image/'+(/png/i.test(m[2])?'png':/webp/i.test(m[2])?'webp':'jpeg')})})}}
+  else{const m=f.name.match(/(\d{1,3})\.(webp|jpe?g|png)$/i);if(m&&+m[1]>=1&&+m[1]<=604)items.push({n:+m[1],get:async()=>f})}}
+  if(!items.length){toast('لم أجد صور صفحات بأسماء مثل 001.webp');return}
+  db=await exDB();let i=0;for(const it of items){const b=await it.get();await new Promise((ok,no)=>{const tx=db.transaction('p','readwrite');tx.objectStore('p').put(b,it.n);tx.oncomplete=ok;tx.onerror=()=>no(tx.error)});if(++i%25==0)toast('جارٍ الحفظ… '+i+' / '+items.length)}
+  const all=await new Promise(ok=>{const q=db.transaction('p').objectStore('p').count();q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(i)});
+  localStorage.setItem('qmrm_pgn',all);toast('تم حفظ '+all+' صفحة'+(all<604?' (المصحف الكامل 604)':''));draw()}
+ catch(e){toast('تعذّر حفظ الصفحات — تأكد من مساحة الجهاز وأعد المحاولة')}}
+async function exPgDel(){if(!confirm('حذف صور المصحف المحفوظة على الجهاز؟'))return;try{const db=await exDB();await new Promise(ok=>{const tx=db.transaction('p','readwrite');tx.objectStore('p').clear();tx.oncomplete=ok;tx.onerror=ok})}catch(e){}localStorage.removeItem('qmrm_pgn');draw()}
+/* هندسة صفحات PDF المصحف: الصفحة 1-2 مزخرفتان (8 أسطر)، 3-61 ارتفاعها 1177، وباقيها 1072 — كل القياسات بوحدة بكسل الصورة الأصلية (عرض 750) */
+function exGeo(n,l1,l2){
+ if(n<=2){const c=k=>k<=1?350:470+(k-2)*42.2,h=k=>k<=1?70:42.2,x=n==1?[105,545]:[245,645];return{H:1177,x0:x[0],x1:x[1],y0:c(l1)-h(l1)/2,y1:c(l2)+h(l2)/2}}
+ const H=n<=61?1177:1072,top=n<=61?192:146,pt=n<=61?52.85:52.4;return{H,x0:118,x1:642,y0:top+(l1-1)*pt,y1:top+l2*pt}}
+function exImg(p){const src='quran-pages/'+String(p.p).padStart(3,'0')+'.webp',has=!!p.l1,g=has?exGeo(p.p,p.l1,p.l2):null,pc=v=>(Math.round(v*1000)/1000)+'%';
+ const ctl=`<div class="row" style="gap:6px;margin:6px 0;justify-content:center"><button class="g" onclick="exZm(-25)">−</button><b style="min-width:52px;text-align:center">${exZoom}%</b><button class="g" onclick="exZm(25)">+</button><button class="g" onclick="exZm(0)">إعادة</button>${has?`<button class="${exCrop?'':'g'}" onclick="exCropT()">قص الأسطر فقط</button>`:''}</div>`;
+ const err=`onerror="exImgErr()"`;
+ if(has&&exCrop){const cw=g.x1-g.x0+40,ch=g.y1-g.y0+20;return `<div id="exMs">${ctl}<div class="exim crop" style="aspect-ratio:${cw}/${ch}"><img ${err} data-pg="${p.p}" alt="صفحة ${p.p}" style="width:${pc(750/cw*100)};left:${pc(-(g.x0-20)/cw*100)};top:${pc(-(g.y0-10)/ch*100)}"></div></div>`}
+ return `<div id="exMs">${ctl}<div style="overflow-x:auto"><div class="exim" style="width:${exZoom}%"><img ${err} data-pg="${p.p}" alt="صفحة ${p.p}">${has?`<div class="exhl" style="left:${pc(g.x0/750*100)};width:${pc((g.x1-g.x0)/750*100)};top:${pc(g.y0/g.H*100)};height:${pc((g.y1-g.y0)/g.H*100)}"></div>`:''}</div></div></div>`}
+function exZm(d){exZoom=d?Math.max(100,Math.min(300,exZoom+d)):100;draw()}
+function exCropT(){exCrop=exCrop?0:1;draw()}
+function exImgErr(){const b=$('#exMs');if(!b||b.dataset.fb)return;b.dataset.fb=1;b.className='exm';b.innerHTML='<div class="m" style="text-align:center">صور المصحف غير مرفوعة بعد — عرض نصي مؤقت</div>';exMush()}
+const exCmp=(c1,v1,c2,v2)=>c1-c2||v1-v2;
+async function exMush(){const box=$('#exMs');if(!box||!exCur||!exGet(exCur)||!exGet(exCur).pos)return;const p=exCurP();
+ try{const vs=await exPage(p.p);if($('#exMs')!==box)return;const L={};
+  vs.forEach(v=>v.w.forEach((w,i)=>{const inR=p.fc?exCmp(v.c,v.n,p.fc,p.fv)>=0&&exCmp(v.c,v.n,p.tc,p.tv)<=0:false;(L[w.l]=L[w.l]||[]).push({...w,c:v.c,n:v.n,inR,hd:v.st&&i===0&&v.n===1})}));
+  const ar=n=>(+n).toLocaleString('ar-EG');let h='';
+  Object.keys(L).map(Number).sort((a,b)=>a-b).forEach(l=>{const ws=L[l],f=ws[0];
+   if(f.hd){h+=`<div class="exsn">سورة ${esc(SUR[f.c-1])}</div>`;if(f.c!=1&&f.c!=9)h+=`<div class="exbs">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`}
+   h+=`<div class="exl${ws.length<5?' sh':''}">${ws.map(w=>w.e?`<span class="ay${w.inR?' hw':''}">﴿${ar(w.n)}﴾</span>`:`<span class="${w.inR?'hw':''}">${esc(w.t)}</span>`).join(' ')}</div>`});
+  box.innerHTML+=h+`<div class="m" style="text-align:center;margin-top:6px">${ar(p.p)}</div>`}
+ catch(e){box.innerHTML='<div class="m" style="text-align:center">تعذّر تحميل الصفحة — تأكد من الإنترنت</div>'}}
+function exCurP(){const e=exGet(exCur);return e.pos[Math.min(e.cur||0,e.pos.length-1)]}
+function exBump(k,d){const p=exCurP(),n=p.m[k]+d;if(n<0)return;p.m[k]=n;save();draw()}
+async function exChange(){const e=exGet(exCur),p=exCurP();if(!confirm('تغيير الموضع يخصم 10 علامات. متابعة؟'))return;
+ try{const u=new Set(e.pos.filter(x=>x.j==p.j).map(x=>x.p)),n=await exMake(p.j,u,12);if(!n){toast('تعذّر اختيار موضع جديد');return}n.m={...p.m,c:p.m.c+1};n.n=p.n;e.pos[e.cur||0]=n;save();draw()}catch(er){toast('تعذّر تحميل بيانات المصحف — تأكد من الإنترنت')}}
+function exGo(i){const e=exGet(exCur);e.cur=Math.max(0,Math.min(e.pos.length-1,i));save();exStop();exLeft=exDur;draw();window.scrollTo({top:0})}
+function exNote(v){exCurP().n=v;save()}
+function exFinPos(){const p=exCurP();p.d=p.d?0:1;save();draw()}
+function exClose(){exStop();exCur=0;draw()}
+function exBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.25;o.start();setTimeout(()=>{o.stop();a.close()},500)}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+function exTimer(){if(exRun){exStop();draw();return}exRun=true;exTm=setInterval(()=>{exLeft--;const el=$('#exT');if(el){el.textContent=exLeft;el.style.color=exLeft<0?'var(--bad)':''}if(exLeft===0)exBeep()},1000);draw()}
+function exReset(){exStop();exLeft=exDur;draw()}
+function exDurSet(){const v=parseInt(prompt('مدة المؤقت بالثواني',exDur));if(v>0){exDur=v;exStop();exLeft=v;draw()}}
+function exApprove(){const e=exGet(exCur);if(!confirm('اعتماد العلامة '+exMark(e)+'؟ ستُحذف تفاصيل السحب والتقييم ويبقى الاسم والمستوى والعلامة فقط.'))return;e.score=exMark(e);e.done=Date.now();delete e.pos;delete e.cur;save();exStop();exCur=0;draw();toast('تم اعتماد العلامة')}
 /* ---------- الإعدادات ---------- */
 const CC="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(' ');
 const ARAB='DZ BH KM DJ EG IQ JO KW LB LY MR MA OM PS QA SA SO SD SY TN AE YE'.split(' '),ISL='AF AL AZ BD BF BN BA TD GM GN ID IR KZ XK KG MY MV ML NE NG PK SN SL TJ TR TM UZ'.split(' '),GN=['الدول العربية','الدول الإسلامية','دول أخرى'];
