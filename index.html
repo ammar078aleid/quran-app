@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<!-- ملاحظة لأي مطوّر أو ذكاء اصطناعي يعدّل هذا الملف: قسم «الاختبارات» له شرح كامل في تعليق كبير داخل السكربت، ابحث عن: EXAM-NOTES. اقرأه قبل تعديل أي دالة تبدأ بـ ex -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>مُثبِّت القرآن</title>
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1a237e"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
@@ -133,7 +134,7 @@ body.exlock{overflow:hidden}
 .exc{flex:0 0 auto;width:42px;height:42px;border-radius:50%;padding:0;background:var(--card);color:var(--tx);border:1.5px solid var(--bd);font-weight:700;transition:transform .12s,background .2s}
 .exc.on{background:var(--pri);color:var(--on);border-color:var(--pri);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 22%,transparent)}.exc.er:not(.on){border-color:var(--bad);color:var(--bad)}.exc.dn:not(.on){border-color:#2e7d32;color:#2e7d32;background:#2e7d3214}
 #exBody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 0 16px}
-.exfade{animation:exin .22s ease}@keyframes exin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.exfade{animation:exin .22s ease}@keyframes exin{from{opacity:.35}to{opacity:1}}
 #exFoot{flex:none;background:var(--card);padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid var(--bd);box-shadow:0 -6px 18px #0000000f;border-radius:18px 18px 0 0}
 .extd{font-size:24px;color:var(--bad);display:block;line-height:1.1}.exbt{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}.exbt button{padding:12px 6px}
 .exttl{text-align:center;font-size:21px;font-weight:700;line-height:1.7;margin-top:6px;font-family:'Amiri Quran','Amiri',serif}
@@ -159,6 +160,39 @@ body.exlock{overflow:hidden}
 .exrw{display:flex;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--bd)}.exrn{width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--pri) 12%,transparent);color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
 .exri{flex:1;min-width:0}.exrp{text-align:center;border-inline-start:1px solid var(--bd);padding-inline-start:12px}.exrp small{display:block;color:var(--mut);font-size:11px}.exrp b{font-size:18px}
 .exnote{margin:14px 18px;padding:10px 12px;border-radius:12px;background:#f9a82522;font-size:13px}.exac{padding:4px 18px 18px;border-top:1px solid var(--bd);padding-top:14px}
+.exfit{overflow-x:auto;border-radius:12px}.exim{flex:none}
+.exphb{margin-top:6px;background:#ffffff26;color:#fff;border:1px solid #ffffff66;border-radius:20px;padding:6px 14px;min-height:0;font-size:13px;font-weight:700}.exphb.on{background:#fff;color:#1a237e;font-weight:700}
+.exgr{display:block}.exq.pl{order:0}.exn{order:0}.exq.mn{order:0}
+#exOv.ro .exq{opacity:.4}
+/* وضع الهاتف (عمودي): الصفحة ثابتة في الأعلى والأزرار تحتها */
+#exOv.ph #exBody{display:flex;flex-direction:column;overflow:hidden;padding:0}
+#exOv.ph .exvc{flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin:6px 10px;padding:8px 10px}
+#exOv.ph .exrest{flex:0 1 auto;max-height:48%;overflow-y:auto}
+/* العرض الأفقي: الصفحة في جهة والأزرار في الجهة الأخرى */
+#exOv.ls{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"vw top" "vw strip" "vw body" "vw foot"}
+#exOv.ls #exTop{grid-area:top}#exOv.ls #exStrip{grid-area:strip}#exOv.ls #exFoot{grid-area:foot;border-radius:0}
+#exOv.ls #exBody{display:contents}
+#exOv.ls .exvc{grid-area:vw;min-height:0;display:flex;flex-direction:column;margin:8px;padding:8px 10px;overflow:hidden}
+#exOv.ls .exrest{grid-area:body;min-height:0;overflow-y:auto}
+#exOv.ph #exVw,#exOv.ls #exVw{flex:1;min-height:0;display:flex;flex-direction:column}
+#exOv.ph .exfit,#exOv.ls .exfit{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;align-items:flex-start;border-radius:10px}
+#exOv.ph .exim,#exOv.ls .exim{margin:0;min-height:0}
+#exOv.ph .exttl,#exOv.ls .exttl{font-size:15px;line-height:1.4;margin:2px 0}
+#exOv.ph .exsub,#exOv.ls .exsub,#exOv.ph .exlbl,#exOv.ls .exlbl{display:none}
+#exOv.ph .exhd,#exOv.ls .exhd{font-size:13px}
+#exOv.ph .exct,#exOv.ls .exct{margin:4px 0;gap:4px}#exOv.ph .exct button,#exOv.ls .exct button{padding:4px 10px;min-height:34px;font-size:13px}#exOv.ph .exct b,#exOv.ls .exct b{min-width:40px;font-size:13px}
+#exOv.ph .exsn2,#exOv.ls .exsn2{margin-top:6px}#exOv.ph .exsn2 button,#exOv.ls .exsn2 button{width:38px;height:38px;font-size:18px}
+#exOv.ph .exh,#exOv.ls .exh{padding-top:calc(env(safe-area-inset-top,0px) + 8px);padding-bottom:8px;gap:8px}
+#exOv.ph .exmk b,#exOv.ls .exmk b{font-size:26px}#exOv.ls .exphb{margin-top:2px;padding:3px 10px;font-size:12px}
+#exOv.ph #exStrip,#exOv.ls #exStrip{padding:6px 10px}#exOv.ph .exc,#exOv.ls .exc{width:36px;height:36px}
+#exOv.ph #exFoot,#exOv.ls #exFoot{padding-top:6px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}#exOv.ph .extd,#exOv.ls .extd{font-size:18px}
+#exOv.ph .exbt button,#exOv.ls .exbt button{padding:9px 4px}
+#exOv.ph .exgr,#exOv.ls .exgr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 8px;margin:6px 0}
+#exOv.ph .exr,#exOv.ls .exr{margin:0;padding:6px 3px}
+#exOv.ph .exrr,#exOv.ls .exrr{flex-direction:column;gap:4px;align-items:stretch}
+#exOv.ph .exrl,#exOv.ls .exrl{text-align:center}#exOv.ph .exrl b,#exOv.ls .exrl b{font-size:11px;line-height:1.25;display:block}#exOv.ph .exrl .m,#exOv.ls .exrl .m{display:none}
+#exOv.ph .exq.pl,#exOv.ls .exq.pl{order:1}#exOv.ph .exn,#exOv.ls .exn{order:2;font-size:24px;min-width:0}#exOv.ph .exq.mn,#exOv.ls .exq.mn{order:3}
+#exOv.ph .exq,#exOv.ls .exq{min-width:0;width:100%;height:40px;font-size:20px}
 @media print{@page{size:A4;margin:12mm}#pv,#pv *{-webkit-print-color-adjust:exact;print-color-adjust:exact}body>*:not(#pv){display:none!important}#pv{display:block!important}body{background:#fff!important;padding:0!important}:root{padding:0!important}}
 
 /* ===== قوالب الدفتر الجديدة: حواف ناعمة بلا سلك ===== */
@@ -1052,10 +1086,59 @@ function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
  <div class="dsec">الحساب والتنبيهات</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}${R("go2('jz')",'calendar','الجداول','جداول المراجعة والحفظ')}
  <div class="dsec">الحفظ والمراجعة</div>${R("go2('st')",'chart','الإحصائيات','تقدّمك وسجل جلساتك')}
- <div class="dsec">المسابقات</div>${R("go2('ct')",'trophy','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'target','اختبار تجريبي','سحب المواضع وتقييم الأخطاء')}
+ <div class="dsec">المسابقات</div>${R("go2('ct')",'trophy','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'target','الاختبارات','سحب المواضع وتقييم الأخطاء')}
  <div class="dsec">اللغة والمظهر</div>${R("go2('ap')",'palette','اللغة والمظهر','الوضع الليلي والألوان واللغة')}</aside></div>`}
 function go2(t){$('#sh').innerHTML='';if(t=='nb')nbCur=0;go(t)}
-/* ---------- اختبار تجريبي: سحب المواضع وتقييم الأخطاء ---------- */
+/* ====================== EXAM-NOTES: دليل قسم «الاختبارات» ======================
+ الغرض: قسم تدريبي مستقل (بلا حساب ولا سيرفر): أضف متسابقاً ← سحب مواضع من القرآن ← تقييم الأخطاء ← اعتماد العلامة.
+ بعد الاعتماد تبقى المواضع والأخطاء محفوظة، ويمكن مراجعتها (وضع القراءة فقط exRO) أو إعادة فتحها للتعديل (exEdit).
+
+ [1] الملفات والاستضافة
+ - التطبيق ملف واحد: index.html (هذا الملف) على Firebase Hosting، ومرتبط بمستودع GitHub باسم quran-app.
+ - صور المصحف (604 صورة WebP باسم 001.webp ... 604.webp، عرض كل صورة 600px) في مستودع GitHub منفصل اسمه quran-pages،
+   ومنشورة بـ GitHub Pages. الرابط الأساسي هو الثابت EXIMG أدناه، ويقرأ التطبيق كل صفحة عند الحاجة فقط.
+ - هذا المستودع غير موجود داخل الملف، لا يلزم معرفته: يكفي أن يبقى الرابط في EXIMG صحيحاً. إن نُقلت الصور غيّر EXIMG فقط.
+   (إن تُرك EXIMG فارغاً يبحث التطبيق عن مجلد quran-pages بجانب الملف).
+ - الصور مأخوذة من PDF مصحف المدينة (نسخة 604 صفحة): الصفحتان 1 و2 مزخرفتان (8 أسطر)، وباقي الصفحات 15 سطراً.
+
+ [2] مصدر البيانات
+ - نص الآيات وحدودها وأرقام الأسطر من واجهة quran.com المجانية: GET https://api.quran.com/api/v4/verses/by_page/{page}?words=true&word_fields=text_uthmani,line_number,page_number
+   تحتاج إنترنت وقت السحب فقط. لا تعتمد على أي مفتاح.
+ - مهم: لا نثق بأرقام الأسطر الخام من الواجهة (ترقيمها يختلف في العناوين والبسملة). دالة exSlots تعيد حسابها من ترتيب الأسطر الفعلي،
+   وتضيف سطر العنوان وسطر البسملة عند بداية كل سورة (سورة التوبة والفاتحة: سطر العنوان فقط). لا تُبسّط هذه الدالة.
+
+ [3] نموذج البيانات (يُحفظ في S.ex عبر save())
+ S.ex={list:[...], seat:رقم الجلوس التالي, draws:عداد السحوبات}
+ متسابق={id,name,seat,level,pos?,cur?,draw?,done?,score?}
+ موضع={j:رقم الجزء, segs:[{p:رقم الصفحة,l1:أول سطر,l2:آخر سطر}] (واحدة أو اثنتان), fc,fv:من سورة/آية, tc,tv:إلى سورة/آية,
+        words,lines, m:{h,l,t,r,c}:عدّاد الأخطاء, n:ملاحظة, d:1 إن انتهى الموضع}
+ - مواضع قديمة بلا segs تُحوَّل تلقائياً عبر exN.
+ - الخصم: حفظ 2 · لغة 2 · تجويد 1 · تردد 0.2 · تغيير موضع 10 (الثابت EXT). العلامة = 100 - مجموع الخصم (لا تقل عن 0).
+
+ [4] خوارزمية السحب (exMake ← exBuild)
+ - يُختار جزء ثم صفحة عشوائية منه بلا تكرار (exPick) بمولّد Web Crypto (exRnd)، ثم أول آية تبدأ في الصفحة عشوائياً.
+ - يتوسع الموضع آية بآية حتى يبلغ 8 أسطر فأكثر وينتهي عند نهاية آية، وقد يمتد للصفحة التالية فيصير segs من عنصرين.
+ - عنوان السورة والبسملة يدخلان في التظليل إذا بدأ الموضع من الآية 1.
+
+ [5] هندسة المربع الأصفر (exGeo) — قياسات حقيقية من الصور
+ - الصور بعرض أصلي 750: الصفحات 3 إلى 61 ارتفاعها 1177، والباقي 1072. الأسطر الخمسة عشر متساوية الارتفاع.
+ - إطار بعض الصفحات مزاح أفقياً (زخرفة الحزب)، والسلسلة EXGC فيها حرف لكل صفحة (0 عادي · 1 مزاح يميناً · 2 مزاح يساراً)
+   تقابل الإزاحات EXGX. الصفحتان 1 و2 لهما قياسات خاصة داخل exGeo. إن استُبدلت الصور بنسخة أخرى يجب إعادة قياس هذه القيم.
+
+ [6] الواجهة
+ - قائمة المتسابقين: exList. ورقة المواضع بعد السحب: exPaper (فيها طباعة/PDF). شاشة الاختبار: طبقة fixed واحدة #exOv
+   (شريط علوي #exTop، دوائر المواضع #exStrip، المحتوى #exBody، شريط سفلي #exFoot) تُرسم مرة واحدة ثم تُحدَّث في مكانها
+   (exUpd, exViewer, exTmUI) دون draw() كي لا تقفز الصفحة. لا تستدعِ draw() أثناء الاختبار.
+ - لا تستخدم confirm() أو prompt(): تعرضان اسم الموقع. استخدم exDlg (نافذة من التطبيق، ترجع Promise).
+ - زر الرجوع في الجوال مضبوط في bbStep: يغلق النافذة ثم الورقة ثم الاختبار.
+ - الألوان من متغيرات الثيم (--pri و--card و--bd ...) فتعمل مع الوضع الليلي. تنسيقات القسم كلها تبدأ بـ .ex أو #ex قرب @media print.
+
+ [7] ما اختُبر وما لم يُختبر
+ - اختُبر في Chromium مع بيانات مقلَّدة: السحب، الامتداد لصفحتين، حساب الأسطر بثلاث طرق ترقيم، التحديث في المكان، التراجع،
+   تغيير الموضع، المراجعة والاعتماد، الوضع الليلي، زر الرجوع.
+ - لم يُختبر مع واجهة quran.com الحية، ولا طباعة PDF على جوال. عند أي تظليل منزاح راجع exSlots أولاً ثم exGeo.
+ ================================================================================= */
+/* ---------- الاختبارات: سحب المواضع وتقييم الأخطاء ---------- */
 const EXJ=[1,22,42,62,82,102,122,142,162,182,202,222,242,262,282,302,322,342,362,382,402,422,442,462,482,502,522,542,562,582];
 const EXS=[1,2,50,77,106,128,151,177,187,208,221,235,249,255,262,267,282,293,305,312,322,332,342,350,359,367,377,385,396,404,411,415,418,428,434,440,446,453,458,467,477,483,489,496,499,502,507,511,515,518,520,523,526,528,531,534,537,542,545,549,551,553,554,556,558,560,562,564,566,568,570,572,574,575,577,578,580,582,583,585,586,587,587,589,590,591,591,592,593,594,595,595,596,596,597,597,598,598,599,599,600,600,601,601,601,602,602,603,603,603,604,604,604,604];
 const EXT=[['h','خطأ الحفظ',2,'#2e7d32'],['l','خطأ اللغة',2,'#1565c0'],['t','خطأ التجويد',1,'#f9a825'],['r','التردد',.2,'#6a1b9a'],['c','تغيير الموضع',10,'#c62828']];
@@ -1133,21 +1216,21 @@ function exDlg(o){return new Promise(ok=>{const d=document.createElement('div');
 /* ---- قائمة المتسابقين ---- */
 function examPage(){return exList()}
 function exList(){const D=exD();
- return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">اختبار تجريبي</b><button class="g" onclick="go('home')">رجوع</button></div>
- <div class="m" style="padding:0 16px 8px;line-height:1.7">قسم تدريبي مستقل: أضف متسابقاً، اختر أجزاءه وعدد المواضع، ثم قيّمه واعتمد علامته. بعد الاعتماد تُحذف تفاصيل السحب والتقييم ويبقى الاسم والمستوى والعلامة فقط.</div>
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الاختبارات</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="m" style="padding:0 16px 8px;line-height:1.7">أضف متسابقاً، اختر أجزاءه وعدد المواضع، ثم قيّمه واعتمد علامته. ويمكنك مراجعة أخطائه بعد الاعتماد.</div>
  <div style="padding:0 14px"><button style="width:100%" onclick="exAddOpen()">${svg('plus')} متسابق جديد</button></div>
  ${D.list.length?D.list.map(exCard).join(''):'<div class="m" style="text-align:center;padding:30px">لا يوجد متسابقون بعد</div>'}`}
 function exCard(e){const st=e.done?`<span class="exb ok">العلامة ${exRound(e.score)}</span>`:e.pos?`<span class="exb">قيد الاختبار · ${e.pos.length} مواضع</span>`:`<span class="exb mu">لم يُسحب بعد</span>`;
  return `<div class="c exlc"><div class="row sp"><b style="font-size:17px">${esc(e.name)}</b>${st}</div><div class="m">رقم الجلوس ${esc(e.seat)}${e.level?' · المستوى: '+esc(e.level):''}</div>
- <div class="row" style="margin-top:10px;gap:6px">${e.done?`<button class="g" onclick="exRedo(${e.id})">↺ إعادة اختبار</button>`:e.pos?`<button onclick="exOpen(${e.id})">متابعة الاختبار</button><button class="g" onclick="exPaper(${e.id})">ورقة المواضع</button><button class="g" onclick="exDrawOpen(${e.id})">سحب جديد</button>`:`<button onclick="exDrawOpen(${e.id})">${svg('target')} سحب الأجزاء والمواضع</button>`}<button class="g" style="color:var(--bad);border-color:var(--bad)" onclick="exDel(${e.id})">حذف</button></div></div>`}
-function exAddOpen(){const D=exD();$('#sh').innerHTML=shW(`<b>إضافة متسابق تجريبي</b><div class="m" style="margin-top:8px">اسم المتسابق</div><input id="exN" autocomplete="off"><div class="m">رقم الجلوس</div><input id="exSt" value="${String(D.seat).padStart(3,'0')}" autocomplete="off"><div class="m">المستوى</div><input id="exLv" placeholder="مثال: 10 أجزاء" autocomplete="off"><div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exAdd()">حفظ المتسابق</button></div>`);setTimeout(()=>{const i=$('#exN');i&&i.focus()},60)}
+ <div class="row" style="margin-top:10px;gap:6px">${e.done?`${e.pos?`<button onclick="exOpen(${e.id},0,1)">مراجعة الأخطاء</button><button class="g" onclick="exPaper(${e.id})">ورقة المواضع</button>`:''}<button class="g" onclick="exRedo(${e.id})">↺ إعادة اختبار</button>`:e.pos?`<button onclick="exOpen(${e.id})">متابعة الاختبار</button><button class="g" onclick="exPaper(${e.id})">ورقة المواضع</button><button class="g" onclick="exDrawOpen(${e.id})">سحب جديد</button>`:`<button onclick="exDrawOpen(${e.id})">${svg('target')} سحب الأجزاء والمواضع</button>`}<button class="g" style="color:var(--bad);border-color:var(--bad)" onclick="exDel(${e.id})">حذف</button></div></div>`}
+function exAddOpen(){const D=exD();$('#sh').innerHTML=shW(`<b>إضافة متسابق</b><div class="m" style="margin-top:8px">اسم المتسابق</div><input id="exN" autocomplete="off"><div class="m">رقم الجلوس</div><input id="exSt" value="${String(D.seat).padStart(3,'0')}" autocomplete="off"><div class="m">المستوى</div><input id="exLv" placeholder="مثال: 10 أجزاء" autocomplete="off"><div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exAdd()">حفظ المتسابق</button></div>`);setTimeout(()=>{const i=$('#exN');i&&i.focus()},60)}
 function exAdd(){const n=$('#exN').value.trim();if(!n){toast('اكتب اسم المتسابق');return}const D=exD();D.list.unshift({id:S.id++,name:n,seat:$('#exSt').value.trim()||String(D.seat).padStart(3,'0'),level:$('#exLv').value.trim()});D.seat++;save();$('#sh').innerHTML='';draw()}
 async function exDel(id){if(!await exDlg({t:'حذف المتسابق',m:'سيُحذف هذا المتسابق وكل ما يخصه. هل تريد المتابعة؟',ok:'حذف',bad:1}))return;const D=exD();D.list=D.list.filter(x=>x.id!=id);save();draw()}
-async function exRedo(id){if(!await exDlg({t:'إعادة الاختبار',m:'ستُمسح العلامة المعتمدة ويبدأ الاختبار من جديد.',ok:'إعادة',bad:1}))return;const e=exGet(id);delete e.done;delete e.score;delete e.pos;delete e.cur;delete e.draw;save();draw()}
+async function exRedo(id){if(!await exDlg({t:'إعادة الاختبار',m:'ستُمسح العلامة وأخطاء المتسابق ويبدأ الاختبار من جديد.',ok:'إعادة',bad:1}))return;const e=exGet(id);delete e.done;delete e.score;delete e.pos;delete e.cur;delete e.draw;save();draw()}
 
 /* ---- السحب ---- */
 async function exDrawOpen(id){const e=exGet(id);if(e.pos&&!await exDlg({t:'سحب جديد',m:'سيحلّ السحب الجديد محلّ المواضع الحالية وتقييمها.',ok:'متابعة',bad:1}))return;
- exDid=id;exSel={};$('#sh').innerHTML=shW(`<b>إعداد سحب تجريبي — ${esc(e.name)}</b><div class="m" style="margin:8px 0">اختر الأجزاء المطلوبة وحدّد عدد المواضع داخل كل جزء — يمكن اختيار أكثر من موضع بنفس الجزء.</div><div id="exDw"></div>`);exDw()}
+ exDid=id;exSel={};$('#sh').innerHTML=shW(`<b>إعداد السحب — ${esc(e.name)}</b><div class="m" style="margin:8px 0">اختر الأجزاء المطلوبة وحدّد عدد المواضع داخل كل جزء — يمكن اختيار أكثر من موضع بنفس الجزء.</div><div id="exDw"></div>`);exDw()}
 function exDw(){const ks=Object.keys(exSel).map(Number),tot=ks.reduce((s,k)=>s+exSel[k],0);
  $('#exDw').innerHTML=`<div class="exg">${[...Array(30)].map((_,i)=>{const j=i+1,c=exSel[j];return c?`<div class="exj on"><b>${j}</b><div class="exs"><button onclick="exAdj(${j},1)">+</button><span>${c}</span><button onclick="exAdj(${j},-1)">−</button></div></div>`:`<div class="exj" onclick="exTog(${j})">${j}</div>`}).join('')}</div>
  <div style="margin:10px 0;padding:10px;border:1px dashed var(--bd);border-radius:12px"><b>توحيد عدد المواضع لكل الأجزاء المختارة</b><div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:6px"><input id="exU" type="number" min="1" placeholder="مثال: 3" style="margin:0"><button class="g" onclick="exUni()">تطبيق</button></div></div>
@@ -1171,7 +1254,7 @@ async function exRun_(){const ks=Object.keys(exSel).map(Number).sort((a,b)=>a-b)
 function exPaper(id){const e=exGet(id);if(!e||!e.pos)return;e.pos.forEach(exN);const juz=[...new Set(e.pos.map(p=>p.j))].sort((a,b)=>a-b),dr=e.draw||{no:'—',code:'—'};
  const row=(i,p)=>`<div class="exrw"><div class="exrn">${i+1}</div><div class="exri"><b>${esc(exRng(p))}</b><div class="m">الجزء ${p.j} · ${p.lines||''} أسطر${p.words?' · '+p.words+' كلمة':''}${p.fc?' · '+p.fc+':'+p.fv+' إلى '+p.tc+':'+p.tv:''}</div></div><div class="exrp"><small>الصفحة</small><b>${exPgs(p)}</b></div></div>`;
  const o=document.createElement('div');o.className='exov2';o.id='exPp';
- o.innerHTML=`<div class="expaper"><div id="expp"><div class="expph"><div class="row sp" style="align-items:flex-start"><div><small>اختبار تجريبي</small><h3>ورقة مواضع الاختبار</h3></div><div style="text-align:left"><small>رقم السحب</small><b style="display:block;font-size:20px">${dr.no}</b><small dir="ltr">${dr.code}</small></div></div></div>
+ o.innerHTML=`<div class="expaper"><div id="expp"><div class="expph"><div class="row sp" style="align-items:flex-start"><div><small>الاختبارات</small><h3>ورقة مواضع الاختبار</h3></div><div style="text-align:left"><small>رقم السحب</small><b style="display:block;font-size:20px">${dr.no}</b><small dir="ltr">${dr.code}</small></div></div></div>
  <div class="exfl"><div><small>اسم المتسابق</small><b>${esc(e.name)}</b></div><div><small>رقم الجلوس</small><b>${esc(e.seat)}</b></div><div><small>المستوى</small><b>${esc(e.level||'—')}</b></div><div><small>أرقام الأجزاء المشاركة</small><b>${juz.join('، ')}</b></div></div>
  <div class="exrh"><span>الرقم</span><span>الموضع المختار</span><span>الصفحة</span></div>${e.pos.map((p,i)=>row(i,p)).join('')}
  <div class="exnote">تم تثبيت هذه المواضع لهذا السحب.</div></div>
@@ -1183,50 +1266,71 @@ function exPrint(){const el=$('#expp');if(!el)return;const f=document.createElem
  setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(er){}setTimeout(()=>f.remove(),2000)},300)}
 
 /* ---- شاشة الاختبار: شريط علوي وسفلي ثابتان، والتحديث في مكانه دون إعادة رسم ---- */
-function exOpen(id,pi){const e=exGet(id);if(!e||!e.pos)return;exCur=id;e.pos.forEach(exN);exHist=[];exSeg=0;exZoom=100;exCrop=0;exStop();exLeft=exDur;
- if(pi!=null)e.cur=pi;e.cur=Math.min(e.cur||0,e.pos.length-1);
+let exPh=0,exRO=0,exRz=null;try{exPh=+(localStorage.getItem('qmrm_exph')||0)}catch(er){}
+const exLand=()=>innerWidth>innerHeight&&innerHeight<600;
+const exPin=()=>{const o=$('#exOv');return !!o&&(o.classList.contains('ls')||o.classList.contains('ph'))};
+const exScr=()=>exPin()?document.querySelector('#exBody .exrest'):$('#exBody');
+function exCls(){const o=$('#exOv');if(!o)return;const l=exLand();o.classList.toggle('ls',l);o.classList.toggle('ph',!l&&!!exPh);o.classList.toggle('ro',!!exRO)}
+function exOpen(id,pi,ro){const e=exGet(id);if(!e||!e.pos)return;exCur=id;exRO=ro?1:0;e.pos.forEach(exN);exHist=[];exSeg=0;exZoom=100;exStop();exLeft=exDur;
+ e.cur=Math.min(pi!=null?pi:(e.cur||0),e.pos.length-1);
  let ov=$('#exOv');if(!ov){ov=document.createElement('div');ov.id='exOv';document.body.appendChild(ov)}
  ov.innerHTML='<div id="exTop"></div><div id="exStrip"></div><div id="exBody"></div><div id="exFoot"></div>';document.body.classList.add('exlock');
- exTopR();exStripR();exBodyR();exFootR()}
-function exClose(){exStop();exCur=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw()}
+ if(exLand()||exPh)exCrop=1;
+ exCls();exTopR();exStripR();exBodyR();exFootR()}
+function exClose(){exStop();exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw()}
 const exE=()=>exGet(exCur),exP=()=>{const e=exE();return e.pos[e.cur||0]};
-function exTopR(){const e=exE();$('#exTop').innerHTML=`<div class="exh"><button class="exx" onclick="exClose()" aria-label="إغلاق">✕</button><div class="exw"><b>${esc(e.name)}</b><small>رقم الجلوس ${esc(e.seat)} · ${e.pos.length} مواضع</small></div><div class="exmk"><small>العلامة</small><b id="exMk">${exMark(e)}</b></div></div>`}
+function exPhone(){exPh=exPh?0:1;try{localStorage.setItem('qmrm_exph',exPh)}catch(er){}if(exPh)exCrop=1;exCls();exTopR();exViewer()}
+function exTopR(){const e=exE();$('#exTop').innerHTML=`<div class="exh"><button class="exx" onclick="exClose()" aria-label="إغلاق">✕</button><div class="exw"><b>${esc(e.name)}</b><small>${exRO?'مراجعة الأخطاء · ':''}رقم الجلوس ${esc(e.seat)} · ${e.pos.length} مواضع</small><button class="exphb${exPh?' on':''}" onclick="exPhone()">📱 وضع الهاتف</button></div><div class="exmk"><small>العلامة</small><b id="exMk">${exMark(e)}</b></div></div>`}
 function exStripR(){const e=exE(),s=$('#exStrip');s.innerHTML=e.pos.map((p,i)=>`<button class="exc${i==(e.cur||0)?' on':''}${p.d?' dn':''}${exDed(p.m)>0?' er':''}" onclick="exGoTo(${i})">${i+1}</button>`).join('');
- const on=s.querySelector('.on');if(on)on.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}
-function exFootR(){const e=exE(),i=e.cur||0;$('#exFoot').innerHTML=`<div class="row sp" style="margin-bottom:8px"><div><small class="m">إجمالي الخصم</small><b id="exTd" class="extd">${exTot(e)}</b></div><button class="g" id="exUn" onclick="exUndo()" ${exHist.length?'':'disabled'}>↶ تراجع عن آخر تسجيل</button></div>
- <div class="exbt"><button class="g" onclick="exGoTo(${i-1})" ${i<1?'disabled':''}>→ السابق</button><button class="g" onclick="exGoTo(${i+1})" ${i>=e.pos.length-1?'disabled':''}>التالي ←</button><button onclick="exReview()">مراجعة واعتماد</button></div>`}
-function exBodyR(fade){const e=exE(),i=e.cur||0,p=e.pos[i];
- $('#exBody').innerHTML=`<div class="${fade?'exfade':''}"><div class="c exc1"><div class="row sp"><b>الموضع ${i+1} من ${e.pos.length}</b><span class="m" id="exPD">خصم الموضع: ${exDed(p.m)}</span></div>
- <div class="exttl">${esc(exRng(p))}</div><div class="m" style="text-align:center">الجزء ${p.j} · الصفحة ${exPgs(p)}${p.lines?' · '+p.lines+' أسطر':''}</div><div id="exVw"></div></div>
- ${EXT.map(([k,n,w,c])=>`<div class="exr" style="--ec:${c}"><div class="exrr"><div class="exrl"><b>${n}</b><div class="m">الواحدة: ${w} · الخصم: <span id="exd${k}">${exRound(p.m[k]*w)}</span></div></div><b class="exn" id="exn${k}">${p.m[k]}</b>${k=='c'?`<button class="exq" onclick="exChange()" aria-label="تغيير الموضع">${svg('refresh')}</button>`:`<button class="exq" onclick="exBump('${k}',1)">+</button>`}<button class="g exq" onclick="exBump('${k}',-1)">−</button></div></div>`).join('')}
- <div class="c"><div class="row sp" style="flex-wrap:nowrap"><div class="extm"><b id="exT">${exLeft}</b><span class="m">ثانية</span></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button id="exTb" onclick="exTimer()">${svg('play')} تشغيل</button><button class="g" onclick="exReset()" aria-label="تصفير">${svg('reset')}</button><button class="g" id="exBl" onclick="exSound()" aria-label="الصوت">${svg(exSnd?'bell':'volume')}</button><button class="g" onclick="exDurSet()" aria-label="المدة">${svg('timer')}</button></div></div></div>
- <div class="c"><b>ملاحظات الموضع</b><textarea rows="3" placeholder="ملاحظة اختيارية عن أداء المتسابق" oninput="exNote(this.value)" style="margin-top:6px">${esc(p.n||'')}</textarea><button class="g" id="exFp" style="width:100%;margin-top:8px" onclick="exFinPos()">${p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع'}</button></div></div>`;
+ const on=s.querySelector('.on');if(on){const x=on.offsetLeft-(s.clientWidth-on.clientWidth)/2;try{s.scrollTo({left:x,behavior:'smooth'})}catch(er){s.scrollLeft=x}}}
+function exFootR(){const e=exE(),i=e.cur||0,nav=`<button class="g" onclick="exGoTo(${i-1})" ${i<1?'disabled':''}>→ السابق</button><button class="g" onclick="exGoTo(${i+1})" ${i>=e.pos.length-1?'disabled':''}>التالي ←</button>`;
+ $('#exFoot').innerHTML=exRO
+  ?`<div class="row sp" style="margin-bottom:8px"><div><small class="m">إجمالي الخصم</small><b id="exTd" class="extd">${exTot(e)}</b></div><button class="g" onclick="exEdit()">✎<span class="exlbl"> تعديل التقييم</span></button></div><div class="exbt">${nav}<button onclick="exClose()">إغلاق</button></div>`
+  :`<div class="row sp" style="margin-bottom:8px"><div><small class="m">إجمالي الخصم</small><b id="exTd" class="extd">${exTot(e)}</b></div><button class="g" id="exUn" onclick="exUndo()" ${exHist.length?'':'disabled'}>↶<span class="exlbl"> تراجع عن آخر تسجيل</span></button></div><div class="exbt">${nav}<button onclick="exReview()">مراجعة واعتماد</button></div>`}
+function exBodyR(fade){const e=exE(),i=e.cur||0,p=e.pos[i],f=fade?' exfade':'',ro=exRO?' disabled':'';
+ $('#exBody').innerHTML=`<div class="c exc1 exvc${f}"><div class="row sp exhd"><b>الموضع ${i+1} من ${e.pos.length}</b><span class="m" id="exPD">خصم الموضع: ${exDed(p.m)}</span></div>
+ <div class="exttl">${esc(exRng(p))}</div><div class="m exsub" style="text-align:center">الجزء ${p.j} · الصفحة ${exPgs(p)}${p.lines?' · '+p.lines+' أسطر':''}</div><div id="exVw"></div></div>
+ <div class="exrest${f}"><div class="exgr">${EXT.map(([k,n,w,c])=>`<div class="exr" style="--ec:${c}"><div class="exrr"><div class="exrl"><b>${n}</b><div class="m">الواحدة: ${w} · الخصم: <span id="exd${k}">${exRound(p.m[k]*w)}</span></div></div><b class="exn" id="exn${k}">${p.m[k]}</b>${k=='c'?`<button class="exq pl" onclick="exChange()" aria-label="تغيير الموضع"${ro}>${svg('refresh')}</button>`:`<button class="exq pl" onclick="exBump('${k}',1)"${ro}>+</button>`}<button class="g exq mn" onclick="exBump('${k}',-1)"${ro}>−</button></div></div>`).join('')}</div>
+ ${exRO?'':`<div class="c"><div class="row sp" style="flex-wrap:nowrap"><div class="extm"><b id="exT">${exLeft}</b><span class="m">ثانية</span></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button id="exTb" onclick="exTimer()">${svg('play')} تشغيل</button><button class="g" onclick="exReset()" aria-label="تصفير">${svg('reset')}</button><button class="g" id="exBl" onclick="exSound()" aria-label="الصوت">${svg(exSnd?'bell':'volume')}</button><button class="g" onclick="exDurSet()" aria-label="المدة">${svg('timer')}</button></div></div></div>`}
+ ${(!exRO||p.n)?`<div class="c"><b>ملاحظات الموضع</b><textarea rows="3" placeholder="ملاحظة اختيارية عن أداء المتسابق" oninput="exNote(this.value)" style="margin-top:6px"${exRO?' readonly':''}>${esc(p.n||'')}</textarea>${exRO?'':`<button class="g" id="exFp" style="width:100%;margin-top:8px" onclick="exFinPos()">${p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع'}</button>`}</div>`:''}</div>`;
  exViewer();exPre()}
 function exPre(){try{const e=exE(),i=e.cur||0,p=e.pos[i],list=[];p.segs.forEach(s=>list.push(s.p));[e.pos[i+1],e.pos[i-1]].forEach(q=>{if(q)list.push(exN(q).segs[0].p)});list.forEach(n=>{const im=new Image();im.src=exSrc(n)})}catch(er){}}
-function exViewer(){const e=exE(),p=exP(),k=Math.min(exSeg,p.segs.length-1),s=p.segs[k],g=exGeo(s.p,s.l1,s.l2),src=exSrc(s.p),pc=v=>(Math.round(v*1000)/1000)+'%',many=p.segs.length>1;
+function exViewer(){const p=exP(),k=Math.min(exSeg,p.segs.length-1),s=p.segs[k],g=exGeo(s.p,s.l1,s.l2),src=exSrc(s.p),pc=v=>(Math.round(v*1000)/1000)+'%',many=p.segs.length>1,pin=exPin();
  const ctl=`<div class="exct"><button class="g" onclick="exZm(-25)" aria-label="تصغير">−</button><b>${exZoom}%</b><button class="g" onclick="exZm(25)" aria-label="تكبير">+</button><button class="g" onclick="exZm(0)">إعادة</button><button class="${exCrop?'':'g'}" onclick="exCropT()">قص الأسطر فقط</button></div>`;
  const err=`onerror="this.closest('#exVw').classList.add('bad')" onload="this.classList.add('ok')"`;
- let img;
- if(exCrop){const cw=g.x1-g.x0+40,ch=g.y1-g.y0+20;img=`<div class="exim crop" style="aspect-ratio:${cw}/${ch}"><img ${err} src="${src}" alt="صفحة ${s.p}" style="width:${pc(750/cw*100)};left:${pc(-(g.x0-20)/cw*100)};top:${pc(-(g.y0-10)/ch*100)}"></div>`}
- else img=`<div class="exsc"><div class="exim" style="width:${exZoom}%"><img ${err} src="${src}" alt="صفحة ${s.p}"><div class="exhl" style="left:${pc(g.x0/750*100)};width:${pc((g.x1-g.x0)/750*100)};top:${pc(g.y0/g.H*100)};height:${pc((g.y1-g.y0)/g.H*100)}"></div></div></div>`;
+ let box;
+ if(exCrop){const cw=g.x1-g.x0+40,ch=g.y1-g.y0+20;box=`<div class="exim crop" data-r="${cw/ch}" style="aspect-ratio:${cw}/${ch}"><img ${err} src="${src}" alt="صفحة ${s.p}" style="width:${pc(750/cw*100)};left:${pc(-(g.x0-20)/cw*100)};top:${pc(-(g.y0-10)/ch*100)}"></div>`}
+ else box=`<div class="exim" data-r="${750/g.H}" style="${pin?'':'width:'+exZoom+'%;'}aspect-ratio:750/${g.H}"><img ${err} src="${src}" alt="صفحة ${s.p}"><div class="exhl" style="left:${pc(g.x0/750*100)};width:${pc((g.x1-g.x0)/750*100)};top:${pc(g.y0/g.H*100)};height:${pc((g.y1-g.y0)/g.H*100)}"></div></div>`;
  const nav=`<div class="exsn2"><button class="g" onclick="exSg(-1)" ${k<1?'disabled':''} aria-label="الصفحة السابقة">›</button><div style="flex:1;text-align:center"><b>صفحة ${s.p}</b><div class="m">${s.l1===s.l2?'السطر '+s.l1:'الأسطر '+s.l1+'–'+s.l2}${many?' · صفحة '+(k+1)+' من '+p.segs.length+' لهذا الموضع':''}</div></div><button class="g" onclick="exSg(1)" ${k>=p.segs.length-1?'disabled':''} aria-label="الصفحة التالية">‹</button></div>`;
- $('#exVw').innerHTML=ctl+img+nav+`<div class="exbadm m">تعذّر تحميل صورة الصفحة — تأكد من الاتصال بالإنترنت.<br><button class="g" style="margin-top:8px" onclick="exViewer()">إعادة المحاولة</button></div>`}
-function exZm(d){exZoom=d?Math.max(100,Math.min(300,exZoom+d)):100;exViewer()}
-function exCropT(){exCrop=exCrop?0:1;exViewer()}
-function exSg(d){const p=exP();exSeg=Math.max(0,Math.min(p.segs.length-1,exSeg+d));exViewer()}
-function exGoTo(i){const e=exE();if(i<0||i>=e.pos.length)return;exStop();e.cur=i;exSeg=0;exZoom=100;exLeft=exDur;save();exStripR();exBodyR(1);exFootR();$('#exBody').scrollTo({top:0,behavior:'smooth'})}
+ $('#exVw').classList.remove('bad');
+ $('#exVw').innerHTML=ctl+`<div class="exfit">${box}</div>`+nav+`<div class="exbadm m">تعذّر تحميل صورة الصفحة — تأكد من الاتصال بالإنترنت.<br><button class="g" style="margin-top:8px" onclick="exViewer()">إعادة المحاولة</button></div>`;
+ if(pin)exFit()}
+/* في وضع الهاتف والعرض الأفقي: تُقاس الصورة لتناسب المساحة المتاحة فتظهر الصفحة كاملة مع الأزرار */
+function exFit(){const f=document.querySelector('#exVw .exfit'),m=f&&f.querySelector('.exim');if(!m)return;const bw=f.clientWidth,bh=f.clientHeight,r=+m.dataset.r;if(!bw||!bh)return;let w=Math.min(bw,bh*r);if(!exCrop)w*=exZoom/100;m.style.width=Math.floor(w)+'px'}
+/* يحفظ مكان التمرير (الصفحة والحاوية) ويعيده بعد أي تحديث، فلا ينزل الموقع ولا يقفز */
+function exKeep(fn){const a=exScr(),b=$('#exBody'),y=window.scrollY,sa=a?a.scrollTop:0,sb=b?b.scrollTop:0;
+ const back=()=>{const a2=exScr(),b2=$('#exBody');if(a2)a2.scrollTop=sa;if(b2)b2.scrollTop=sb;if(Math.abs(window.scrollY-y)>1){try{window.scrollTo({top:y,behavior:'instant'})}catch(er){window.scrollTo(0,y)}}};
+ fn();back();requestAnimationFrame(back);setTimeout(back,80)}
+function exZm(d){exKeep(()=>{exZoom=d?Math.max(100,Math.min(300,exZoom+d)):100;exViewer()})}
+function exCropT(){exKeep(()=>{exCrop=exCrop?0:1;exViewer()})}
+function exSg(d){const p=exP();exKeep(()=>{exSeg=Math.max(0,Math.min(p.segs.length-1,exSeg+d));exViewer()})}
+/* التنقل بين المواضع: لا يتحرك التمرير ولا يقفز المحتوى */
+function exGoTo(i){const e=exE();if(i<0||i>=e.pos.length)return;exStop();exKeep(()=>{e.cur=i;exSeg=0;exZoom=100;exLeft=exDur;save();exStripR();exBodyR(1);exFootR()});const sc=null,st=0,s2=null;if(s2)s2.scrollTop=st}
 /* تسجيل الأخطاء: تحديث الأرقام في مكانها فقط، بلا إعادة رسم ولا قفز */
-function exBump(k,d){const e=exE(),p=exP(),n=p.m[k]+d;if(n<0)return;p.m[k]=n;if(d>0)exHist.push([e.cur||0,k]);save();exUpd(k)}
+function exBump(k,d){if(exRO)return;const e=exE(),p=exP(),n=p.m[k]+d;if(n<0)return;p.m[k]=n;if(d>0)exHist.push([e.cur||0,k]);save();exUpd(k)}
 function exUpd(k){const e=exE(),p=exP(),w=EXT.find(x=>x[0]==k);
  if(k){const n=$('#exn'+k);n.textContent=p.m[k];n.classList.remove('bmp');void n.offsetWidth;n.classList.add('bmp');$('#exd'+k).textContent=exRound(p.m[k]*w[2])}
- $('#exPD').textContent='خصم الموضع: '+exDed(p.m);$('#exMk').textContent=exMark(e);$('#exTd').textContent=exTot(e);$('#exUn').disabled=!exHist.length;
+ $('#exPD').textContent='خصم الموضع: '+exDed(p.m);$('#exMk').textContent=exMark(e);$('#exTd').textContent=exTot(e);const u=$('#exUn');if(u)u.disabled=!exHist.length;
  const c=$('#exStrip').children[e.cur||0];if(c)c.classList.toggle('er',exDed(p.m)>0)}
-function exUndo(){if(!exHist.length)return;const[pi,k]=exHist.pop(),e=exE();if(pi!==(e.cur||0)){exGoTo(pi)}const p=exP();if(p.m[k]>0){p.m[k]--;save();exUpd(k)}$('#exUn').disabled=!exHist.length}
-async function exChange(){const e=exE(),p=exP();if(!await exDlg({t:'تغيير الموضع',m:'سيُسحب موضع جديد من الجزء نفسه، وتُخصم 10 علامات.',ok:'تغيير الموضع'}))return;
+function exUndo(){if(exRO||!exHist.length)return;const[pi,k]=exHist.pop(),e=exE();if(pi!==(e.cur||0)){exGoTo(pi)}const p=exP();if(p.m[k]>0){p.m[k]--;save();exUpd(k)}const u=$('#exUn');if(u)u.disabled=!exHist.length}
+async function exChange(){if(exRO)return;const e=exE(),p=exP();if(!await exDlg({t:'تغيير الموضع',m:'سيُسحب موضع جديد من الجزء نفسه، وتُخصم 10 علامات.',ok:'تغيير الموضع'}))return;
  try{const u=new Set();e.pos.forEach(x=>{if(x.j==p.j)exN(x).segs.forEach(s=>u.add(s.p))});const n=await exMake(p.j,u,12);if(!n){toast('تعذّر اختيار موضع جديد');return}n.m={...p.m,c:p.m.c+1};n.n=p.n;e.pos[e.cur||0]=n;exHist.push([e.cur||0,'c']);save();exSeg=0;exStripR();exBodyR(1);exFootR();exTopR()}
  catch(er){toast('تعذّر تحميل بيانات المصحف — تأكد من الإنترنت')}}
-function exNote(v){exP().n=v;save()}
-function exFinPos(){const p=exP();p.d=p.d?0:1;save();$('#exFp').textContent=p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع';const c=$('#exStrip').children[exE().cur||0];if(c)c.classList.toggle('dn',!!p.d)}
+function exNote(v){if(exRO)return;exP().n=v;save()}
+function exFinPos(){if(exRO)return;const p=exP();p.d=p.d?0:1;save();$('#exFp').textContent=p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع';const c=$('#exStrip').children[exE().cur||0];if(c)c.classList.toggle('dn',!!p.d)}
+try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(er){}
+addEventListener('orientationchange',()=>{setTimeout(()=>{try{window.dispatchEvent(new Event('resize'))}catch(er){}},250)});
+addEventListener('resize',()=>{if(!$('#exOv'))return;clearTimeout(exRz);exRz=setTimeout(()=>{exCls();const e=exCur&&exGet(exCur);if(e&&e.pos){if(exLand()&&!$('#exOv').dataset.ls){$('#exOv').dataset.ls=1;exCrop=1}exKeep(()=>exViewer())}},120)});
 /* المؤقت */
 function exStop(){clearInterval(exTm);exTm=null;exRun=false}
 function exTmUI(){const t=$('#exT');if(t){t.textContent=exLeft;t.classList.toggle('over',exLeft<0)}const b=$('#exTb');if(b)b.innerHTML=exRun?svg('pause')+' إيقاف':svg('play')+' تشغيل'}
@@ -1235,10 +1339,11 @@ function exReset(){exStop();exLeft=exDur;exTmUI()}
 function exSound(){exSnd=exSnd?0:1;const b=$('#exBl');if(b)b.innerHTML=svg(exSnd?'bell':'volume')}
 async function exDurSet(){const v=parseInt(await exDlg({t:'مدة المؤقت',m:'اكتب المدة بالثواني',inp:1,v:exDur,ok:'حفظ'}));if(v>0){exDur=v;exStop();exLeft=v;exTmUI()}}
 function exBeep(){if(!exSnd)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.25;o.start();setTimeout(()=>{o.stop();a.close()},500)}catch(er){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(er){}}
-/* مراجعة واعتماد */
+/* مراجعة واعتماد: تبقى التفاصيل محفوظة ويمكن مراجعتها لاحقاً */
 async function exReview(){const e=exE(),rows=e.pos.map((p,i)=>`<div class="row sp exrv"><span>الموضع ${i+1} · ${esc(exRng(p))}</span><b>${exDed(p.m)}</b></div>`).join('');
- const ok=await exDlg({t:'مراجعة واعتماد العلامة',m:`<div class="exrvl">${rows}</div><div class="row sp" style="margin-top:10px"><span>إجمالي الخصم</span><b>${exTot(e)}</b></div><div class="row sp"><span>العلامة النهائية</span><b style="font-size:24px;color:var(--pri)">${exMark(e)}</b></div><div class="m" style="margin-top:8px">بعد الاعتماد تُحذف تفاصيل السحب والتقييم ويبقى الاسم والمستوى والعلامة فقط.</div>`,ok:'اعتماد العلامة',no:'رجوع'});
- if(!ok)return;e.score=exMark(e);e.done=Date.now();delete e.pos;delete e.cur;delete e.draw;save();exStop();exCur=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw();toast('تم اعتماد العلامة')}
+ const ok=await exDlg({t:'مراجعة واعتماد العلامة',m:`<div class="exrvl">${rows}</div><div class="row sp" style="margin-top:10px"><span>إجمالي الخصم</span><b>${exTot(e)}</b></div><div class="row sp"><span>العلامة النهائية</span><b style="font-size:24px;color:var(--pri)">${exMark(e)}</b></div>`,ok:'اعتماد العلامة',no:'رجوع'});
+ if(!ok)return;e.score=exMark(e);e.done=Date.now();save();exStop();exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw();toast('تم اعتماد العلامة')}
+async function exEdit(){const e=exE();if(!await exDlg({t:'تعديل التقييم',m:'سيُعاد فتح الاختبار لتعديل الأخطاء، ثم تعتمد العلامة من جديد.',ok:'تعديل'}))return;delete e.done;delete e.score;save();exOpen(e.id,e.cur||0)}
 /* ---------- الإعدادات ---------- */
 const CC="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(' ');
 const ARAB='DZ BH KM DJ EG IQ JO KW LB LY MR MA OM PS QA SA SO SD SY TN AE YE'.split(' '),ISL='AF AL AZ BD BF BN BA TD GM GN ID IR KZ XK KG MY MV ML NE NG PK SN SL TJ TR TM UZ'.split(' '),GN=['الدول العربية','الدول الإسلامية','دول أخرى'];
