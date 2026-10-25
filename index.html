@@ -193,6 +193,18 @@ body.exlock{overflow:hidden}
 #exOv.ph .exrl,#exOv.ls .exrl{text-align:center}#exOv.ph .exrl b,#exOv.ls .exrl b{font-size:11px;line-height:1.25;display:block}#exOv.ph .exrl .m,#exOv.ls .exrl .m{display:none}
 #exOv.ph .exq.pl,#exOv.ls .exq.pl{order:1}#exOv.ph .exn,#exOv.ls .exn{order:2;font-size:24px;min-width:0}#exOv.ph .exq.mn,#exOv.ls .exq.mn{order:3}
 #exOv.ph .exq,#exOv.ls .exq{min-width:0;width:100%;height:40px;font-size:20px}
+/* ===== تعديلات: شريط علوي مصغّر، أزرار جنب الصفحة ===== */
+#exOv .exh,#exOv.ph .exh,#exOv.ls .exh{padding:calc(env(safe-area-inset-top,0px) + 4px) 10px 6px;gap:8px;border-radius:0 0 14px 14px;box-shadow:0 3px 10px #1a237e44}
+#exOv .exh .exx{width:32px;height:32px;font-size:15px;border-radius:10px}
+#exOv .exw b{font-size:15px;line-height:1.35}#exOv .exw small{font-size:11px;line-height:1.3}
+#exOv .exphb,#exOv.ls .exphb{margin-top:2px;padding:2px 10px;font-size:11px}
+#exOv .exmk,#exOv.ph .exmk,#exOv.ls .exmk{padding-inline-start:10px}#exOv .exmk b,#exOv.ph .exmk b,#exOv.ls .exmk b{font-size:22px}#exOv .exmk small{font-size:10px}
+.exvr{display:flex;gap:6px;flex:1;min-height:0}.exvr .exfit{flex:1;min-width:0}
+.exside{display:flex;flex-direction:column;gap:6px;justify-content:center;align-items:stretch;flex:none;width:42px}
+.exside button{padding:0;height:38px;min-height:0;font-size:17px;border-radius:10px}.exside b{text-align:center;font-size:11px}
+#exOv.ph .exfit,#exOv.ls .exfit{justify-content:safe center}
+#exOv.ph .exvc{margin:4px 6px;padding:6px 8px}#exOv.ph .exrest{max-height:38%}
+#exOv.ph .exc{width:32px;height:32px;font-size:13px}#exOv.ph #exStrip{padding:4px 10px}
 @media print{@page{size:A4;margin:12mm}#pv,#pv *{-webkit-print-color-adjust:exact;print-color-adjust:exact}body>*:not(#pv){display:none!important}#pv{display:block!important}body{background:#fff!important;padding:0!important}:root{padding:0!important}}
 
 /* ===== قوالب الدفتر الجديدة: حواف ناعمة بلا سلك ===== */
@@ -1223,8 +1235,9 @@ function exList(){const D=exD();
 function exCard(e){const st=e.done?`<span class="exb ok">العلامة ${exRound(e.score)}</span>`:e.pos?`<span class="exb">قيد الاختبار · ${e.pos.length} مواضع</span>`:`<span class="exb mu">لم يُسحب بعد</span>`;
  return `<div class="c exlc"><div class="row sp"><b style="font-size:17px">${esc(e.name)}</b>${st}</div><div class="m">رقم الجلوس ${esc(e.seat)}${e.level?' · المستوى: '+esc(e.level):''}</div>
  <div class="row" style="margin-top:10px;gap:6px">${e.done?`${e.pos?`<button onclick="exOpen(${e.id},0,1)">مراجعة الأخطاء</button><button class="g" onclick="exPaper(${e.id})">ورقة المواضع</button>`:''}<button class="g" onclick="exRedo(${e.id})">↺ إعادة اختبار</button>`:e.pos?`<button onclick="exOpen(${e.id})">متابعة الاختبار</button><button class="g" onclick="exPaper(${e.id})">ورقة المواضع</button><button class="g" onclick="exDrawOpen(${e.id})">سحب جديد</button>`:`<button onclick="exDrawOpen(${e.id})">${svg('target')} سحب الأجزاء والمواضع</button>`}<button class="g" style="color:var(--bad);border-color:var(--bad)" onclick="exDel(${e.id})">حذف</button></div></div>`}
-function exAddOpen(){const D=exD();$('#sh').innerHTML=shW(`<b>إضافة متسابق</b><div class="m" style="margin-top:8px">اسم المتسابق</div><input id="exN" autocomplete="off"><div class="m">رقم الجلوس</div><input id="exSt" value="${String(D.seat).padStart(3,'0')}" autocomplete="off"><div class="m">المستوى</div><input id="exLv" placeholder="مثال: 10 أجزاء" autocomplete="off"><div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exAdd()">حفظ المتسابق</button></div>`);setTimeout(()=>{const i=$('#exN');i&&i.focus()},60)}
-function exAdd(){const n=$('#exN').value.trim();if(!n){toast('اكتب اسم المتسابق');return}const D=exD();D.list.unshift({id:S.id++,name:n,seat:$('#exSt').value.trim()||String(D.seat).padStart(3,'0'),level:$('#exLv').value.trim()});D.seat++;save();$('#sh').innerHTML='';draw()}
+const exNextSeat=()=>{const D=exD();let m=0;D.list.forEach(x=>{const n=parseInt(String(x.seat).replace(/\D/g,''),10);if(n>m)m=n});return String(m+1).padStart(3,'0')};
+function exAddOpen(){const D=exD();$('#sh').innerHTML=shW(`<b>إضافة متسابق</b><div class="m" style="margin-top:8px">اسم المتسابق</div><input id="exN" autocomplete="off"><div class="m">رقم الجلوس</div><input id="exSt" value="${exNextSeat()}" autocomplete="off"><div class="m">المستوى</div><input id="exLv" placeholder="مثال: 10 أجزاء" autocomplete="off"><div class="row" style="margin-top:10px;gap:6px"><button class="g" style="flex:1" onclick="$('#sh').innerHTML=''">إلغاء</button><button style="flex:1" onclick="exAdd()">حفظ المتسابق</button></div>`);setTimeout(()=>{const i=$('#exN');i&&i.focus()},60)}
+function exAdd(){const n=$('#exN').value.trim();if(!n){toast('اكتب اسم المتسابق');return}const D=exD();D.list.unshift({id:S.id++,name:n,seat:$('#exSt').value.trim()||exNextSeat(),level:$('#exLv').value.trim()});D.seat++;save();$('#sh').innerHTML='';draw()}
 async function exDel(id){if(!await exDlg({t:'حذف المتسابق',m:'سيُحذف هذا المتسابق وكل ما يخصه. هل تريد المتابعة؟',ok:'حذف',bad:1}))return;const D=exD();D.list=D.list.filter(x=>x.id!=id);save();draw()}
 async function exRedo(id){if(!await exDlg({t:'إعادة الاختبار',m:'ستُمسح العلامة وأخطاء المتسابق ويبدأ الاختبار من جديد.',ok:'إعادة',bad:1}))return;const e=exGet(id);delete e.done;delete e.score;delete e.pos;delete e.cur;delete e.draw;save();draw()}
 
@@ -1277,10 +1290,17 @@ function exOpen(id,pi,ro){const e=exGet(id);if(!e||!e.pos)return;exCur=id;exRO=r
  ov.innerHTML='<div id="exTop"></div><div id="exStrip"></div><div id="exBody"></div><div id="exFoot"></div>';document.body.classList.add('exlock');
  if(exLand()||exPh)exCrop=1;
  exCls();exTopR();exStripR();exBodyR();exFootR()}
-function exClose(){exStop();exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw()}
+function exClose(){exStop();exLockOri(0);exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw()}
 const exE=()=>exGet(exCur),exP=()=>{const e=exE();return e.pos[e.cur||0]};
-function exPhone(){exPh=exPh?0:1;try{localStorage.setItem('qmrm_exph',exPh)}catch(er){}if(exPh)exCrop=1;exCls();exTopR();exViewer()}
-function exTopR(){const e=exE();$('#exTop').innerHTML=`<div class="exh"><button class="exx" onclick="exClose()" aria-label="إغلاق">✕</button><div class="exw"><b>${esc(e.name)}</b><small>${exRO?'مراجعة الأخطاء · ':''}رقم الجلوس ${esc(e.seat)} · ${e.pos.length} مواضع</small><button class="exphb${exPh?' on':''}" onclick="exPhone()">📱 وضع الهاتف</button></div><div class="exmk"><small>العلامة</small><b id="exMk">${exMark(e)}</b></div></div>`}
+let exLk=0;
+function exLockOri(on){try{
+ if(!on){if(exLk){exLk=0;try{screen.orientation.unlock()}catch(er){}try{if(document.fullscreenElement)document.exitFullscreen()}catch(er){}}return}
+ const t=(screen.orientation&&screen.orientation.type)||(innerWidth>innerHeight?'landscape-primary':'portrait-primary'),fail=()=>{exLk=0;toast('لم يسمح الجهاز بتثبيت الاتجاه من المتصفح، استعمل قفل التدوير في الهاتف')};
+ exLk=1;const r=screen.orientation.lock(t);
+ if(r&&r.catch)r.catch(()=>{const el=document.documentElement;(el.requestFullscreen?el.requestFullscreen():Promise.reject()).then(()=>screen.orientation.lock(t)).catch(fail)})
+}catch(er){exLk=0;try{toast('لم يسمح الجهاز بتثبيت الاتجاه من المتصفح، استعمل قفل التدوير في الهاتف')}catch(x){}}}
+function exPhone(){exPh=exPh?0:1;try{localStorage.setItem('qmrm_exph',exPh)}catch(er){}if(exPh)exCrop=1;exLockOri(exPh);exCls();exTopR();exViewer()}
+function exTopR(){const e=exE();$('#exTop').innerHTML=`<div class="exh"><button class="exx" onclick="exClose()" aria-label="إغلاق">✕</button><div class="exw"><b>${esc(e.name)}</b><small>${exRO?'مراجعة الأخطاء · ':''}رقم الجلوس ${esc(e.seat)} · ${e.pos.length} مواضع</small><button class="exphb${exPh?' on':''}" onclick="exPhone()">${exPh?'🔒':'📱'} وضع الهاتف${exPh?' · مثبّت':''}</button></div><div class="exmk"><small>العلامة</small><b id="exMk">${exMark(e)}</b></div></div>`}
 function exStripR(){const e=exE(),s=$('#exStrip');s.innerHTML=e.pos.map((p,i)=>`<button class="exc${i==(e.cur||0)?' on':''}${p.d?' dn':''}${exDed(p.m)>0?' er':''}" onclick="exGoTo(${i})">${i+1}</button>`).join('');
  const on=s.querySelector('.on');if(on){const x=on.offsetLeft-(s.clientWidth-on.clientWidth)/2;try{s.scrollTo({left:x,behavior:'smooth'})}catch(er){s.scrollLeft=x}}}
 function exFootR(){const e=exE(),i=e.cur||0,nav=`<button class="g" onclick="exGoTo(${i-1})" ${i<1?'disabled':''}>→ السابق</button><button class="g" onclick="exGoTo(${i+1})" ${i>=e.pos.length-1?'disabled':''}>التالي ←</button>`;
@@ -1291,7 +1311,7 @@ function exBodyR(fade){const e=exE(),i=e.cur||0,p=e.pos[i],f=fade?' exfade':'',r
  $('#exBody').innerHTML=`<div class="c exc1 exvc${f}"><div class="row sp exhd"><b>الموضع ${i+1} من ${e.pos.length}</b><span class="m" id="exPD">خصم الموضع: ${exDed(p.m)}</span></div>
  <div class="exttl">${esc(exRng(p))}</div><div class="m exsub" style="text-align:center">الجزء ${p.j} · الصفحة ${exPgs(p)}${p.lines?' · '+p.lines+' أسطر':''}</div><div id="exVw"></div></div>
  <div class="exrest${f}"><div class="exgr">${EXT.map(([k,n,w,c])=>`<div class="exr" style="--ec:${c}"><div class="exrr"><div class="exrl"><b>${n}</b><div class="m">الواحدة: ${w} · الخصم: <span id="exd${k}">${exRound(p.m[k]*w)}</span></div></div><b class="exn" id="exn${k}">${p.m[k]}</b>${k=='c'?`<button class="exq pl" onclick="exChange()" aria-label="تغيير الموضع"${ro}>${svg('refresh')}</button>`:`<button class="exq pl" onclick="exBump('${k}',1)"${ro}>+</button>`}<button class="g exq mn" onclick="exBump('${k}',-1)"${ro}>−</button></div></div>`).join('')}</div>
- ${exRO?'':`<div class="c"><div class="row sp" style="flex-wrap:nowrap"><div class="extm"><b id="exT">${exLeft}</b><span class="m">ثانية</span></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button id="exTb" onclick="exTimer()">${svg('play')} تشغيل</button><button class="g" onclick="exReset()" aria-label="تصفير">${svg('reset')}</button><button class="g" id="exBl" onclick="exSound()" aria-label="الصوت">${svg(exSnd?'bell':'volume')}</button><button class="g" onclick="exDurSet()" aria-label="المدة">${svg('timer')}</button></div></div></div>`}
+ ${exRO?'':`<div class="c"><div class="row sp" style="flex-wrap:nowrap"><div class="extm"><b id="exT">${exLeft}</b><span class="m">ثانية</span></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button id="exTb" onclick="exTimer()">${svg('play')} تشغيل</button><button class="g" onclick="exReset()" aria-label="تصفير">${svg('reset')}</button><button class="g" id="exBl" onclick="exSound()" aria-label="تجربة الصوت">${svg('bell')}</button><button class="g" onclick="exDurSet()" aria-label="المدة">${svg('timer')}</button></div></div></div>`}
  ${(!exRO||p.n)?`<div class="c"><b>ملاحظات الموضع</b><textarea rows="3" placeholder="ملاحظة اختيارية عن أداء المتسابق" oninput="exNote(this.value)" style="margin-top:6px"${exRO?' readonly':''}>${esc(p.n||'')}</textarea>${exRO?'':`<button class="g" id="exFp" style="width:100%;margin-top:8px" onclick="exFinPos()">${p.d?'✅ تم إنهاء الموضع':'○ إنهاء هذا الموضع'}</button>`}</div>`:''}</div>`;
  exViewer();exPre()}
 function exPre(){try{const e=exE(),i=e.cur||0,p=e.pos[i],list=[];p.segs.forEach(s=>list.push(s.p));[e.pos[i+1],e.pos[i-1]].forEach(q=>{if(q)list.push(exN(q).segs[0].p)});list.forEach(n=>{const im=new Image();im.src=exSrc(n)})}catch(er){}}
@@ -1299,14 +1319,15 @@ function exViewer(){const p=exP(),k=Math.min(exSeg,p.segs.length-1),s=p.segs[k],
  const ctl=`<div class="exct"><button class="g" onclick="exZm(-25)" aria-label="تصغير">−</button><b>${exZoom}%</b><button class="g" onclick="exZm(25)" aria-label="تكبير">+</button><button class="g" onclick="exZm(0)">إعادة</button><button class="${exCrop?'':'g'}" onclick="exCropT()">قص الأسطر فقط</button></div>`;
  const err=`onerror="this.closest('#exVw').classList.add('bad')" onload="this.classList.add('ok')"`;
  let box;
- if(exCrop){const cw=g.x1-g.x0+40,ch=g.y1-g.y0+20;box=`<div class="exim crop" data-r="${cw/ch}" style="aspect-ratio:${cw}/${ch}"><img ${err} src="${src}" alt="صفحة ${s.p}" style="width:${pc(750/cw*100)};left:${pc(-(g.x0-20)/cw*100)};top:${pc(-(g.y0-10)/ch*100)}"></div>`}
+ if(exCrop){const cw=g.x1-g.x0+40,ch=g.y1-g.y0+20;box=`<div class="exim crop" data-r="${cw/ch}" style="aspect-ratio:${cw}/${ch};${pin?'':'width:'+exZoom+'%'}"><img ${err} src="${src}" alt="صفحة ${s.p}" style="width:${pc(750/cw*100)};left:${pc(-(g.x0-20)/cw*100)};top:${pc(-(g.y0-10)/ch*100)}"></div>`}
  else box=`<div class="exim" data-r="${750/g.H}" style="${pin?'':'width:'+exZoom+'%;'}aspect-ratio:750/${g.H}"><img ${err} src="${src}" alt="صفحة ${s.p}"><div class="exhl" style="left:${pc(g.x0/750*100)};width:${pc((g.x1-g.x0)/750*100)};top:${pc(g.y0/g.H*100)};height:${pc((g.y1-g.y0)/g.H*100)}"></div></div>`;
  const nav=`<div class="exsn2"><button class="g" onclick="exSg(-1)" ${k<1?'disabled':''} aria-label="الصفحة السابقة">›</button><div style="flex:1;text-align:center"><b>صفحة ${s.p}</b><div class="m">${s.l1===s.l2?'السطر '+s.l1:'الأسطر '+s.l1+'–'+s.l2}${many?' · صفحة '+(k+1)+' من '+p.segs.length+' لهذا الموضع':''}</div></div><button class="g" onclick="exSg(1)" ${k>=p.segs.length-1?'disabled':''} aria-label="الصفحة التالية">‹</button></div>`;
  $('#exVw').classList.remove('bad');
- $('#exVw').innerHTML=ctl+`<div class="exfit">${box}</div>`+nav+`<div class="exbadm m">تعذّر تحميل صورة الصفحة — تأكد من الاتصال بالإنترنت.<br><button class="g" style="margin-top:8px" onclick="exViewer()">إعادة المحاولة</button></div>`;
+ const side=`<div class="exside"><button class="g" onclick="exZm(25)" aria-label="تكبير">+</button><b>${exZoom}%</b><button class="g" onclick="exZm(-25)" aria-label="تصغير">−</button><button class="g" onclick="exZm(0)" aria-label="إعادة الحجم">↺</button><button class="${exCrop?'':'g'}" onclick="exCropT()" aria-label="قص الأسطر فقط">✂</button></div>`;
+ $('#exVw').innerHTML=(pin?`<div class="exvr"><div class="exfit">${box}</div>${side}</div>`:ctl+`<div class="exfit">${box}</div>`)+nav+`<div class="exbadm m">تعذّر تحميل صورة الصفحة — تأكد من الاتصال بالإنترنت.<br><button class="g" style="margin-top:8px" onclick="exViewer()">إعادة المحاولة</button></div>`;
  if(pin)exFit()}
 /* في وضع الهاتف والعرض الأفقي: تُقاس الصورة لتناسب المساحة المتاحة فتظهر الصفحة كاملة مع الأزرار */
-function exFit(){const f=document.querySelector('#exVw .exfit'),m=f&&f.querySelector('.exim');if(!m)return;const bw=f.clientWidth,bh=f.clientHeight,r=+m.dataset.r;if(!bw||!bh)return;let w=Math.min(bw,bh*r);if(!exCrop)w*=exZoom/100;m.style.width=Math.floor(w)+'px'}
+function exFit(){const f=document.querySelector('#exVw .exfit'),m=f&&f.querySelector('.exim');if(!m)return;const bw=f.clientWidth,bh=f.clientHeight,r=+m.dataset.r;if(!bw||!bh)return;let w=Math.min(bw,bh*r);w*=exZoom/100;m.style.width=Math.floor(w)+'px'}
 /* يحفظ مكان التمرير (الصفحة والحاوية) ويعيده بعد أي تحديث، فلا ينزل الموقع ولا يقفز */
 function exKeep(fn){const a=exScr(),b=$('#exBody'),y=window.scrollY,sa=a?a.scrollTop:0,sb=b?b.scrollTop:0;
  const back=()=>{const a2=exScr(),b2=$('#exBody');if(a2)a2.scrollTop=sa;if(b2)b2.scrollTop=sb;if(Math.abs(window.scrollY-y)>1){try{window.scrollTo({top:y,behavior:'instant'})}catch(er){window.scrollTo(0,y)}}};
@@ -1315,7 +1336,7 @@ function exZm(d){exKeep(()=>{exZoom=d?Math.max(100,Math.min(300,exZoom+d)):100;e
 function exCropT(){exKeep(()=>{exCrop=exCrop?0:1;exViewer()})}
 function exSg(d){const p=exP();exKeep(()=>{exSeg=Math.max(0,Math.min(p.segs.length-1,exSeg+d));exViewer()})}
 /* التنقل بين المواضع: لا يتحرك التمرير ولا يقفز المحتوى */
-function exGoTo(i){const e=exE();if(i<0||i>=e.pos.length)return;exStop();exKeep(()=>{e.cur=i;exSeg=0;exZoom=100;exLeft=exDur;save();exStripR();exBodyR(1);exFootR()});const sc=null,st=0,s2=null;if(s2)s2.scrollTop=st}
+function exGoTo(i){const e=exE();if(i<0||i>=e.pos.length)return;exStop();exKeep(()=>{e.cur=i;exSeg=0;exLeft=exDur;save();exStripR();exBodyR(1);exFootR()});const sc=null,st=0,s2=null;if(s2)s2.scrollTop=st}
 /* تسجيل الأخطاء: تحديث الأرقام في مكانها فقط، بلا إعادة رسم ولا قفز */
 function exBump(k,d){if(exRO)return;const e=exE(),p=exP(),n=p.m[k]+d;if(n<0)return;p.m[k]=n;if(d>0)exHist.push([e.cur||0,k]);save();exUpd(k)}
 function exUpd(k){const e=exE(),p=exP(),w=EXT.find(x=>x[0]==k);
@@ -1336,13 +1357,13 @@ function exStop(){clearInterval(exTm);exTm=null;exRun=false}
 function exTmUI(){const t=$('#exT');if(t){t.textContent=exLeft;t.classList.toggle('over',exLeft<0)}const b=$('#exTb');if(b)b.innerHTML=exRun?svg('pause')+' إيقاف':svg('play')+' تشغيل'}
 function exTimer(){if(exRun){exStop();exTmUI();return}exRun=true;exTm=setInterval(()=>{exLeft--;exTmUI();if(exLeft===0)exBeep()},1000);exTmUI()}
 function exReset(){exStop();exLeft=exDur;exTmUI()}
-function exSound(){exSnd=exSnd?0:1;const b=$('#exBl');if(b)b.innerHTML=svg(exSnd?'bell':'volume')}
+function exSound(){exSnd=1;exBeep()}
 async function exDurSet(){const v=parseInt(await exDlg({t:'مدة المؤقت',m:'اكتب المدة بالثواني',inp:1,v:exDur,ok:'حفظ'}));if(v>0){exDur=v;exStop();exLeft=v;exTmUI()}}
 function exBeep(){if(!exSnd)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.25;o.start();setTimeout(()=>{o.stop();a.close()},500)}catch(er){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(er){}}
 /* مراجعة واعتماد: تبقى التفاصيل محفوظة ويمكن مراجعتها لاحقاً */
 async function exReview(){const e=exE(),rows=e.pos.map((p,i)=>`<div class="row sp exrv"><span>الموضع ${i+1} · ${esc(exRng(p))}</span><b>${exDed(p.m)}</b></div>`).join('');
  const ok=await exDlg({t:'مراجعة واعتماد العلامة',m:`<div class="exrvl">${rows}</div><div class="row sp" style="margin-top:10px"><span>إجمالي الخصم</span><b>${exTot(e)}</b></div><div class="row sp"><span>العلامة النهائية</span><b style="font-size:24px;color:var(--pri)">${exMark(e)}</b></div>`,ok:'اعتماد العلامة',no:'رجوع'});
- if(!ok)return;e.score=exMark(e);e.done=Date.now();save();exStop();exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw();toast('تم اعتماد العلامة')}
+ if(!ok)return;e.score=exMark(e);e.done=Date.now();save();exStop();exLockOri(0);exCur=0;exRO=0;const ov=$('#exOv');if(ov)ov.remove();document.body.classList.remove('exlock');draw();toast('تم اعتماد العلامة')}
 async function exEdit(){const e=exE();if(!await exDlg({t:'تعديل التقييم',m:'سيُعاد فتح الاختبار لتعديل الأخطاء، ثم تعتمد العلامة من جديد.',ok:'تعديل'}))return;delete e.done;delete e.score;save();exOpen(e.id,e.cur||0)}
 /* ---------- الإعدادات ---------- */
 const CC="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(' ');
