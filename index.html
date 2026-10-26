@@ -292,14 +292,14 @@ let drawnTab=null;
 function draw(){
  $('#nav').innerHTML=tabs.map(([k,i,n])=>`<button class="${k==tab||(k=='td'&&tab=='gl')?'on':''}" onclick="go('${k}')">${i}<br>${n}</button>`).join('');
  const vm=$('#v'),chg=tab!==drawnTab,y0=window.scrollY;drawnTab=tab;vm.classList.toggle('na',!chg);
- vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage}[tab]();
+ vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,wk:wkPage,hp:hpPage,kh:khPage}[tab]();
  if(!chg&&Math.abs(window.scrollY-y0)>1){try{window.scrollTo({top:y0,behavior:'instant'})}catch(e){window.scrollTo(0,y0)}}
 }
 /* ---------- المهام ---------- */
 function due(){const e=new Date();e.setHours(23,59,59);return S.tasks.filter(t=>!t.arch&&new Date(t.next)<=e)}
 function home(){
  const d=due();
- return `${glRemHtml()}${prRemHtml()}<div class="c" id="tbox">${tbox()}</div>
+ return `${glRemHtml()}${prRemHtml()}${wrdCard()}${khCard()}${hpCard()}${wkCard()}${rvCard()}<div class="c" id="tbox">${tbox()}</div>
  <div class="c"><b>المراجعة والحفظ</b>
  <div class="row" style="flex-wrap:nowrap;gap:6px"><input id="ts" value="${esc(pkTgt?'':pkSum())}" placeholder="اكتب المهمة أو اختر: سور / أجزاء / صفحات" autocomplete="off" oninput="selClear()" style="flex:1;margin:0;min-width:0"><button type="button" onclick="pkOpen()" style="padding:10px 14px">${svg('plus')} اختيار</button></div><input id="tn" placeholder="اسم المهمة (اختياري)" autocomplete="off">
  <div class="row"><input id="ta" type="number" placeholder="من آية" style="flex:1"><input id="tb" type="number" placeholder="إلى آية" style="flex:1"></div>
@@ -314,6 +314,239 @@ function home(){
   <div class="row" style="margin-top:8px">${m?'':`<button class="g" onclick="tmNew(${t.id})">⏱ تايمر</button>`}<button class="g" onclick="startT(${t.id})">${t.st?'⏱ بدأت '+hm(new Date(t.st)):'▶ ابدأ'}</button>${t.st?`<button class="g" onclick="tkRs(${t.id})">↺ البداية</button>`:''}<button onclick="rate(${t.id})">✅ تم</button><button class="g" onclick="archT(${t.id},true)">📦</button><button class="g" onclick="ask('هل تريد حذف المهمة؟',()=>delT(${t.id}),'نعم، احذف')">🗑</button></div>
   <div class="m" style="margin-top:8px;cursor:pointer" onclick="tkOpen[${t.id}]=!tkOpen[${t.id}];draw()">${op?'▴':'▾'} تفاصيل المهمة</div>${op?`<div class="m" style="line-height:1.9">بدأت: ${t.st?dt(t.st):'لم تبدأ بعد'}<br>انتهت: لم تنتهِ بعد${m?`<br>الوقت الأصلي: ${hms(mOrig(m))} • المستغرق: ${hms(mUsed(m))}${mOver(m)?' • الزائد: '+hms(mOver(m)):''}`:''}</div>`:''}</div>`}).join('')||'<div class="c m">لا مهام اليوم، بارك الله فيك 🌿</div>');
 }
+
+/* ---------- جدول المراجعة: يحسب موعد المراجعة التالي لكل ما أنهيته، من تقييمك (أتقنت / خفيفة / صعوبة) ---------- */
+const rvDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
+const rvKey=(n,sb)=>(n||'')+'|'+(sb||'');
+function rvItems(){
+ const m={};
+ (S.arc||[]).filter(a=>a.r&&a.en).slice().sort((a,b)=>String(a.en).localeCompare(String(b.en))).forEach(a=>{
+  const k=rvKey(a.name,a.sub),it=m[k]||(m[k]={k,name:a.name,sub:a.sub||'',stage:0,tk:null,last:null,r:'',n:0,fin:false,ty:''});
+  const cur=it.stage;let nx;
+  if(a.r=='mastered')nx=a.ty=='حفظ'?0:Math.min(cur+1,3);else if(a.r=='light')nx=cur;else nx=0;
+  it.fin=a.r=='mastered'&&a.ty!='حفظ'&&cur==3;
+  it.stage=nx;it.last=a.en;it.r=a.r;it.n++;it.ty=a.ty;it.tk=a.tk||it.tk});
+ const act=new Set((S.tasks||[]).filter(t=>!t.arch).map(t=>rvKey(t.s,isG(t)?jl(t):'')));
+ return Object.values(m).map(it=>{
+  let nd=rvDay(new Date(it.last).getTime()+(it.r=='hard'?1:L[it.stage])*864e5);
+  if(S.skipFri&&nd.getDay()==5)nd=new Date(nd.getTime()+864e5);
+  it.next=nd;it.act=act.has(it.k);return it}).filter(it=>!it.fin).sort((a,b)=>a.next-b.next)}
+const rvDue=()=>{const t=rvDay(new Date());return rvItems().filter(it=>it.next<=t&&!it.act)};
+const rvCard=()=>{const n=rvDue().length;return n?`<div class="c" onclick="go('rv')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>🗓 جدول المراجعة</b><span class="ch">${svg('chev')}</span></div><div class="m">${n} للمراجعة اليوم، اضغط لإضافتها إلى مهامك</div></div>`:''};
+function rvAdd(k){k=decodeURIComponent(k);
+ const it=rvItems().find(x=>x.k==k);if(!it||it.act)return;
+ const t=it.tk?JSON.parse(JSON.stringify(it.tk)):{s:it.name,j:0,tm:null,a:1,b:1};
+ t.id=S.id++;t.s=t.s||it.name;t.type='مراجعة';t.stage=it.stage;t.next=new Date().toISOString();t.st=null;t.mk=0;delete t.arch;delete t.doneAt;
+ S.tasks.push(t);save();toast('أُضيفت إلى مهام اليوم');draw()}
+function rvAddAll(){
+ const L2=rvDue();if(!L2.length)return;
+ L2.forEach(it=>{const t=it.tk?JSON.parse(JSON.stringify(it.tk)):{s:it.name,j:0,tm:null,a:1,b:1};
+  t.id=S.id++;t.s=t.s||it.name;t.type='مراجعة';t.stage=it.stage;t.next=new Date().toISOString();t.st=null;t.mk=0;delete t.arch;delete t.doneAt;S.tasks.push(t)});
+ save();toast('أُضيفت '+L2.length+' مهمة إلى اليوم');draw()}
+function revPage(){
+ const all=rvItems(),today=rvDay(new Date()),dd=x=>Math.round((x-today)/864e5),
+  rI={mastered:'🟢',light:'🟡',hard:'🔴'},
+  row=it=>{const d=dd(it.next),ago=Math.max(0,Math.round((today-rvDay(new Date(it.last)))/864e5));
+   return `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:8px 0;border-top:1px solid var(--bd)"><div style="flex:1;min-width:0"><b>${esc(it.name)}</b><div class="m">${it.sub?esc(it.sub)+' • ':''}${rI[it.r]||''} آخر مراجعة ${ago?'قبل '+ago+' يوم':'اليوم'} • المرحلة ${it.stage+1}/4${d<0?' • متأخرة '+(-d)+' يوم':''}${it.r=='hard'&&d<=1?' • واجهت صعوبة':''}</div></div>${it.act?'<span class="m">في مهام اليوم</span>':d<=0?`<button style="padding:6px 12px" onclick="rvAdd('${encodeURIComponent(it.k).replace(/'/g,'%27')}')">أضف</button>`:`<span class="m">${d==1?'غداً':D[it.next.getDay()]+' '+ymd(it.next).slice(5)}</span>`}</div>`},
+  sec=(t,L2,x)=>L2.length?`<div class="c"><div class="row sp"><b>${t} (${L2.length})</b>${x||''}</div>${L2.map(row).join('')}</div>`:'',
+  A=all.filter(it=>dd(it.next)<=0),B=all.filter(it=>dd(it.next)==1),C=all.filter(it=>dd(it.next)>=2&&dd(it.next)<=7),E=all.filter(it=>dd(it.next)>7),
+  pend=A.filter(it=>!it.act).length;
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">جدول المراجعة</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c m">يُحسب موعد كل مراجعة من تقييمك عند الضغط على «تم»: أتقنت تماماً تباعد المراجعة أكثر، وخفيفة تبقى في مرحلتها، وصعوبة تعود غداً. المراحل: بعد 1 ثم 3 ثم 7 ثم 30 يوماً.</div>
+ ${all.length?'':'<div class="c m">يظهر الجدول بعد أن تُنهي مهمة بزر «✅ تم» وتقيّم أداءك.</div>'}
+ ${sec('اليوم والمتأخر',A,pend?`<button style="padding:6px 12px" onclick="rvAddAll()">أضف الكل</button>`:'')}
+ ${sec('غداً',B)}${sec('خلال هذا الأسبوع',C)}${sec('لاحقاً',E)}`}
+
+/* ---------- الورد اليومي المقترح: يحسب كمية الحفظ اليومية لتنهي هدفك في موعد تحدده ---------- */
+const WRL=15;let wrdEdit=0;
+const wrdG=()=>S.wrd&&S.wrd.due?S.wrd:null;
+const wrdUn=()=>'<option value="p">صفحة</option><option value="j">جزء</option><option value="h">حزب</option>';
+const wrdPgOf=(v,u,snap)=>{v=Math.max(0,+v||0);const p=u=='j'?(snap&&v>=30?604:v*20):u=='h'?(snap&&v>=60?604:v*10):v;return Math.min(604,p)};
+const wrdLn=v=>Math.max(0,Math.round((+v||0)*WRL));
+const wrdPg=l=>{const v=Math.round(l/WRL*10)/10;return String(v).replace(/\.0$/,'')};
+function wrdTxt(l){l=Math.max(0,Math.round(l));if(!l)return 'لا شيء';const p=Math.floor(l/WRL),r=l%WRL,
+ ps=p==0?'':p==1?'صفحة':p==2?'صفحتان':p<=10?p+' صفحات':p+' صفحة',
+ rs=r==0?'':r==1?'سطر':r==2?'سطران':r<=10?r+' أسطر':r+' سطراً';
+ return [ps,rs].filter(Boolean).join(' و')}
+function wrdQtr(l){const n=Math.round(l/WRL*4),w=Math.floor(n/4),r=n%4;if(n<=0)return 'أقل من ربع صفحة';
+ const q=['','ربع','نصف','ثلاثة أرباع'][r];if(!w)return q+' صفحة';
+ const ps=w==1?'صفحة':w==2?'صفحتان':w<=10?w+' صفحات':w+' صفحة';return r?ps+' و'+q:ps}
+const WRX=[[0,'حسب موعدي (تلقائي)'],[4,'ربع صفحة'],[8,'نصف صفحة'],[15,'صفحة'],[30,'صفحتان'],[75,'5 صفحات'],[150,'حزب (10 صفحات)'],[300,'جزء (20 صفحة)']];
+function wrdFix(v){const W=wrdG();if(!W)return;W.fix=+v||0;save();draw()}
+const wrdDate=t=>{const a=String(t).split('-');return new Date(+a[0],a[1]-1,+a[2])};
+const wrdPz=(d,W)=>{const t=ymd(d);return (W.pz||[]).some(p=>t>=p.a&&t<=p.b)};
+function wrdDays(a,b,fr,W){let n=0;const d=new Date(a),e=new Date(b);d.setHours(0,0,0,0);e.setHours(0,0,0,0);for(let i=0;d<=e&&i<6000;i++){if(!(fr&&d.getDay()==5)&&!(W&&wrdPz(d,W)))n++;d.setDate(d.getDate()+1)}return n}
+function wrdCalc(){const W=wrdG();if(!W)return null;const today=new Date();today.setHours(0,0,0,0);const td=ymd(today),
+ done=W.base+W.log.reduce((a,x)=>a+x.l,0),dToday=W.log.filter(x=>x.d==td).reduce((a,x)=>a+x.l,0),before=done-dToday,rem=Math.max(0,W.total-done),
+ days=wrdDays(today,wrdDate(W.due),W.fr,W),auto=days>0?Math.ceil(Math.max(0,W.total-before)/days):0,fix=W.fix||0,daily=fix||auto;
+ let eta=null,etaD=0;if(fix&&rem>0){const need=Math.ceil(Math.max(0,W.total-before)/fix),d=new Date(today);let n=0;for(let i=0;i<20000;i++){if(!(W.fr&&d.getDay()==5)&&!wrdPz(d,W)){n++;if(n>=need)break}d.setDate(d.getDate()+1)}eta=d;etaD=Math.round((wrdDate(W.due)-d)/864e5)}
+ return{W,tot:W.total,done,dToday,rem,days,daily,auto,fix,eta,etaD,paused:wrdPz(today,W),pct:Math.min(100,Math.round(done/W.total*100)),late:wrdDate(W.due)<today,fin:rem<=0}}
+const wrdCard=()=>{const c=wrdCalc();if(!c||c.fin||c.paused||((c.late||c.days<=0)&&!c.fix)||c.dToday>=c.daily)return '';return `<div class="c" onclick="go('wr')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>📖 وردك اليوم</b><span class="ch">${svg('chev')}</span></div><div class="m">${wrdTxt(c.daily-c.dToday)}${c.dToday?' (متبقٍ من وردك)':''}</div></div>`};
+function wrdQ(m){const d=new Date();d.setMonth(d.getMonth()+m);const i=$('#wrdd');if(i)i.value=ymd(d)}
+function wrdSave(){const tot=Math.min(604,Math.max(1,wrdPgOf($('#wrdt').value,$('#wrdtu').value,1))),base=Math.min(tot,wrdPgOf($('#wrdb').value,$('#wrdbu').value,1)),due=$('#wrdd').value;
+ if(!due||wrdDate(due)<new Date(new Date().setHours(0,0,0,0))){toast('اختر موعد إنهاء قادماً');return}
+ const old=S.wrd||{};S.wrd={total:wrdLn(tot),base:wrdLn(base),due,fr:$('#wrdf').checked,start:old.start||ymd(new Date()),log:old.log||[],fix:old.fix||0,pz:old.pz||[],rr:old.rr||0};
+ wrdEdit=0;save();toast('تم حفظ الخطة');draw()}
+function wrdAdd(l){const c=wrdCalc();if(!c||l<=0)return;S.wrd.log.push({id:S.id++,d:ymd(new Date()),l:Math.min(l,c.rem)});save();draw()}
+function wrdAddT(){const c=wrdCalc();if(c)wrdAdd(Math.max(0,c.daily-c.dToday))}
+function wrdCustom(){const l=wrdLn(wrdPgOf($('#wrdc').value,$('#wrdcu').value));if(!l){toast('اكتب الكمية');return}wrdAdd(l)}
+function wrdUndo(){const W=wrdG();if(!W||!W.log.length)return;W.log.pop();save();draw()}
+function wrdReset(){ask('حذف خطة الورد اليومي وسجلها؟',()=>{S.wrd=null;wrdEdit=0;save();draw()},'نعم، احذف')}
+let wrdS={t:new Set(),b:new Set()};
+const wrdGrid=k=>`<div class="exg">${[...Array(30)].map((_,i)=>{const j=i+1;return `<div class="exj${wrdS[k].has(j)?' on':''}" style="cursor:pointer;min-height:36px;padding:8px 0" onclick="wrdTg('${k}',${j})">${j}</div>`}).join('')}</div>`;
+function wrdTg(k,j){const st=wrdS[k];st.has(j)?st.delete(j):st.add(j);const pg=[...st].reduce((a,x)=>a+exPages(x),0),inp=$(k=='t'?'#wrdt':'#wrdb'),un=$(k=='t'?'#wrdtu':'#wrdbu');
+ $('#wrdg'+k).innerHTML=wrdGrid(k);inp.value=st.size?pg:'';un.value='p';$('#wrdi'+k).textContent=st.size?st.size+' '+(st.size==1?'جزء':'أجزاء')+' = '+pg+' صفحة (حسب صفحات المصحف الفعلية)':''}
+function wrdOpen(k){const g=$('#wrdg'+k);if(!g)return;g.style.display=g.style.display=='none'?'block':'none';if(g.style.display=='block')g.innerHTML=wrdGrid(k)}
+function wrdForm(){wrdS={t:new Set(),b:new Set()};const W=S.wrd,c=W?wrdCalc():null;
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الورد اليومي</b><button class="g" onclick="${W?'wrdEdit=0;draw()':"go('home')"}">رجوع</button></div>
+ <div class="c"><div class="m">كم صفحة تريد حفظها بالمجموع؟</div><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="wrdt" type="number" inputmode="decimal" min="1" step="0.5" value="${W?wrdPg(W.total):604}" style="flex:1;margin:0;min-width:0"><select id="wrdtu" style="width:auto;margin:0">${wrdUn()}</select></div><div class="m" style="color:var(--pri);cursor:pointer;margin-top:4px" onclick="wrdOpen('t')">▾ أو اختر أجزاء محددة</div><div id="wrdgt" style="display:none;margin:6px 0"></div><div class="m" id="wrdit"></div>
+ <div class="m">كم صفحة حفظت حتى الآن؟</div><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="wrdb" type="number" inputmode="decimal" min="0" step="0.5" value="${W?wrdPg(W.base):0}" placeholder="مثال: 5" style="flex:1;margin:0;min-width:0"><select id="wrdbu" style="width:auto;margin:0">${wrdUn()}</select></div><div class="m" style="color:var(--pri);cursor:pointer;margin-top:4px" onclick="wrdOpen('b')">▾ أو اختر الأجزاء التي حفظتها</div><div id="wrdgb" style="display:none;margin:6px 0"></div><div class="m" id="wrdib"></div>
+ <div class="m" style="margin-top:6px">الجزء = 20 صفحة تقريباً، والحزب = 10 صفحات (و30 جزءاً = المصحف كاملاً 604 صفحة)</div><div class="m">موعد إنهاء الحفظ</div><input id="wrdd" type="date" value="${W?W.due:''}">
+ <div style="margin:6px 0">${[['6 أشهر',6],['سنة',12],['سنتان',24],['3 سنوات',36]].map(([t,m])=>`<span class="chip" onclick="wrdQ(${m})">${t}</span>`).join('')}</div>
+ <label class="m"><input id="wrdf" type="checkbox" style="width:auto" ${!W||W.fr?'checked':''}> استثناء يوم الجمعة من أيام الحفظ</label>
+ <button onclick="wrdSave()" style="width:100%;margin-top:10px">${W?'حفظ التعديل':'احسب وردي وابدأ'}</button></div>`}
+function wrdPage(){const c=wrdCalc();if(!c||wrdEdit)return wrdForm();
+ const rem=c.fin?'':`<div class="m" style="margin-top:6px">المتبقي ${wrdTxt(c.rem)} • ${c.days} يوم حفظ حتى ${c.W.due}</div>${c.fix&&c.eta?`<div class="m" style="margin-top:4px">بهذا الورد تنهي في ${ymd(c.eta)} ${c.etaD>0?'(قبل موعدك بـ '+c.etaD+' يوماً)':c.etaD<0?'(بعد موعدك بـ '+(-c.etaD)+' يوماً)':'(في موعدك تماماً)'}</div>`:''}<div class="row" style="flex-wrap:nowrap;gap:8px;margin-top:10px;align-items:center"><span class="m" style="white-space:nowrap">مقدار الورد:</span><select onchange="wrdFix(this.value)" style="margin:0">${WRX.map(x=>`<option value="${x[0]}" ${x[0]==c.fix?'selected':''}>${x[1]}</option>`).join('')}</select></div>${wrdRr(c)}`,
+ hist=c.W.log.slice(-5).reverse().map(x=>`<div class="m" style="padding:4px 0;border-top:1px solid var(--bd)">${x.d} • ${wrdTxt(x.l)}</div>`).join('');
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الورد اليومي</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c" style="text-align:center">${c.fin?'<b style="font-size:20px">ما شاء الله، أتممت هدفك 🎉</b>':c.paused?`<div class="m">اليوم إجازة</div><b style="font-size:24px;display:block;margin:4px 0">🌴 لا ورد عليك اليوم</b><div class="m">يعود وردك بعد الإجازة: ${wrdTxt(c.daily)} يومياً</div>`:(c.late&&!c.fix)?'<b style="font-size:17px">انتهى الموعد الذي حددته، عدّل الخطة بموعد جديد</b>':(c.days<=0&&!c.fix)?'<b style="font-size:17px">لا توجد أيام حفظ قبل الموعد، عدّل الخطة</b>':`<div class="m">وردك اليوم</div><b style="font-size:26px;display:block;margin:4px 0">${c.fix?(WRX.find(x=>x[0]==c.fix)||[0,wrdTxt(c.daily)])[1]:wrdTxt(c.daily)}</b><div class="m" style="margin-bottom:4px">${c.fix?'= '+wrdTxt(c.daily)+' تقريباً':'≈ '+wrdQtr(c.daily)}</div><div class="m">${c.dToday>=c.daily?'أتممت وردك اليوم، بارك الله فيك 🌿':'أنجزت اليوم '+wrdTxt(c.dToday)}</div>`}
+ <div style="background:var(--bd);border-radius:10px;height:12px;margin-top:12px;overflow:hidden"><div style="width:${c.pct}%;height:100%;background:var(--pri)"></div></div>
+ <div class="m" style="margin-top:6px">حفظت ${wrdPg(c.done)} من ${wrdPg(c.tot)} صفحة (${c.pct}%)</div>${rem}</div>
+ ${c.fin||((c.late||c.days<=0)&&!c.fix)?'':`<div class="c"><b>تسجيل الحفظ</b><div class="row" style="margin-top:8px;gap:6px"><button style="flex:1" onclick="wrdAddT()" ${c.dToday>=c.daily?'disabled style="flex:1;opacity:.5"':''}>✅ أنجزت وردي</button><button class="g" onclick="wrdAdd(${WRL})">+ صفحة</button><button class="g" onclick="wrdAdd(${WRL/2|0})">+ نصف صفحة</button></div>
+ <div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:8px"><input id="wrdc" type="number" inputmode="decimal" step="0.5" min="0" placeholder="كمية أخرى" style="flex:1;margin:0;min-width:0"><select id="wrdcu" style="width:auto;margin:0">${wrdUn()}</select><button class="g" onclick="wrdCustom()">إضافة</button></div></div>`}
+ ${hist?`<div class="c"><div class="row sp"><b>آخر التسجيلات</b><button class="g" style="padding:4px 10px" onclick="wrdUndo()">↩ تراجع عن الأخير</button></div>${hist}</div>`:''}
+ ${wrdPzCard(c)}<div class="row" style="padding:0 14px;gap:6px"><button class="g" style="flex:1" onclick="wrdEdit=1;draw()">تعديل الخطة</button><button class="g" style="flex:1" onclick="wrdReset()">حذف الخطة</button></div>`}
+
+/* ---------- نسبة المراجعة مع الورد + إجازة الورد ---------- */
+const WRR=[[0,'بدون'],[1,'1 : 1 (راجع بمقدار ما تحفظ)'],[2,'2 : 1 (ضعف الحفظ)'],[3,'3 : 1 (ثلاثة أضعاف)']];
+function wrdSetRr(v){const W=wrdG();if(!W)return;W.rr=+v||0;save();draw()}
+function wrdRr(c){const W=c.W,k=W.rr||0,sh={1:'نصف',2:'ثلثا',3:'ثلاثة أرباع'}[k];
+ return `<div class="row" style="flex-wrap:nowrap;gap:8px;margin-top:8px;align-items:center"><span class="m" style="white-space:nowrap">المراجعة مع الورد:</span><select onchange="wrdSetRr(this.value)" style="margin:0">${WRR.map(x=>`<option value="${x[0]}" ${x[0]==k?'selected':''}>${x[1]}</option>`).join('')}</select></div>${k&&!c.fin&&!c.paused&&c.daily?`<div class="c" style="margin:10px 0 0;background:transparent;border-style:dashed"><div class="row sp"><span>📖 حفظ جديد</span><b>${wrdTxt(c.daily)}</b></div><div class="row sp"><span>🔁 مراجعة</span><b>${wrdTxt(Math.round(c.daily*k))}</b></div><div class="row sp" style="border-top:1px solid var(--bd);margin-top:4px;padding-top:4px"><span>المجموع</span><b>${wrdTxt(Math.round(c.daily*(1+k)))}</b></div><div class="m" style="margin-top:4px">${sh} الجلسة مراجعة. افتح جدول المراجعة لتعرف ما تراجعه.</div><button class="g" style="width:100%;margin-top:6px" onclick="go('rv')">🗓 جدول المراجعة</button></div>`:''}`}
+function wrdPzCard(c){const W=c&&c.W;if(!W)return '';const t=ymd(new Date()),L=(W.pz||[]).filter(p=>p.b>=t).sort((x,y)=>x.a.localeCompare(y.a));
+ return `<div class="c"><b>🌴 إجازة الورد</b><div class="m" style="margin:4px 0">للسفر أو المرض أو رمضان: تُستثنى هذه الأيام ويُعاد حساب وردك على الأيام المتبقية.</div><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="wrpa" type="date" style="flex:1;margin:0;min-width:0"><input id="wrpb" type="date" style="flex:1;margin:0;min-width:0"></div><div class="m" style="margin-top:4px">من تاريخ إلى تاريخ (النهاية اختيارية ليوم واحد)</div><div class="row" style="margin-top:8px;gap:6px"><button style="flex:1" onclick="wrdPzAdd()">إضافة إجازة</button><button class="g" style="flex:1" onclick="wrdPzToday()">إجازة اليوم فقط</button></div>${L.map(p=>`<div class="row sp" style="padding:6px 0;border-top:1px solid var(--bd)"><span class="m">${p.a==p.b?p.a:p.a+' ← '+p.b}</span><button class="g" style="padding:2px 10px" onclick="wrdPzDel(${p.id})">حذف</button></div>`).join('')}</div>`}
+function wrdPzPush(a,b){const W=wrdG();if(!W)return;(W.pz=W.pz||[]).push({id:S.id++,a,b});save();toast('تمت إضافة الإجازة');draw()}
+function wrdPzAdd(){const a=$('#wrpa').value,b=$('#wrpb').value||a;if(!a){toast('اختر تاريخ بداية الإجازة');return}if(b<a){toast('تاريخ النهاية قبل البداية');return}wrdPzPush(a,b)}
+function wrdPzToday(){const t=ymd(new Date());wrdPzPush(t,t)}
+function wrdPzDel(id){const W=wrdG();if(!W)return;W.pz=(W.pz||[]).filter(p=>p.id!=id);save();draw()}
+
+/* ---------- خريطة الأجزاء: لون لكل جزء حسب حالته ---------- */
+const JMC={'0':['#8a948f','لم يُحفظ'],'1':['#1565c0','قيد الحفظ'],g:['#2e7d32','متقن، مراجعته حديثة'],y:['#f9a825','يقترب موعد مراجعته'],r:['#c62828','يحتاج مراجعة']};
+const jmM=j=>{const m=(S.jm||{})[j];return m!==undefined?m:(((S.juz||{})[j]||{}).n>0?2:0)};
+function jmDays(j){const J=(S.juz||{})[j]||{};return J.last?Math.floor((Date.now()-new Date(J.last))/864e5):null}
+function jmSt(j){const m=jmM(j);if(m==0)return '0';if(m==1)return '1';const d=jmDays(j);return d===null||d>30?'r':d>7?'y':'g'}
+function jmPage(){const st=[...Array(30)].map((_,i)=>jmSt(i+1)),cnt=k=>st.filter(x=>x==k).length,mem=st.filter(x=>'gyr'.includes(x)).length;
+ const tile=j=>{const k=st[j-1],c=JMC[k][0],d=jmDays(j),sm=k=='0'||k=='1'?JMC[k][1]:d===null?'لم تُراجع':d==0?'اليوم':'قبل '+d+' ي';
+  return `<div class="exj" style="border-color:${c};background:color-mix(in srgb,${c} 18%,transparent);cursor:pointer;min-height:62px;padding:8px 0" onclick="jmOpen(${j})"><b style="font-size:18px">${j}</b><small style="font-size:10px;opacity:.85">${sm}</small></div>`};
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">خريطة الأجزاء</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c"><div class="row" style="gap:12px"><div style="flex:1;text-align:center">محفوظ<br><b style="font-size:22px">${mem}</b> <span class="m">من 30</span></div><div style="flex:1;text-align:center">يحتاج مراجعة<br><b style="font-size:22px;color:${JMC.r[0]}">${cnt('r')}</b></div></div></div>
+ <div class="c"><div class="exg">${[...Array(30)].map((_,i)=>tile(i+1)).join('')}</div>
+ <div style="margin-top:10px">${['0','1','g','y','r'].map(k=>`<div class="m" style="padding:2px 0"><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:${JMC[k][0]};vertical-align:middle;margin-inline-end:6px"></span>${JMC[k][1]}${k=='g'?' (آخر مراجعة خلال 7 أيام)':k=='y'?' (8 إلى 30 يوماً)':k=='r'?' (أكثر من 30 يوماً أو لم يُراجع بعد)':''}</div>`).join('')}</div></div>
+ <div class="m" style="margin:0 16px">اضغط على أي جزء لتحديد حالته أو تسجيل مراجعة. اللون يتغير تلقائياً مع تسجيل المراجعات في «الجداول» أو بزر «تم».</div>`}
+function jmOpen(j){const k=jmSt(j),m=jmM(j),J=(S.juz||{})[j]||{},d=jmDays(j),b=(v,t)=>`<button class="${m==v?'':'g'}" style="flex:1;padding:8px 4px" onclick="jmSet(${j},${v})">${t}</button>`;
+ $('#sh').innerHTML=shW(`<b>الجزء ${j}</b><div class="m" style="margin:6px 0">${exPages(j)} صفحة • ${JMC[k][1]}${J.n?' • '+J.n+' مراجعة':''}${d!==null?' • آخر مراجعة '+(d==0?'اليوم':'قبل '+d+' يوم'):''}</div><div class="row" style="gap:6px;flex-wrap:nowrap">${b(0,'لم يُحفظ')}${b(1,'قيد الحفظ')}${b(2,'محفوظ')}</div><button onclick="jmRev(${j})" style="width:100%;margin-top:10px">✅ سجّلت مراجعته اليوم</button><button class="g" onclick="jmTask(${j})" style="width:100%;margin-top:6px">➕ أضف مراجعته إلى مهام اليوم</button><button class="g" onclick="$('#sh').innerHTML=''" style="width:100%;margin-top:6px">إغلاق</button>`)}
+function jmSet(j,v){S.jm=S.jm||{};S.jm[j]=v;save();draw();jmOpen(j)}
+function jmRev(j){jAdd(j,1);$('#sh').innerHTML='';toast('سُجّلت مراجعة الجزء '+j);draw()}
+function jmTask(j){const ex=(S.tasks||[]).some(t=>!t.arch&&(t.js||[]).includes(j)&&t.type=='مراجعة');if(ex){toast('المراجعة موجودة في مهامك');return}
+ S.tasks.push({id:S.id++,s:'الجزء '+j,j:0,js:[j],tm:null,a:1,b:1,type:'مراجعة',stage:0,next:new Date().toISOString()});save();$('#sh').innerHTML='';toast('أُضيفت إلى مهام اليوم');draw()}
+
+/* ---------- الأهداف الأسبوعية والشارات ---------- */
+const wkAct=()=>{const a=new Set();(S.logs||[]).forEach(l=>l.date&&a.add(l.date));((S.wrd||{}).log||[]).forEach(x=>a.add(x.d));Object.values(S.juz||{}).forEach(j=>(j.h||[]).forEach(h=>a.add(new Date(h).toLocaleDateString('en-CA'))));return a};
+function wkRun(){const A=wkAct();if(!A.size)return{cur:0,best:0};const t=new Date();t.setHours(0,0,0,0);const end=A.has(ymd(t))?t:new Date(t-864e5),d=new Date([...A].sort()[0]+'T00:00:00');let run=0,best=0;
+ for(let i=0;d<=end&&i<9000;i++){if(A.has(ymd(d))){run++;best=Math.max(best,run)}else if(!(S.skipFri&&d.getDay()==5))run=0;d.setDate(d.getDate()+1)}return{cur:run,best}}
+function wkWeek(){const t=new Date();t.setHours(0,0,0,0);const s=new Date(t);s.setDate(t.getDate()-((t.getDay()+1)%7));return [...Array(7)].map((_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})}
+function wkStats(){const W=wkWeek(),A=wkAct(),ks=new Set(W.map(ymd));return{days:W,act:W.filter(d=>A.has(ymd(d))).length,
+ lines:((S.wrd||{}).log||[]).filter(x=>ks.has(x.d)).reduce((a,x)=>a+x.l,0),tasks:(S.logs||[]).filter(l=>ks.has(l.date)).length,A}}
+const wkCard=()=>{const w=wkStats();if(!w.A.size)return '';const g=S.wkg||5;return `<div class="c" onclick="go('wk')" style="cursor:pointer"><div class="row sp"><b>🏅 هذا الأسبوع</b><span class="ch">${svg('chev')}</span></div><div class="m">${w.act} من ${g} أيام${w.act>=g?' • حققت هدفك 🎉':''}${wkRun().cur?' • '+wkRun().cur+' يوماً متتالياً':''}</div></div>`};
+const WKB=[['🔥','أيام متتالية',[3,7,14,30,100],()=>wkRun().best,'يوم'],
+ ['📖','صفحات محفوظة',[10,50,100,300,604],()=>{const W=S.wrd;return W?Math.floor((W.base+(W.log||[]).reduce((a,x)=>a+x.l,0))/WRL):0},'صفحة'],
+ ['🧭','أجزاء محفوظة',[1,5,10,20,30],()=>[...Array(30)].filter((_,i)=>jmM(i+1)==2).length,'جزء'],
+ ['🔁','مراجعات مكتملة',[10,50,100,300],()=>(S.arc||[]).filter(a=>arTy(a)=='مراجعة').length,'مراجعة']];
+function wkGoal(v){S.wkg=+v||5;save();draw()}
+function wkPage(){const w=wkStats(),g=S.wkg||5,run=wkRun(),A=w.A,pct=Math.min(100,Math.round(w.act/g*100));let got=0,all=0;
+ const bd=WKB.map(([ic,nm,th,fn,u])=>{const v=fn();return `<div class="c"><div class="row sp"><b>${ic} ${nm}</b><span class="m">${v} ${u}</span></div><div class="row" style="gap:6px;margin-top:8px">${th.map(x=>{const ok=v>=x;all++;if(ok)got++;return `<div style="flex:1;min-width:54px;text-align:center;padding:8px 2px;border-radius:12px;border:1px solid ${ok?'var(--pri)':'var(--bd)'};background:${ok?'color-mix(in srgb,var(--pri) 12%,transparent)':'transparent'};opacity:${ok?1:.55}"><div style="font-size:20px">${ok?ic:'🔒'}</div><div style="font-size:11px">${x} ${u}</div></div>`}).join('')}</div></div>`}).join('');
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الأهداف والشارات</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c"><b>هدفك هذا الأسبوع</b><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center;margin:8px 0"><span class="m" style="white-space:nowrap">أيام النشاط في الأسبوع:</span><select onchange="wkGoal(this.value)" style="margin:0">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n==g?'selected':''}>${n}</option>`).join('')}</select></div>
+ <div class="row" style="gap:6px;justify-content:space-between">${w.days.map(d=>{const on=A.has(ymd(d));return `<div style="text-align:center;flex:1"><div style="height:34px;width:34px;margin:0 auto;border-radius:50%;line-height:34px;font-weight:700;background:${on?'var(--pri)':'transparent'};color:${on?'#fff':'inherit'};border:1px solid ${on?'var(--pri)':'var(--bd)'}">${on?'✓':d.getDate()}</div><div class="m" style="font-size:10px">${D[d.getDay()].replace('ال','')}</div></div>`}).join('')}</div>
+ <div style="background:var(--bd);border-radius:10px;height:10px;margin-top:10px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--pri)"></div></div>
+ <div class="m" style="margin-top:6px">${w.act} من ${g} أيام${w.act>=g?' • حققت هدفك 🎉':''} • ${w.tasks} مهمة منجزة${w.lines?' • '+wrdTxt(w.lines)+' حفظ':''}</div>
+ <div class="m">الأيام المتتالية الآن: ${run.cur} • أفضل رقم: ${run.best}</div></div>
+ <div class="c m">الشارات المفتوحة ${got} من ${all}. تُحسب من سجلك تلقائياً، ولا تحتاج إلى إدخال شيء.</div>${bd}`}
+
+/* ---------- التقرير الأسبوعي للمعلم (آخر 7 أيام) ---------- */
+function repWk(T,H,K){const t=new Date();t.setHours(0,0,0,0);const days=[...Array(7)].map((_,i)=>{const d=new Date(t);d.setDate(t.getDate()-6+i);return d}),ks=new Set(days.map(ymd)),A=wkAct(),act=days.filter(d=>A.has(ymd(d))).length,
+ arc=(S.arc||[]).filter(a=>a.en&&ks.has(ymd(new Date(a.en)))).sort((a,b)=>String(a.en).localeCompare(String(b.en))),
+ W=S.wrd,lines=W?(W.log||[]).filter(x=>ks.has(x.d)).reduce((a,x)=>a+x.l,0):0,run=wkRun(),
+ mist={};(S.mist||[]).filter(m=>ks.has(m.d)).forEach(m=>mist[m.type]=(mist[m.type]||0)+1);
+ const st=[...Array(30)].map((_,i)=>jmSt(i+1)),need=st.map((x,i)=>x=='r'?i+1:0).filter(Boolean);
+ let o=H('الفترة: '+ymd(days[0])+' إلى '+ymd(days[6]))+K([['أيام النشاط',act+' / 7'],['مهام منجزة',arc.length],['حفظ جديد',lines?wrdTxt(lines):'—'],['أيام متتالية',run.cur]]);
+ if(W){const c=wrdCalc();if(c)o+=H('خطة الحفظ')+K([['النسبة المنجزة',c.pct+'%'],['المحفوظ',wrdPg(c.done)+' صفحة'],['المتبقي',wrdPg(c.rem)+' صفحة'],['موعد الإنهاء',W.due]])}
+ o+=H('ما أُنجز هذا الأسبوع')+(arc.length?T(['التاريخ','المهمة','النوع','التقييم'],arc.map(a=>[ymd(new Date(a.en)),esc(a.name)+(a.sub?' • '+esc(a.sub):''),arTy(a)||'—',(BADGE[a.r]||['','—'])[1]])):'<div style="font-size:12px;color:#555">لا مهام مسجّلة هذا الأسبوع.</div>');
+ o+=H('حالة الأجزاء')+K([['محفوظ',st.filter(x=>'gyr'.includes(x)).length+' / 30'],['قيد الحفظ',st.filter(x=>x=='1').length],['يحتاج مراجعة',need.length]])+(need.length?'<div style="font-size:12px;color:#555">أجزاء تحتاج مراجعة: '+need.join('، ')+'</div>':'');
+ const mk=Object.keys(mist);if(mk.length)o+=H('الأخطاء المسجّلة')+T(['النوع','العدد'],mk.map(k=>[esc(k),mist[k]]));
+ return o}
+
+/* ---------- الصفحات الصعبة: تتكرر مراجعتها كل يومين ---------- */
+const hpG=()=>S.hp=S.hp||{};
+const jzOf=p=>EXJ.filter(x=>x<=p).length;
+const hpDays=h=>h.l?Math.round((rvDay(new Date())-rvDay(new Date(h.l)))/864e5):null;
+const hpDue=()=>Object.keys(hpG()).map(Number).filter(p=>{const d=hpDays(hpG()[p]);return d===null||d>=2});
+const hpCard=()=>{const n=hpDue().length;return n?`<div class="c" onclick="go('hp')" style="cursor:pointer;border-color:var(--bad)"><div class="row sp"><b>📌 الصفحات الصعبة</b><span class="ch">${svg('chev')}</span></div><div class="m">${n} ${n==1?'صفحة':'صفحات'} تحتاج مراجعة اليوم</div></div>`:''};
+function hpAdd(){const v=String($('#hpi').value||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)),ps=[...new Set((v.match(/\d+/g)||[]).map(Number).filter(p=>p>=1&&p<=604))];
+ if(!ps.length){toast('اكتب رقم صفحة من 1 إلى 604');return}const H=hpG();let n=0;ps.forEach(p=>{if(!H[p]){H[p]={a:new Date().toISOString(),l:null,n:0};n++}});save();toast(n?'أُضيفت '+n+(n==1?' صفحة':' صفحات'):'الصفحات موجودة في القائمة');draw()}
+function hpRev(p){const h=hpG()[p];if(!h)return;h.l=new Date().toISOString();h.n=(h.n||0)+1;save();toast('سُجّلت مراجعة صفحة '+p);draw()}
+function hpDel(p){delete hpG()[p];save();draw()}
+function hpTask(p){if((S.tasks||[]).some(t=>!t.arch&&(t.pg||[]).includes(p)&&t.type=='مراجعة')){toast('المراجعة موجودة في مهامك');return}
+ S.tasks.push({id:S.id++,s:'صفحة '+p,j:0,pg:[p],tm:null,a:1,b:1,type:'مراجعة',stage:0,next:new Date().toISOString()});save();toast('أُضيفت إلى مهام اليوم');draw()}
+function hpPage(){const H=hpG(),ks=Object.keys(H).map(Number);
+ const key=p=>{const d=hpDays(H[p]);return[d===null||d>=2?0:1,H[p].l?new Date(H[p].l).getTime():0,p]};
+ ks.sort((a,b)=>{const x=key(a),y=key(b);return x[0]-y[0]||x[1]-y[1]||x[2]-y[2]});
+ const row=p=>{const h=H[p],d=hpDays(h),due=d===null||d>=2;
+  return `<div class="c" style="${due?'border-color:var(--bad)':''}"><div class="row sp" style="flex-wrap:nowrap"><div><b>صفحة ${p}</b><div class="m">${exSur(p)} • الجزء ${jzOf(p)}</div></div>${due?'<span class="m" style="color:var(--bad);font-weight:700">مستحقة اليوم</span>':'<span class="m">مراجَعة</span>'}</div><div class="m" style="margin-top:4px">${d===null?'لم تُراجع بعد':'آخر مراجعة '+(d==0?'اليوم':'قبل '+d+' يوم')} • ${h.n||0} مراجعة</div>
+  <div class="row" style="margin-top:8px;gap:6px"><button style="flex:1" onclick="hpRev(${p})">✅ راجعتها</button><button class="g" onclick="hpTask(${p})">➕ مهمة</button><button class="g" onclick="ask('إزالة صفحة ${p} من الصفحات الصعبة؟',()=>hpDel(${p}),'نعم، أزل')">لم تعد صعبة</button></div></div>`};
+ const n=hpDue().length;
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الصفحات الصعبة</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c"><b>أضف صفحات تجد صعوبة فيها</b><div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:8px"><input id="hpi" inputmode="numeric" placeholder="رقم الصفحة، أو عدة أرقام: 52، 120، 301" autocomplete="off" style="flex:1;margin:0;min-width:0"><button onclick="hpAdd()">إضافة</button></div>
+ <div class="m" style="margin-top:6px">تظهر الصفحة هنا وتتكرر مراجعتها كل يومين، أكثر من الجدول العادي. اضغط «لم تعد صعبة» عندما تتقنها.</div></div>
+ ${ks.length?`<div class="m" style="margin:0 16px">${ks.length} ${ks.length==1?'صفحة':'صفحات'} • ${n?n+' مستحقة اليوم':'لا شيء مستحق اليوم، بارك الله فيك 🌿'}</div>${ks.map(row).join('')}`:'<div class="c m">لا صفحات صعبة بعد. أضف أول صفحة من الخانة أعلاه.</div>'}`}
+
+/* ---------- خطة ختمة رمضان: ختم القرآن في عدد أيام تحدده ---------- */
+const khG=()=>S.kh&&S.kh.start?S.kh:null;let khEdit=0;
+function khSeg(K,i){const T=604*K.k;let a=Math.round((i-1)*T/K.days)+1,b=Math.max(a,Math.round(i*T/K.days));const seg=[];
+ while(a<=b){const c=Math.floor((a-1)/604),e=Math.min(b,(c+1)*604);seg.push([a-c*604,e-c*604,c+1]);a=e+1}return seg}
+const khTxt=(K,seg)=>seg.map(([x,y,c])=>(x==y?'صفحة '+x:'صفحات '+x+' - '+y)+(K.k>1?' (ختمة '+c+')':'')).join(' ثم ');
+const khIdx=K=>{const t=new Date();t.setHours(0,0,0,0);return Math.floor((t-wrdDate(K.start))/864e5)+1};
+const khDone=K=>Object.keys(K.chk||{}).filter(i=>K.chk[i]).length;
+const khCard=()=>{const K=khG();if(!K)return '';const i=khIdx(K);if(i<1||i>K.days||(K.chk||{})[i])return '';return `<div class="c" onclick="go('kh')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>🌙 ختمتك اليوم</b><span class="ch">${svg('chev')}</span></div><div class="m">${khTxt(K,khSeg(K,i))}</div></div>`};
+function khQ(n){const e=$('#khd');if(e){e.value=n;khPrev()}}
+function khPrev(){const d=Math.max(0,Math.floor(+$('#khd').value||0)),k=Math.max(0,Math.floor(+$('#khk').value||0)),o=$('#khp');if(!o)return;
+ if(!d||!k){o.textContent='';return}const ppd=604*k/d;o.textContent='≈ '+(Math.round(ppd*10)/10)+' صفحة يومياً، أي '+wrdTxt(Math.round(ppd*WRL/5))+' بعد كل صلاة من الصلوات الخمس'}
+function khSave(){const days=Math.floor(+$('#khd').value||0),k=Math.floor(+$('#khk').value||0),st=$('#khs').value;
+ if(days<1||days>120){toast('عدد الأيام من 1 إلى 120');return}if(k<1||k>10){toast('عدد الختمات من 1 إلى 10');return}if(!st){toast('اختر تاريخ البدء');return}
+ const o=S.kh||{},same=o.days==days&&o.k==k;S.kh={days,k,start:st,chk:same?(o.chk||{}):{}};khEdit=0;save();toast('تم حفظ الخطة');draw()}
+function khTog(i){const K=khG();if(!K)return;K.chk=K.chk||{};K.chk[i]=!K.chk[i];save();draw()}
+function khReset(){ask('حذف خطة الختمة وتقدمها؟',()=>{S.kh=null;khEdit=0;save();draw()},'نعم، احذف')}
+function khForm(){const K=S.kh;
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">ختمة رمضان</b><button class="g" onclick="${K?'khEdit=0;draw()':"go('home')"}">رجوع</button></div>
+ <div class="c"><div class="m">في كم يوماً تريد ختم القرآن؟</div><input id="khd" type="number" inputmode="numeric" min="1" max="120" value="${K?K.days:30}" oninput="khPrev()">
+ <div style="margin:6px 0">${[30,20,15,10,7].map(n=>`<span class="chip" onclick="khQ(${n})">${n} ${n==30?'يوماً':'أيام'}</span>`).join('')}</div>
+ <div class="m">عدد الختمات</div><input id="khk" type="number" inputmode="numeric" min="1" max="10" value="${K?K.k:1}" oninput="khPrev()">
+ <div class="m">تاريخ أول يوم</div><input id="khs" type="date" value="${K?K.start:ymd(new Date())}">
+ <div class="m" style="margin-top:4px">غيّر التاريخ إلى أول يوم من رمضان، أو اتركه اليوم لتبدأ الآن.</div>
+ <div class="m" id="khp" style="margin-top:8px;font-weight:700"></div>
+ <button onclick="khSave()" style="width:100%;margin-top:10px">${K?'حفظ التعديل':'ابدأ الخطة'}</button>${K?'<div class="m" style="margin-top:6px">تعديل عدد الأيام أو الختمات يمسح علامات الأيام السابقة.</div>':''}</div>`}
+function khPage(){const K=khG();if(!K||khEdit){setTimeout(khPrev,0);return khForm()}
+ const i=khIdx(K),dn=khDone(K),pct=Math.round(dn/K.days*100),ppd=604*K.k/K.days;
+ const today=()=>{if(i<1){const n=1-i;return `<div class="m">الخطة تبدأ بعد ${n} ${n==1?'يوم':'أيام'} (${K.start})</div><b style="font-size:20px;display:block;margin:6px 0">${khTxt(K,khSeg(K,1))}</b><div class="m">ورد أول يوم</div>`}
+  if(i>K.days)return `<b style="font-size:18px">انتهت أيام الخطة</b><div class="m" style="margin-top:6px">أتممت ${dn} من ${K.days} يوماً${dn>=K.days?' • ما شاء الله، ختمت 🎉':''}</div>`;
+  const sg=khSeg(K,i),on=!!(K.chk||{})[i];
+  return `<div class="m">اليوم ${i} من ${K.days}</div><b style="font-size:22px;display:block;margin:6px 0">${khTxt(K,sg)}</b><div class="m">يبدأ من ${exSur(sg[0][0])} • ${wrdTxt(Math.round(ppd*WRL/5))} بعد كل صلاة</div>
+  <button onclick="khTog(${i})" style="width:100%;margin-top:10px;${on?'opacity:.6':''}">${on?'✅ أنهيت ورد اليوم (اضغط للتراجع)':'أنهيت ورد اليوم'}</button>`};
+ const rows=[...Array(K.days)].map((_,x)=>{const n=x+1,d=wrdDate(K.start);d.setDate(d.getDate()+x);const on=!!(K.chk||{})[n],now=n==i,late=n<i&&!on;
+  return `<div class="row" onclick="khTog(${n})" style="flex-wrap:nowrap;gap:8px;padding:8px 6px;border-top:1px solid var(--bd);cursor:pointer;${now?'background:color-mix(in srgb,var(--pri) 10%,transparent);border-radius:8px':''}"><span style="width:26px;height:26px;border-radius:50%;flex:none;text-align:center;line-height:26px;font-size:13px;border:1px solid ${on?'var(--pri)':late?'var(--bad)':'var(--bd)'};background:${on?'var(--pri)':'transparent'};color:${on?'#fff':'inherit'}">${on?'✓':n}</span><div style="flex:1;min-width:0"><b style="font-size:14px">${khTxt(K,khSeg(K,n))}</b><div class="m" style="font-size:11px">${D[d.getDay()]} ${ymd(d).slice(5)}${now?' • اليوم':late?' • متأخر':''}</div></div></div>`}).join('');
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">ختمة رمضان</b><button class="g" onclick="go('home')">رجوع</button></div>
+ <div class="c" style="text-align:center">${today()}<div style="background:var(--bd);border-radius:10px;height:10px;margin-top:12px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--pri)"></div></div><div class="m" style="margin-top:6px">أتممت ${dn} من ${K.days} يوماً (${pct}%) • الخطة: ${K.k==1?'ختمة':K.k+' ختمات'} في ${K.days} يوماً، نحو ${Math.round(ppd*10)/10} صفحة يومياً</div></div>
+ <div class="c"><b>جدول الأيام</b><div class="m" style="margin-bottom:4px">اضغط على أي يوم لوضع علامة الإنجاز أو إزالتها.</div>${rows}</div>
+ <div class="row" style="padding:0 14px;gap:6px"><button class="g" style="flex:1" onclick="khEdit=1;draw()">تعديل الخطة</button><button class="g" style="flex:1" onclick="khReset()">حذف الخطة</button></div>`}
 const tkCd={};
 function tkPick(id,v){const t=tkG(id);if(!t)return;if(tkCd[id]){clearInterval(tkCd[id].iv);delete tkCd[id]}
  if(t.mk==v){t.mk=0;save();draw();return}
@@ -938,16 +1171,18 @@ function ctStats(C){if(!C.length)return '<div class="c m">أضف متسابقي�
 /* ---------- النسخ الاحتياطي والتقارير ---------- */
 const bkJson=()=>JSON.stringify({app:'qmrm',v:1,at:Date.now(),data:S});
 function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bkJson()],{type:'application/json'}));a.download='qmrm-backup-'+ymd(new Date())+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);S.lastBk=Date.now();save();toast('تم حفظ النسخة الاحتياطية');if(tab=='bk')draw()}
-function importData(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(o.app!=='qmrm'||!o.data||!Array.isArray(o.data.tasks))throw 0;ask('استبدال بياناتك الحالية بمحتوى هذه النسخة؟',()=>{S=Object.assign(EMPTY(),o.data);migrate();S._u=Date.now();save();toast('تم استيراد البيانات');go('home')},'نعم، استبدل')}catch(e){toast('الملف غير صالح')}};rd.readAsText(f)}
+function importData(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(o.app!=='qmrm'||!o.data||!Array.isArray(o.data.tasks))throw 0;ask('استبدال بياناتك الحالية بمحتوى هذه النسخة؟ سيُحفظ نسخة أمان من بياناتك الحالية للتراجع.',()=>{try{localStorage.setItem('qmrm_pre_import',JSON.stringify({at:Date.now(),s:S}))}catch(e){toast('تعذّر حفظ نسخة الأمان لامتلاء المساحة')}S=Object.assign(EMPTY(),o.data);migrate();S._u=Date.now();save();toast('تم استيراد البيانات');go('home')},'نعم، استبدل')}catch(e){toast('الملف غير صالح')}};rd.readAsText(f)}
+const preGet=()=>{try{const t=localStorage.getItem('qmrm_pre_import');return t?JSON.parse(t):null}catch(e){return null}};
+function undoImport(){const p=preGet();if(!p||!p.s)return;ask('التراجع عن آخر استيراد واسترجاع بياناتك قبله؟',()=>{S=Object.assign(EMPTY(),p.s);migrate();S._u=Date.now();save();try{localStorage.removeItem('qmrm_pre_import')}catch(e){}toast('تم التراجع عن الاستيراد');go('home')},'نعم، تراجع')}
 function setBkf(v){S.bkf=v;save();draw()}
 function bkCheck(){const f=S.bkf||'7';if(f=='off')return;if(!S.lastBk){S.lastBk=Date.now();save();return}
  if(Date.now()-S.lastBk>f*864e5&&!$('#ban').innerHTML.includes('bkb'))$('#ban').innerHTML+=`<div class="c bkb" style="border-color:var(--pri)"><b>${svg('download')} النسخة الاحتياطية</b><div class="m" style="margin:6px 0">حان وقت حفظ نسخة من بياناتك على جهازك.</div><div class="row"><button onclick="exportData();this.closest('.c').remove()">حفظ الآن</button><button class="g" onclick="this.closest('.c').remove()">لاحقاً</button></div></div>`}
 setInterval(bkCheck,36e5);
 function backup(){const f=S.bkf||'7',lb=S.lastBk?new Date(S.lastBk):null;
  return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">النسخ الاحتياطي والتقارير</b><button class="g" onclick="go('home')">رجوع</button></div>
- <div class="c"><b>حفظ بياناتك على جهازك</b><div class="m" style="margin-top:4px">آخر نسخة: ${lb?ymd(lb)+' '+hm(lb):'لم تُحفظ بعد'}</div><button onclick="exportData()" style="width:100%;margin-top:8px">${svg('download')} حفظ نسخة احتياطية (ملف)</button><label style="display:block;text-align:center;margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--pri);color:var(--pri);cursor:pointer">استيراد نسخة من ملف<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label></div>
+ <div class="c"><b>حفظ بياناتك على جهازك</b><div class="m" style="margin-top:4px">آخر نسخة: ${lb?ymd(lb)+' '+hm(lb):'لم تُحفظ بعد'}</div><button onclick="exportData()" style="width:100%;margin-top:8px">${svg('download')} حفظ نسخة احتياطية (ملف)</button><label style="display:block;text-align:center;margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--pri);color:var(--pri);cursor:pointer">استيراد نسخة من ملف<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label>${preGet()?`<button class="g" onclick="undoImport()" style="width:100%;margin-top:8px">↩ التراجع عن آخر استيراد (${ymd(new Date(preGet().at))})</button>`:''}</div>
  <div class="c"><b>تذكير النسخ الدوري</b><div style="margin-top:6px">${[['off','إيقاف'],['1','يومياً'],['7','أسبوعياً'],['30','شهرياً']].map(([k,t])=>`<span class="chip ${f==k?'on':''}" onclick="setBkf('${k}')">${t}</span>`).join('')}</div><div class="m" style="margin-top:6px">المتصفح لا يسمح بالكتابة التلقائية على ملفات جهازك، لذلك يظهر لك تنبيه في الموعد وتضغط «حفظ الآن» فيُحمَّل الملف.</div></div>
- <div class="c"><b>التقارير (PDF / Word)</b>${[['all','إنجازاتي كاملة (كل التقارير في ملف واحد)'],['ach','سجل الإنجازات'],['juz','جدول الأجزاء'],['ct','المتسابقون'],['prw','متتبع الصلاة — الأسبوع'],['pr','متتبع الصلاة — الشهر'],['pry','متتبع الصلاة — السنة'],['td','قائمة المهمات'],['arc','الأرشيف']].map(([k,t])=>`<div class="row" style="flex-wrap:nowrap;padding:8px 0;border-top:1px solid var(--bd)"><span style="flex:1;${k=='all'?'font-weight:700':''}">${t}</span><button style="padding:6px 12px" onclick="printReport('${k}')">PDF</button><button class="g" style="padding:6px 12px" onclick="exportWord('${k}')">Word</button></div>`).join('')}<div class="m" style="margin-top:6px">PDF: تفتح نافذة الطباعة فاختر «حفظ بصيغة PDF». Word: يُحمَّل ملف .docx يفتح في Word على الهاتف.</div></div>`}
+ <div class="c"><b>التقارير (PDF / Word)</b>${[['all','إنجازاتي كاملة (كل التقارير في ملف واحد)'],['wk','تقرير أسبوعي للمعلم (آخر 7 أيام)'],['ach','سجل الإنجازات'],['juz','جدول الأجزاء'],['ct','المتسابقون'],['prw','متتبع الصلاة — الأسبوع'],['pr','متتبع الصلاة — الشهر'],['pry','متتبع الصلاة — السنة'],['td','قائمة المهمات'],['arc','الأرشيف']].map(([k,t])=>`<div class="row" style="flex-wrap:nowrap;padding:8px 0;border-top:1px solid var(--bd)"><span style="flex:1;${k=='all'?'font-weight:700':''}">${t}</span><button style="padding:6px 12px" onclick="printReport('${k}')">PDF</button><button class="g" style="padding:6px 12px" onclick="exportWord('${k}')">Word</button></div>`).join('')}<div class="m" style="margin-top:6px">PDF: تفتح نافذة الطباعة فاختر «حفظ بصيغة PDF». Word: يُحمَّل ملف .docx يفتح في Word على الهاتف.</div></div>`}
 const streak=()=>{const ds=new Set(S.logs.map(l=>l.date));let st=0,d=new Date();if(!ds.has(ymd(d)))d=new Date(d-864e5);while(ds.has(ymd(d))){st++;d=new Date(d-864e5)}return st};
 /* ---------- ملفات DOCX حقيقية (تُفتح في Word على الهاتف) ---------- */
 const CRCT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
@@ -977,7 +1212,7 @@ function dlBlob(bytes,name,mime){const a=document.createElement('a');a.href=URL.
 const DOCX_MIME='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 /* ---------- التقارير (تصميم احترافي + نسخة DOCX) ---------- */
 const nbAcc=()=>{const t=th();return(t.acc<0&&t.custom)?t.custom:thPal(thCur(),false).pri};
-const REPT={all:'إنجازاتي كاملة',ach:'سجل الإنجازات',juz:'جدول الأجزاء',ct:'إحصائيات المتسابقين',prw:'متتبع الصلاة — الأسبوع',pr:'متتبع الصلاة — الشهر',pry:'متتبع الصلاة — السنة',td:'قائمة المهمات',arc:'الأرشيف'};
+const REPT={all:'إنجازاتي كاملة',ach:'سجل الإنجازات',juz:'جدول الأجزاء',ct:'إحصائيات المتسابقين',prw:'متتبع الصلاة — الأسبوع',pr:'متتبع الصلاة — الشهر',pry:'متتبع الصلاة — السنة',td:'قائمة المهمات',arc:'الأرشيف',wk:'تقرير أسبوعي للمعلم'};
 function repHtml(k,mode){const dx=mode=='docx',P=prof(),now=new Date(),AC=nbAcc(),AH=AC.slice(1).toUpperCase(),who=(P.name?P.name+' • ':'')+ymd(now)+' • '+hij(now),bgOf=h=>{const m=/background:#([0-9a-f]{6})/i.exec(String(h));return m?m[1].toUpperCase():''};
  const T=dx?(h,rows)=>dxT(h,rows.map(r=>r.map(x=>({t:stripT(x),f:bgOf(x)}))),AH):(h,rows)=>`<table style="width:100%;border-collapse:collapse;margin:6px 0 18px;font-size:12.5px"><thead><tr style="background:${AC};color:#fff">${h.map(x=>`<th style="padding:7px 8px;border:1px solid ${AC};font-weight:600">${x}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr style="background:${i%2?'#f4f7f5':'#fff'};page-break-inside:avoid">${r.map(x=>`<td style="padding:6px 8px;border:1px solid #d6dcd8;text-align:center">${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
  const H=dx?x=>dxP(dxRun(x,{b:1,sz:28,c:AH}),{sp:[260,100]}):x=>`<h2 style="font-size:16px;margin:22px 0 8px;padding:7px 12px;border-inline-start:5px solid ${AC};background:#f1f5f2;border-radius:4px;color:#1c2a1f">${x}</h2>`;
@@ -988,7 +1223,7 @@ function repHtml(k,mode){const dx=mode=='docx',P=prof(),now=new Date(),AC=nbAcc(
   o+=H('سجل الجلسات')+T(['#','التاريخ','اليوم','الوقت','المهمة','المدة (د)','التقييم'],S.logs.slice(-200).reverse().map((l,i)=>[i+1,l.date,l.day,l.time,esc(l.s||'—'),l.dur,(BADGE[l.r]||['','—'])[1]]))}
  if(k=='all'||k=='juz'){const J=S.juz||{};o+=H('جدول الأجزاء')+T(['الجزء','عدد المراجعات','آخر مراجعة'],[...Array(30)].map((_,i)=>{const j=J[i+1]||{};return[i+1,j.n||0,j.last?ymd(new Date(j.last)):'—']}))}
  if(k=='all'||k=='ct'){const C=allC();if(C.length)o+=H('المتسابقون')+T(['الاسم','الأجزاء المطلوبة','الأجزاء المسموعة','الوقت','المعدل لكل جزء'],C.map(c=>[esc(c.name),c.juz.map(uLbl).join('، '),c.heard.length+' ('+c.heard.map(uLbl).join('، ')+')',c.fin?fmt(c.el):'—',c.fin&&c.heard.length?fmt(Math.round(c.el/c.heard.length)):'—']))}
- if(k=='all'||k=='prw')o+=prRepW(T,H,K);if(k=='all'||k=='pr')o+=prRepM(T,H);if(k=='all'||k=='pry')o+=prRepY(T,H);if(k=='all'||k=='td')o+=repTd(T,H);if(k=='all'||k=='arc')o+=repArc(T,H);
+ if(k=='all'||k=='prw')o+=prRepW(T,H,K);if(k=='all'||k=='pr')o+=prRepM(T,H);if(k=='all'||k=='pry')o+=prRepY(T,H);if(k=='all'||k=='td')o+=repTd(T,H);if(k=='all'||k=='arc')o+=repArc(T,H);if(k=='wk')o+=repWk(T,H,K);
  if(dx)return o.replace(/<div[^>]*>([\s\S]*?)<\/div>/g,(m,t)=>dxP(dxRun(stripT(t),{c:'666666',sz:18})));
  return o+`<div style="text-align:center;font-size:11px;color:#7a877d;margin-top:22px;padding-top:8px;border-top:1px solid #d6dcd8">أُنشئ بواسطة تطبيق مُثبِّت القرآن • ${ymd(now)}</div></div>`}
 function repTd(T,H){const L=(S.td||[]).concat(S.tda||[]),P=((S.pv||{}).items||[]).length;return L.length?H('قائمة المهمات')+T(['المهمة','الحالة','أُضيفت','أُنجزت'],L.map(x=>[esc(x.t),x.s==1?'✓ صح':x.s==2?'✗ غلط':'—',x.c?ymd(new Date(x.c)):'—',x.at?ymd(new Date(x.at)):'—']))+(P?'<div style="font-size:12px;color:#555">المهام الخاصة (محمية بكلمة سر) غير مضمّنة في التقرير.</div>':''):''}
@@ -1097,7 +1332,7 @@ const prof=()=>S.profile||(S.profile={name:'',age:'',gender:''});
 function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">${svg(i)}</span><div><b>${t}</b><small>${x}</small></div><span class="ch">${svg('chev')}</span></a>`;
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
  <div class="dsec">الحساب والتنبيهات</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}${R("go2('jz')",'calendar','الجداول','جداول المراجعة والحفظ')}
- <div class="dsec">الحفظ والمراجعة</div>${R("go2('st')",'chart','الإحصائيات','تقدّمك وسجل جلساتك')}
+ <div class="dsec">الحفظ والمراجعة</div>${R("go2('wr')",'target','الورد اليومي','كم تحفظ يومياً لتنهي في موعدك')}${R("go2('hp')",'target','الصفحات الصعبة','صفحات تتكرر مراجعتها أكثر')}${R("go2('kh')",'calendar','ختمة رمضان','خطة ختم القرآن بكمية يومية')}${R("go2('jm')",'chart','خريطة الأجزاء','حالة كل جزء بلون واحد')}${R("go2('wk')",'trophy','الأهداف والشارات','هدفك الأسبوعي وإنجازاتك')}${R("go2('rv')",'calendar','جدول المراجعة','ما تراجعه اليوم وغداً وهذا الأسبوع')}${R("go2('st')",'chart','الإحصائيات','تقدّمك وسجل جلساتك')}
  <div class="dsec">المسابقات</div>${R("go2('ct')",'trophy','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'target','الاختبارات','سحب المواضع وتقييم الأخطاء')}
  <div class="dsec">اللغة والمظهر</div>${R("go2('ap')",'palette','اللغة والمظهر','الوضع الليلي والألوان واللغة')}</aside></div>`}
 function go2(t){$('#sh').innerHTML='';if(t=='nb')nbCur=0;go(t)}
