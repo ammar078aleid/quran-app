@@ -292,7 +292,7 @@ let drawnTab=null;
 function draw(){
  $('#nav').innerHTML=tabs.map(([k,i,n])=>`<button class="${k==tab||(k=='td'&&tab=='gl')?'on':''}" onclick="go('${k}')">${i}<br>${n}</button>`).join('');
  const vm=$('#v'),chg=tab!==drawnTab,y0=window.scrollY;drawnTab=tab;vm.classList.toggle('na',!chg);
- vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,wk:wkPage,hp:hpPage,kh:khPage}[tab]();
+ vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,hp:hpPage,kh:khPage}[tab]();
  if(!chg&&Math.abs(window.scrollY-y0)>1){try{window.scrollTo({top:y0,behavior:'instant'})}catch(e){window.scrollTo(0,y0)}}
 }
 /* ---------- المهام ---------- */
@@ -315,26 +315,36 @@ function home(){
   <div class="m" style="margin-top:8px;cursor:pointer" onclick="tkOpen[${t.id}]=!tkOpen[${t.id}];draw()">${op?'▴':'▾'} تفاصيل المهمة</div>${op?`<div class="m" style="line-height:1.9">بدأت: ${t.st?dt(t.st):'لم تبدأ بعد'}<br>انتهت: لم تنتهِ بعد${m?`<br>الوقت الأصلي: ${hms(mOrig(m))} • المستغرق: ${hms(mUsed(m))}${mOver(m)?' • الزائد: '+hms(mOver(m)):''}`:''}</div>`:''}</div>`}).join('')||'<div class="c m">لا مهام اليوم، بارك الله فيك 🌿</div>');
 }
 
-/* ---------- جدول المراجعة: مبني على الأجزاء التي حددتها «محفوظة» في خريطة الأجزاء، وسجل مراجعاتها في جدول الأجزاء ---------- */
+/* ---------- جدول المراجعة: خطة شهرية بأجزائك المحفوظة (من خريطة الأجزاء) ---------- */
 const rvDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
-function rvJuz(j){const J=(S.juz||{})[j]||{},n=J.n||0,st=Math.min(n,3),bs=J.last||(S.jma||{})[j]||null;
- let nd=bs?rvDay(new Date(bs).getTime()+L[st]*864e5):rvDay(new Date());
- if(S.skipFri&&nd.getDay()==5)nd=new Date(nd.getTime()+864e5);
- return{k:'j'+j,j,name:'الجزء '+j,n,stage:st,last:J.last||null,next:nd}}
-const rvItems=()=>[...Array(30)].map((_,i)=>i+1).filter(j=>jmM(j)==2).map(rvJuz).sort((a,b)=>a.next-b.next||a.j-b.j);
-const rvDue=()=>{const t=rvDay(new Date());return rvItems().filter(it=>it.next<=t)};
-const rvCard=()=>{const n=rvDue().length;return n?`<div class="c" onclick="go('rv')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>🗓 جدول المراجعة</b><span class="ch">${svg('chev')}</span></div><div class="m">${n} ${n==1?'جزء':'أجزاء'} للمراجعة اليوم</div></div>`:''};
+const rvMem=()=>[...Array(30)].map((_,i)=>i+1).filter(j=>jmM(j)==2);
+const rvN=()=>Math.max(1,Math.min(10,Math.floor(+S.rvn)||1));
+const rvLast=j=>{const J=(S.juz||{})[j]||{};return J.last?rvDay(new Date(J.last)):null};
+const rvOrd=(mem,L)=>mem.slice().sort((a,b)=>(L[a]?L[a].getTime():-1)-(L[b]?L[b].getTime():-1)||a-b);
+function rvPlan(n){const mem=rvMem(),N=Math.min(rvN(),mem.length||1),t=rvDay(new Date()),tk=t.getTime(),L={};mem.forEach(j=>L[j]=rvLast(j));
+ const isT=j=>L[j]&&L[j].getTime()==tk,dn=mem.filter(isT),td=[...dn,...rvOrd(mem.filter(j=>!isT(j)),L).slice(0,Math.max(0,N-dn.length))],pend=td.filter(j=>!isT(j));
+ const days=[{d:t,juz:td,pend,done:dn,off:false}];td.forEach(j=>L[j]=t);
+ for(let k=1;k<n;k++){const d=new Date(t);d.setDate(t.getDate()+k);
+  if(S.skipFri&&d.getDay()==5){days.push({d,juz:[],off:true});continue}
+  const pk=rvOrd(mem,L).slice(0,N);pk.forEach(j=>L[j]=d);days.push({d,juz:pk.slice().sort((a,b)=>a-b),off:false})}
+ return days}
+const rvDue=()=>rvPlan(1)[0].pend;
+const rvGap=()=>{const M=rvMem().length;return M?Math.ceil(M/Math.min(rvN(),M)):0};
+const rvDT=n=>n==1?'يوم':n==2?'يومان':n<=10?n+' أيام':n+' يوماً';
+const rvCard=()=>{const n=rvDue().length;return n?`<div class="c" onclick="go('rv')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>🗓 جدول المراجعة</b><span class="ch">${svg('chev')}</span></div><div class="m">${n==1?'جزء واحد':n==2?'جزءان':n<=10?n+' أجزاء':n+' جزءاً'} للمراجعة اليوم</div></div>`:''};
 function rvRev(j){jAdd(j,1);toast('سُجّلت مراجعة الجزء '+j);draw()}
+function rvSetN(v){S.rvn=Math.max(1,Math.min(10,+v||1));save();draw()}
 function revPage(){
- const all=rvItems(),today=rvDay(new Date()),dd=x=>Math.round((x-today)/864e5),
-  row=it=>{const d=dd(it.next),ago=it.last?Math.max(0,Math.round((today-rvDay(new Date(it.last)))/864e5)):null;
-   return `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:8px 0;border-top:1px solid var(--bd)"><div style="flex:1;min-width:0"><b>${it.name}</b><div class="m">${it.n} مراجعة • ${ago===null?'لم تُراجع بعد':'آخر مراجعة '+(ago?'قبل '+ago+' يوم':'اليوم')} • المرحلة ${it.stage+1}/4${d<0?' • متأخر '+(-d)+' يوم':''}</div></div>${d<=0?`<button style="padding:6px 12px" onclick="rvRev(${it.j})">✅ راجعته</button>`:`<span class="m">${d==1?'غداً':D[it.next.getDay()]+' '+ymd(it.next).slice(5)}</span>`}</div>`},
-  sec=(t,L2)=>L2.length?`<div class="c"><div class="row sp"><b>${t} (${L2.length})</b></div>${L2.map(row).join('')}</div>`:'',
-  A=all.filter(it=>dd(it.next)<=0),B=all.filter(it=>dd(it.next)==1),C=all.filter(it=>dd(it.next)>=2&&dd(it.next)<=7),E=all.filter(it=>dd(it.next)>7);
- return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">جدول المراجعة</b><button class="g" onclick="go('home')">رجوع</button></div>
- <div class="c m">يظهر هنا فقط ما حددته «محفوظاً» في خريطة الأجزاء. كل مراجعة تسجّلها من هنا تُحتسب في جدول الأجزاء، وما تسجّله في جدول الأجزاء يحدّث هذا الجدول. المراحل: بعد 1 ثم 3 ثم 7 ثم 30 يوماً.</div>
- ${all.length?'':`<div class="c m">لا أجزاء محفوظة بعد. افتح خريطة الأجزاء وحدّد الأجزاء التي حفظتها لتظهر هنا.<button style="width:100%;margin-top:8px" onclick="go('jm')">فتح خريطة الأجزاء</button></div>`}
- ${sec('اليوم والمتأخر',A)}${sec('غداً',B)}${sec('خلال هذا الأسبوع',C)}${sec('لاحقاً',E)}`}
+ const mem=rvMem(),M=mem.length,head=`<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">جدول المراجعة</b><button class="g" onclick="go('home')">رجوع</button></div>`;
+ if(!M)return head+`<div class="c m">لا أجزاء محفوظة بعد. افتح خريطة الأجزاء وحدّد الأجزاء التي حفظتها، فأضع لك خطة شهرية لمراجعتها بحيث لا يُنسى جزء.<button style="width:100%;margin-top:8px" onclick="go('jm')">فتح خريطة الأجزاء</button></div>`;
+ const N=Math.min(rvN(),M),P=rvPlan(30),T=P[0],cyc=Math.ceil(M/N),nm=a=>a.length==1?'الجزء '+a[0]:'الأجزاء '+a.join('، '),
+  opts=[...Array(Math.min(10,M))].map((_,i)=>`<option value="${i+1}" ${i+1==N?'selected':''}>${i+1}</option>`).join('');
+ return head+`<div class="c"><b>حفظت ${M==1?'جزءاً واحداً':M==2?'جزأين':M<=10?M+' أجزاء':M+' جزءاً'}</b>
+ <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center;margin:8px 0"><span class="m" style="white-space:nowrap">كم جزءاً تراجع في اليوم؟</span><select onchange="rvSetN(this.value)" style="margin:0">${opts}</select></div>
+ <div class="m">بهذه الخطة يعود إليك كل جزء كل ${rvDT(cyc)} تقريباً. تُراجَع الأجزاء كلها بالترتيب، الأقدم مراجعةً أولاً، فلا يُنسى جزء.</div></div>
+ <div class="c"><b>مراجعة اليوم</b><div class="m">${T.pend.length?'تبقّى '+T.pend.length+' من '+T.juz.length:'أتممت مراجعة اليوم، بارك الله فيك 🌿'}</div>${T.juz.map(j=>{const dn=T.done.includes(j),ag=jmAge(j);
+  return `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:8px 0;border-top:1px solid var(--bd)"><div style="flex:1"><b>الجزء ${j}</b><div class="m">${exPages(j)} صفحة • ${ag===null?'لم يُراجع بعد':'آخر مراجعة '+(ag==0?'اليوم':'قبل '+ag+' يوم')}</div></div>${dn?'<span class="m" style="color:var(--pri);font-weight:700">✅ تمت</span>':`<button style="padding:6px 12px" onclick="rvRev(${j})">✅ راجعته</button>`}</div>`}).join('')}</div>
+ <div class="c"><b>الخطة الشهرية</b><div class="m" style="margin-bottom:4px">الأيام الثلاثون القادمة، وتتحدّث تلقائياً كلما سجّلت مراجعة.</div>${P.map((r,i)=>`<div class="row" style="flex-wrap:nowrap;gap:8px;padding:7px 6px;border-top:1px solid var(--bd);${i==0?'background:color-mix(in srgb,var(--pri) 10%,transparent);border-radius:8px':''}"><span class="m" style="width:86px;flex:none">${i==0?'اليوم':D[r.d.getDay()]+' '+ymd(r.d).slice(5)}</span><b style="flex:1;font-size:14px">${r.off?'<span class="m">إجازة</span>':nm(r.juz)}</b></div>`).join('')}</div>`}
 
 /* ---------- الورد اليومي المقترح: يحسب كمية الحفظ اليومية لتنهي هدفك في موعد تحدده ---------- */
 const WRL=15;let wrdEdit=0;
@@ -408,47 +418,31 @@ function wrdPzAdd(){const a=$('#wrpa').value,b=$('#wrpb').value||a;if(!a){toast(
 function wrdPzToday(){const t=ymd(new Date());wrdPzPush(t,t)}
 function wrdPzDel(id){const W=wrdG();if(!W)return;W.pz=(W.pz||[]).filter(p=>p.id!=id);save();draw()}
 
-/* ---------- خريطة الأجزاء: لون لكل جزء حسب موعد مراجعته ---------- */
-const JMC={'0':['#8a948f','لم يُحفظ'],'1':['#1565c0','قيد الحفظ'],g:['#2e7d32','لم يحن موعد مراجعته'],y:['#f9a825','موعد مراجعته اليوم أو متأخر يوماً أو يومين'],r:['#c62828','متأخر 3 أيام أو أكثر']};
+/* ---------- خريطة الأجزاء: لون لكل جزء حسب دورة مراجعتك ---------- */
+const JMC={'0':['#8a948f','لم يُحفظ'],'1':['#1565c0','قيد الحفظ'],g:['#2e7d32','ضمن دورة مراجعتك'],y:['#f9a825','تأخر قليلاً عن دورتك'],r:['#c62828','تأخر كثيراً أو لم يُراجع بعد']};
 const jmM=j=>{const m=(S.jm||{})[j];return m!==undefined?m:(((S.juz||{})[j]||{}).n>0?2:0)};
-const jmOv=j=>Math.round((rvDay(new Date())-rvJuz(j).next)/864e5);
 function jmDays(j){const J=(S.juz||{})[j]||{};return J.last?Math.floor((Date.now()-new Date(J.last))/864e5):null}
-function jmSt(j){const m=jmM(j);if(m==0)return '0';if(m==1)return '1';const d=jmOv(j);return d<0?'g':d<=2?'y':'r'}
+function jmBase(j){const L=rvLast(j);if(L)return L;const a=(S.jma||{})[j];return a?rvDay(new Date(a)):null}
+const jmAge=j=>{const b=jmBase(j);return b?Math.round((rvDay(new Date())-b)/864e5):null};
+function jmSt(j){const m=jmM(j);if(m==0)return '0';if(m==1)return '1';const d=jmAge(j),g=Math.max(rvGap(),1);return d===null?'r':d<=g?'g':d<=g+7?'y':'r'}
 function jmPage(){const st=[...Array(30)].map((_,i)=>jmSt(i+1)),cnt=k=>st.filter(x=>x==k).length,mem=st.filter(x=>'gyr'.includes(x)).length;
- const tile=j=>{const k=st[j-1],c=JMC[k][0],sm=k=='0'||k=='1'?JMC[k][1]:(d=>d<0?'بعد '+(-d)+' ي':d==0?'اليوم':'متأخر '+d+' ي')(jmOv(j));
+ const tile=j=>{const k=st[j-1],c=JMC[k][0],d=jmAge(j),sm=k=='0'||k=='1'?JMC[k][1]:d===null?'لم تُراجع':d==0?'اليوم':'قبل '+d+' ي';
   return `<div class="exj" style="border-color:${c};background:color-mix(in srgb,${c} 18%,transparent);cursor:pointer;min-height:62px;padding:8px 0" onclick="jmOpen(${j})"><b style="font-size:18px">${j}</b><small style="font-size:10px;opacity:.85">${sm}</small></div>`};
  return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">خريطة الأجزاء</b><button class="g" onclick="go('home')">رجوع</button></div>
- <div class="c"><div class="row" style="gap:12px"><div style="flex:1;text-align:center">محفوظ<br><b style="font-size:22px">${mem}</b> <span class="m">من 30</span></div><div style="flex:1;text-align:center">مستحق مراجعته<br><b style="font-size:22px;color:${JMC.r[0]}">${cnt('y')+cnt('r')}</b></div></div></div>
+ <div class="c"><div class="row" style="gap:12px"><div style="flex:1;text-align:center">محفوظ<br><b style="font-size:22px">${mem}</b> <span class="m">من 30</span></div><div style="flex:1;text-align:center">متأخر عن الخطة<br><b style="font-size:22px;color:${JMC.r[0]}">${cnt('y')+cnt('r')}</b></div></div></div>
  <div class="c"><div class="exg">${[...Array(30)].map((_,i)=>tile(i+1)).join('')}</div>
  <div style="margin-top:10px">${['0','1','g','y','r'].map(k=>`<div class="m" style="padding:2px 0"><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:${JMC[k][0]};vertical-align:middle;margin-inline-end:6px"></span>${JMC[k][1]}</div>`).join('')}</div></div>
- <div class="m" style="margin:0 16px">اضغط على جزء لتحديد حالته. الأجزاء التي تحددها «محفوظة» تظهر في جدول المراجعة، وكل مراجعة تسجّلها تُحتسب في جدول الأجزاء.</div>`}
+ <div class="m" style="margin:0 16px">اضغط على جزء لتحديد حالته. الأجزاء التي تحددها «محفوظة» تدخل خطة المراجعة الشهرية، وكل مراجعة تسجّلها تُحتسب في جدول الأجزاء.</div>`}
 function jmOpen(j){const k=jmSt(j),m=jmM(j),J=(S.juz||{})[j]||{},d=jmDays(j),b=(v,t)=>`<button class="${m==v?'':'g'}" style="flex:1;padding:8px 4px" onclick="jmSet(${j},${v})">${t}</button>`;
- $('#sh').innerHTML=shW(`<b>الجزء ${j}</b><div class="m" style="margin:6px 0">${exPages(j)} صفحة • ${JMC[k][1]}${J.n?' • '+J.n+' مراجعة':''}${d!==null?' • آخر مراجعة '+(d==0?'اليوم':'قبل '+d+' يوم'):''}${m==2?' • المراجعة القادمة '+ymd(rvJuz(j).next):''}</div><div class="row" style="gap:6px;flex-wrap:nowrap">${b(0,'لم يُحفظ')}${b(1,'قيد الحفظ')}${b(2,'محفوظ')}</div>${m==2?`<button onclick="jmRev(${j})" style="width:100%;margin-top:10px">✅ سجّلت مراجعته اليوم</button>`:''}<button class="g" onclick="$('#sh').innerHTML=''" style="width:100%;margin-top:6px">إغلاق</button>`)}
+ let nx='';if(m==2){const P=rvPlan(30),r=P.find((x,i)=>x.juz.includes(j)&&(i>0||!P[0].done.includes(j)));nx=r?' • موعده في الخطة: '+(r===P[0]?'اليوم':ymd(r.d)):''}
+ $('#sh').innerHTML=shW(`<b>الجزء ${j}</b><div class="m" style="margin:6px 0">${exPages(j)} صفحة • ${JMC[k][1]}${J.n?' • '+J.n+' مراجعة':''}${d!==null?' • آخر مراجعة '+(d==0?'اليوم':'قبل '+d+' يوم'):''}${nx}</div><div class="row" style="gap:6px;flex-wrap:nowrap">${b(0,'لم يُحفظ')}${b(1,'قيد الحفظ')}${b(2,'محفوظ')}</div>${m==2?`<button onclick="jmRev(${j})" style="width:100%;margin-top:10px">✅ سجّلت مراجعته اليوم</button>`:''}<button class="g" onclick="$('#sh').innerHTML=''" style="width:100%;margin-top:6px">إغلاق</button>`)}
 function jmSet(j,v){S.jm=S.jm||{};S.jm[j]=v;if(v==2&&!(S.jma||{})[j]){S.jma=S.jma||{};S.jma[j]=new Date().toISOString()}save();draw();jmOpen(j)}
 function jmRev(j){jAdd(j,1);$('#sh').innerHTML='';toast('سُجّلت مراجعة الجزء '+j);draw()}
 
-/* ---------- الأهداف الأسبوعية والشارات ---------- */
+/* ---------- أيام النشاط (تُستعمل في تقرير المعلم) ---------- */
 const wkAct=()=>{const a=new Set();(S.logs||[]).forEach(l=>l.date&&a.add(l.date));((S.wrd||{}).log||[]).forEach(x=>a.add(x.d));Object.values(S.juz||{}).forEach(j=>(j.h||[]).forEach(h=>a.add(new Date(h).toLocaleDateString('en-CA'))));return a};
 function wkRun(){const A=wkAct();if(!A.size)return{cur:0,best:0};const t=new Date();t.setHours(0,0,0,0);const end=A.has(ymd(t))?t:new Date(t-864e5),d=new Date([...A].sort()[0]+'T00:00:00');let run=0,best=0;
  for(let i=0;d<=end&&i<9000;i++){if(A.has(ymd(d))){run++;best=Math.max(best,run)}else if(!(S.skipFri&&d.getDay()==5))run=0;d.setDate(d.getDate()+1)}return{cur:run,best}}
-function wkWeek(){const t=new Date();t.setHours(0,0,0,0);const s=new Date(t);s.setDate(t.getDate()-((t.getDay()+1)%7));return [...Array(7)].map((_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d})}
-function wkStats(){const W=wkWeek(),A=wkAct(),ks=new Set(W.map(ymd));return{days:W,act:W.filter(d=>A.has(ymd(d))).length,
- lines:((S.wrd||{}).log||[]).filter(x=>ks.has(x.d)).reduce((a,x)=>a+x.l,0),tasks:(S.logs||[]).filter(l=>ks.has(l.date)).length,A}}
-const wkCard=()=>{const w=wkStats();if(!w.A.size)return '';const g=S.wkg||5;return `<div class="c" onclick="go('wk')" style="cursor:pointer"><div class="row sp"><b>🏅 هذا الأسبوع</b><span class="ch">${svg('chev')}</span></div><div class="m">${w.act} من ${g} أيام${w.act>=g?' • حققت هدفك 🎉':''}${wkRun().cur?' • '+wkRun().cur+' يوماً متتالياً':''}</div></div>`};
-const WKB=[['🔥','أيام متتالية',[3,7,14,30,100],()=>wkRun().best,'يوم'],
- ['📖','صفحات محفوظة',[10,50,100,300,604],()=>{const W=S.wrd;return W?Math.floor((W.base+(W.log||[]).reduce((a,x)=>a+x.l,0))/WRL):0},'صفحة'],
- ['🧭','أجزاء محفوظة',[1,5,10,20,30],()=>[...Array(30)].filter((_,i)=>jmM(i+1)==2).length,'جزء'],
- ['🔁','مراجعات مكتملة',[10,50,100,300],()=>(S.arc||[]).filter(a=>arTy(a)=='مراجعة').length,'مراجعة']];
-function wkGoal(v){S.wkg=+v||5;save();draw()}
-function wkPage(){const w=wkStats(),g=S.wkg||5,run=wkRun(),A=w.A,pct=Math.min(100,Math.round(w.act/g*100));let got=0,all=0;
- const bd=WKB.map(([ic,nm,th,fn,u])=>{const v=fn();return `<div class="c"><div class="row sp"><b>${ic} ${nm}</b><span class="m">${v} ${u}</span></div><div class="row" style="gap:6px;margin-top:8px">${th.map(x=>{const ok=v>=x;all++;if(ok)got++;return `<div style="flex:1;min-width:54px;text-align:center;padding:8px 2px;border-radius:12px;border:1px solid ${ok?'var(--pri)':'var(--bd)'};background:${ok?'color-mix(in srgb,var(--pri) 12%,transparent)':'transparent'};opacity:${ok?1:.55}"><div style="font-size:20px">${ok?ic:'🔒'}</div><div style="font-size:11px">${x} ${u}</div></div>`}).join('')}</div></div>`}).join('');
- return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">الأهداف والشارات</b><button class="g" onclick="go('home')">رجوع</button></div>
- <div class="c"><b>هدفك هذا الأسبوع</b><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center;margin:8px 0"><span class="m" style="white-space:nowrap">أيام النشاط في الأسبوع:</span><select onchange="wkGoal(this.value)" style="margin:0">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n==g?'selected':''}>${n}</option>`).join('')}</select></div>
- <div class="row" style="gap:6px;justify-content:space-between">${w.days.map(d=>{const on=A.has(ymd(d));return `<div style="text-align:center;flex:1"><div style="height:34px;width:34px;margin:0 auto;border-radius:50%;line-height:34px;font-weight:700;background:${on?'var(--pri)':'transparent'};color:${on?'#fff':'inherit'};border:1px solid ${on?'var(--pri)':'var(--bd)'}">${on?'✓':d.getDate()}</div><div class="m" style="font-size:10px">${D[d.getDay()].replace('ال','')}</div></div>`}).join('')}</div>
- <div style="background:var(--bd);border-radius:10px;height:10px;margin-top:10px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--pri)"></div></div>
- <div class="m" style="margin-top:6px">${w.act} من ${g} أيام${w.act>=g?' • حققت هدفك 🎉':''} • ${w.tasks} مهمة منجزة${w.lines?' • '+wrdTxt(w.lines)+' حفظ':''}</div>
- <div class="m">الأيام المتتالية الآن: ${run.cur} • أفضل رقم: ${run.best}</div></div>
- <div class="c m">الشارات المفتوحة ${got} من ${all}. تُحسب من سجلك تلقائياً، ولا تحتاج إلى إدخال شيء.</div>${bd}`}
 
 /* ---------- التقرير الأسبوعي للمعلم (آخر 7 أيام) ---------- */
 function repWk(T,H,K){const t=new Date();t.setHours(0,0,0,0);const days=[...Array(7)].map((_,i)=>{const d=new Date(t);d.setDate(t.getDate()-6+i);return d}),ks=new Set(days.map(ymd)),A=wkAct(),act=days.filter(d=>A.has(ymd(d))).length,
@@ -528,7 +522,7 @@ function khPage(){const K=khG();if(!K||khEdit){setTimeout(khPrev,0);return khFor
 
 /* ---------- التذكيرات: تظهر عادياً، ويمكن إخفاؤها واستعادتها بالسحب ---------- */
 let remOpen=0,remY=null;
-function remBox(){const cs=[glRemHtml(),prRemHtml(),wrdCard(),khCard(),hpCard(),wkCard(),rvCard()].filter(Boolean);if(!cs.length)return '';
+function remBox(){const cs=[glRemHtml(),prRemHtml(),wrdCard(),khCard(),hpCard(),rvCard()].filter(Boolean);if(!cs.length)return '';
  if(S.remH&&!remOpen)return `<div id="remBar" onpointerdown="remDn(event)" onpointermove="remMv(event)" onpointerup="remY=null" onpointercancel="remY=null" onclick="remShow()" style="touch-action:none;cursor:pointer;display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:12px 14px;border-radius:16px;background:var(--bd);user-select:none"><span style="width:30px;height:30px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;flex:none">⬇</span><span style="flex:1;text-align:center;font-weight:700">اسحب لعرض التذكيرات (${cs.length})</span></div>`;
  return cs.join('')+`<button class="g" onclick="remHide()" style="width:100%;margin:0 0 10px;padding:8px">🗄 إخفاء التذكيرات حتى أسحبها</button>`}
 function remDn(e){remY=e.clientY}
@@ -598,6 +592,7 @@ function done(id,r){
  const snap=JSON.parse(JSON.stringify(t));snap.st=null;snap.mk=0;snap.next=new Date().toISOString();if(tm)snap.tm=mkT(mOrig(tm));
  (S.arc=S.arc||[]).push({id:S.id++,tid:id,ty:t.type,name:t.s,sub:isG(t)?jl(t):'',r,st:st.toISOString(),en:n.toISOString(),us,ov:tm?mOver(tm):0,og:tm?mOrig(tm):0,mk:t.mk||0,tk:snap,lg:{t:id,date:ymd(n),time:hm(n)}});
  if(tm)mReset(tm);t.mk=0;
+ (t.js||(t.j?[t.j]:[])).forEach(u=>jAdd(u,1));
  const fin=r=='mastered'&&t.type=='مراجعة'&&t.stage==3;
  S.tasks=S.tasks.filter(x=>x.id!=id);save();$('#sh').innerHTML='';draw()}
 /* ---------- محرك المؤقتات (المهام والمسابقات) ---------- */
@@ -1323,7 +1318,7 @@ function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
  <div class="dsec">الحساب</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}
  <div class="dsec">الحفظ</div>${R("go2('wr')",'book','الورد اليومي','كم تحفظ كل يوم')}${R("go2('kh')",'moon','ختمة رمضان','ختم القرآن بكمية يومية')}${R("go2('hp')",'pin','الصفحات الصعبة','صفحات تُراجَع أكثر')}
- <div class="dsec">المراجعة والمتابعة</div>${R("go2('rv')",'repeat','جدول المراجعة','ما تراجعه اليوم وغداً')}${R("go2('jz')",'grid','الجداول','مراجعات كل جزء')}${R("go2('jm')",'mapfold','خريطة الأجزاء','حالة كل جزء بلون')}${R("go2('st')",'chart','الإحصائيات','تقدّمك وجلساتك')}${R("go2('wk')",'medal','الأهداف والشارات','هدفك الأسبوعي')}
+ <div class="dsec">المراجعة والمتابعة</div>${R("go2('rv')",'repeat','جدول المراجعة','ما تراجعه اليوم وغداً')}${R("go2('jz')",'grid','الجداول','مراجعات كل جزء')}${R("go2('jm')",'mapfold','خريطة الأجزاء','حالة كل جزء بلون')}${R("go2('st')",'chart','الإحصائيات','تقدّمك وجلساتك')}
  <div class="dsec">المسابقات</div>${R("go2('ct')",'users','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'clipcheck','الاختبارات','سحب المواضع وتقييم الأخطاء')}
  <div class="dsec">اللغة والمظهر</div>${R("go2('ap')",'palette','اللغة والمظهر','الوضع الليلي والألوان واللغة')}</aside></div>`}
 function go2(t){$('#sh').innerHTML='';if(t=='nb')nbCur=0;go(t)}
