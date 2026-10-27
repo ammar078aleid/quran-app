@@ -1,0 +1,33 @@
+// أضف هذه المقاطع داخل: match /databases/{database}/documents { ... } في Firestore Rules
+// ثم اضغط Publish. (لا تحذف قواعد users و usernames الحالية)
+
+match /invites/{code} {
+  allow get: if request.auth != null;                       // المعلّم يقرأ الكود
+  allow list: if false;                                     // ممنوع استعراض الأكواد
+  allow create: if request.auth != null
+                && request.resource.data.uid == request.auth.uid;
+  allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+}
+
+match /links/{id} {
+  allow read: if request.auth != null
+              && (resource.data.s == request.auth.uid || resource.data.t == request.auth.uid);
+
+  // المعلّم ينشئ الربط بكود صالح فقط
+  allow create: if request.auth != null
+                && request.resource.data.t == request.auth.uid
+                && request.resource.data.s != request.auth.uid
+                && id == request.resource.data.s + '_' + request.auth.uid
+                && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.uid == request.resource.data.s
+                && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.exp > request.time.toMillis();
+
+  // الطالب يكتب: sum, dn, sn   |   المعلّم يكتب: as, tn
+  allow update: if request.auth != null && (
+      (resource.data.s == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sum','dn','sn']))
+   || (resource.data.t == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['as','tn'])));
+
+  allow delete: if request.auth != null
+                && (resource.data.s == request.auth.uid || resource.data.t == request.auth.uid);
+}
