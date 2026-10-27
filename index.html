@@ -1699,37 +1699,118 @@ const nv=document.getElementById('nav');if(nv){nv.setAttribute('role','navigatio
 new MutationObserver(()=>{if(!q){q=1;requestAnimationFrame(fix)}}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('keydown',e=>{const x=e.target;if((e.key=='Enter'||e.key==' ')&&x.getAttribute&&x.getAttribute('role')=='button'&&x.tagName!='BUTTON'){e.preventDefault();x.click()}});fix()})();
 /* ===== TEACH: وضع المعلّم والطالب =====
- invites/{CODE}: {uid,name,exp}  — كود ربط يولّده الطالب (صالح 7 أيام)
- links/{studentUid_teacherUid}: {s,t,sn,tn,code,sum,as:[{id,t,d,c}],dn:{id:time}}
-   الطالب يكتب: sum,dn,sn   —   المعلّم يكتب: as,tn   (القواعد في firestore.rules.txt) */
-let tcM='s',tcSel=null,tcL=[],tcBusy=0,tcLast=0,tcAt=0;
+ invites/{CODE}: {uid,name,exp}  — كود الطالب الدائم (يُنشأ مرة واحدة فقط)
+ links/{studentUid_teacherUid}: {s,t,sn,tn,code,as:[{id,t,d,c}],dn:{id:{v:1|0|null,n,t}},sum}
+   sum = ملخص + تفاصيل إنجازات الطالب (للقراءة فقط عند المعلّم): st,wk,n,m,last,ps,pr,lg,jz
+   الطالب يكتب: sum,dn,sn   —   المعلّم يكتب: as,tn   (القواعد كما هي) */
+let tcM='s',tcSel=null,tcL=[],tcBusy=0,tcLast=0,tcAt=0,tcOp=null,tcTb='pr',tcEns=0,tcPd=0;
+const TCFAR=4102444800000;
+(function(){const s=document.createElement('style');s.textContent=`
+.tcT{display:flex;gap:4px;margin:10px 12px 0;padding:4px;background:color-mix(in srgb,var(--pri) 8%,transparent);border-radius:14px}
+.tcT div{flex:1;text-align:center;padding:9px 2px;border-radius:11px;font-size:13px;color:var(--mut);cursor:pointer;white-space:nowrap}
+.tcT div.on{background:var(--card);color:var(--pri);font-weight:700;box-shadow:0 1px 6px rgba(0,0,0,.14)}
+.tcH{display:flex;align-items:center;gap:12px;cursor:pointer}
+.tcH>div:nth-child(2){flex:1;min-width:0}
+.tcAv{width:44px;height:44px;border-radius:50%;background:var(--pri);color:var(--on);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;flex:none}
+.tcCd{font-size:34px;font-weight:800;letter-spacing:8px;text-align:center;direction:ltr;padding:16px 8px;margin:10px 0 4px;border:2px dashed var(--gold);border-radius:16px;cursor:pointer;color:var(--pri);user-select:all}
+.tcK{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.tcK div{background:color-mix(in srgb,var(--pri) 7%,transparent);border-radius:12px;padding:10px 4px;text-align:center}
+.tcK b{display:block;font-size:20px}.tcK span{font-size:11px;color:var(--mut)}
+.tcDot{width:20px;height:20px;border-radius:50%;display:inline-block;background:var(--bd);vertical-align:middle}
+.tcDot.m{background:#2e7d32}.tcDot.h{background:#f9a825}.tcDot.x{background:#c62828}
+.tcP{width:100%;border-collapse:collapse;text-align:center;font-size:12px}
+.tcP th{color:var(--mut);font-weight:600;padding:4px 0}.tcP td{padding:5px 0;border-top:1px solid var(--bd)}
+.tcP td:first-child{text-align:start;font-weight:600;white-space:nowrap}.tcP small{display:block;font-size:10px;line-height:1;margin-top:2px;color:var(--mut)}
+.tcA{border:1px solid var(--bd);border-inline-start:4px solid var(--bd);border-radius:14px;padding:12px;margin:8px 0;background:var(--card)}
+.tcA.ok{border-inline-start-color:#2e7d32}.tcA.no{border-inline-start-color:#c62828}
+.tcB{display:flex;gap:8px;margin:10px 0 8px}
+.tcB button{flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font-weight:700;font-size:15px}
+.tcB button.y.on{background:#2e7d32;border-color:#2e7d32;color:#fff}.tcB button.n.on{background:#c62828;border-color:#c62828;color:#fff}
+.tcNote{background:color-mix(in srgb,var(--gold) 14%,transparent);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:13px}
+.tcS{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:var(--bd);color:var(--mut)}
+.tcS.ok{background:#2e7d32;color:#fff}.tcS.no{background:#c62828;color:#fff}
+.tcBadge{min-width:22px;height:22px;border-radius:11px;background:var(--gold);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+`;document.head.appendChild(s)})();
 const tcMe=()=>prof().name||(fu&&fu.displayName)||'';
-const TCE={'tc-bad':'الكود غير صحيح أو منتهي','tc-self':'لا يمكنك ربط نفسك','tc-dup':'هذا الطالب مرتبط بك مسبقاً','permission-denied':'لا توجد صلاحية: حدّث قواعد Firestore (انظر الملف المرفق)'};
+const TCE={'tc-bad':'الكود غير صحيح','tc-self':'لا يمكنك ربط نفسك','tc-dup':'هذا الطالب مرتبط بك مسبقاً','permission-denied':'لا توجد صلاحية: حدّث قواعد Firestore (انظر الملف المرفق)'};
 const tcErr=e=>{dbg(e,'tc');toast('⚠️ '+(TCE[e.code]||'حدث خطأ، حاول لاحقاً'))};
+const tcSt=(l,a)=>{const d=(l.dn||{})[a];return typeof d=='number'?{v:1,t:d,n:''}:(d||{})};
+const tcIn=n=>(String(n||'').trim()[0]||'؟');
 function tcSum(){const ds=new Set(S.logs.map(l=>l.date));let st=0,d=new Date();if(!ds.has(ymd(d)))d=new Date(d-864e5);while(ds.has(ymd(d))){st++;d=new Date(d-864e5)}
- return{st,wk:[...Array(7)].map((_,i)=>S.logs.filter(l=>l.date==ymd(new Date(Date.now()-(6-i)*864e5))).length),n:S.logs.length,m:S.logs.filter(l=>l.r=='mastered').length,last:S.logs.reduce((a,l)=>l.date>a?l.date:a,''),u:Date.now()}}
+ const P=S.pr||{days:{}},pr={};
+ for(let i=0;i<30;i++){const k=ymd(new Date(Date.now()-i*864e5)),r=(P.days||{})[k];if(!r)continue;const a=PK.map(p=>r[p]&&r[p].s||'-').join('');if(a=='-----')continue;pr[k]=a+PK.map(p=>r[p]&&r[p].s&&r[p].s!='x'?(r[p].t||0):0).join('')}
+ let jz=[];try{jz=[...Array(30)].map((_,i)=>{const j=i+1,a=jmAge(j);return jmSt(j)+','+(a===null?'':a)+','+(((S.juz||{})[j]||{}).n||0)})}catch(e){dbg(e,'tcSum')}
+ const lg=S.logs.slice(-40).reverse().map(l=>({d:l.date||'',s:String(l.s||'').slice(0,40),r:l.r||'',tm:l.time||'',m:l.dur||0}));
+ return{st,wk:[...Array(7)].map((_,i)=>S.logs.filter(l=>l.date==ymd(new Date(Date.now()-(6-i)*864e5))).length),n:S.logs.length,m:S.logs.filter(l=>l.r=='mastered').length,last:S.logs.reduce((a,l)=>l.date>a?l.date:a,''),ps:P.start||'',pr,lg,jz,u:Date.now()}}
 async function tcLoad(){if(!fbOK||!fu)return;try{const[a,b]=await Promise.all([fs.collection('links').where('s','==',fu.uid).get(),fs.collection('links').where('t','==',fu.uid).get()]);tcL=[...a.docs.map(d=>Object.assign({id:d.id,r:'s'},d.data())),...b.docs.map(d=>Object.assign({id:d.id,r:'t'},d.data()))]}catch(e){tcErr(e)}}
-async function tcPub(force){if(!fbOK||!fu||(!force&&Date.now()-tcLast<6e5))return;tcLast=Date.now();try{const q=await fs.collection('links').where('s','==',fu.uid).get(),sm=tcSum(),sn=tcMe();await Promise.all(q.docs.map(d=>d.ref.update({sum:sm,sn})))}catch(e){dbg(e,'tcPub')}}
+async function tcPub(force){if(!fbOK||!fu||(!force&&Date.now()-tcLast<6e5))return;tcLast=Date.now();try{const q=await fs.collection('links').where('s','==',fu.uid).get();if(q.empty)return;const sm=tcSum(),sn=tcMe();await Promise.all(q.docs.map(d=>d.ref.update({sum:sm,sn})))}catch(e){dbg(e,'tcPub')}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')tcPub()});
-async function tcGen(){if(tcBusy)return;tcBusy=1;try{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<6;i++)c+=A[Math.floor(Math.random()*A.length)];const old=(S.tcCode||{}).c;if(old)await fs.collection('invites').doc(old).delete().catch(dbg);await fs.collection('invites').doc(c).set({uid:fu.uid,name:tcMe(),exp:Date.now()+7*864e5});S.tcCode={c,exp:Date.now()+7*864e5};save()}catch(e){tcErr(e)}tcBusy=0;draw()}
+/* كود الطالب: يُنشأ مرة واحدة ويبقى ثابتاً */
+const tcCode=()=>(S.tcCode&&S.tcCode.c)||'';
+async function tcEnsure(){if(tcBusy||!fbOK||!fu)return;tcBusy=1;
+ try{const col=fs.collection('invites'),val=()=>({uid:fu.uid,name:tcMe(),exp:TCFAR});let c=tcCode(),ok=false;
+  if(c){const r=col.doc(c),d=await r.get();
+   if(!d.exists){await r.set(val());ok=true}
+   else if(d.data().uid==fu.uid){if(d.data().exp<TCFAR){await r.delete();await r.set(val())}ok=true}}
+  if(!ok){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+   for(let t=0;t<8&&!ok;t++){c='';for(let i=0;i<6;i++)c+=A[Math.floor(Math.random()*A.length)];const r=col.doc(c);if((await r.get()).exists)continue;
+    try{await r.set(val());ok=true}catch(e){if(e.code!='permission-denied'||t==7)throw e}}
+   if(ok){S.tcCode={c};save()}}
+ }catch(e){tcErr(e);tcEns=0}tcBusy=0}
 async function tcJoin(){const c=($('#tcc').value||'').trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(c)){toast('الكود 6 خانات');return}if(tcBusy)return;tcBusy=1;try{const d=await fs.collection('invites').doc(c).get();if(!d.exists||d.data().exp<Date.now())throw{code:'tc-bad'};const v=d.data();if(v.uid==fu.uid)throw{code:'tc-self'};const ref=fs.collection('links').doc(v.uid+'_'+fu.uid);if((await ref.get()).exists)throw{code:'tc-dup'};await ref.set({s:v.uid,t:fu.uid,sn:v.name||'',tn:tcMe(),code:c,as:[],dn:{},sum:null,c:Date.now()});await tcLoad();toast('تم ربط الطالب ✅')}catch(e){tcErr(e)}tcBusy=0;draw()}
 const tcG=i=>tcL.find(x=>x.id==i);
-async function tcAs(i){const l=tcG(i),t=($('#tct').value||'').trim(),d=$('#tcd').value;if(!l||!t)return;const as=[...(l.as||[]),{id:Date.now().toString(36),t:t.slice(0,200),d,c:Date.now()}];try{await fs.collection('links').doc(i).update({as,tn:tcMe()});l.as=as;draw()}catch(e){tcErr(e)}}
+/* المعلّم: إضافة/حذف واجب وفصل الطالب */
+async function tcAs(i){const l=tcG(i),t=($('#tct').value||'').trim(),d=$('#tcd').value;if(!l||!t)return;const as=[...(l.as||[]),{id:Date.now().toString(36),t:t.slice(0,200),d,c:Date.now()}];try{await fs.collection('links').doc(i).update({as,tn:tcMe()});l.as=as;toast('أُضيف الواجب ✅');draw()}catch(e){tcErr(e)}}
 async function tcAsDel(i,a){const l=tcG(i);if(!l)return;const as=(l.as||[]).filter(x=>x.id!=a);try{await fs.collection('links').doc(i).update({as});l.as=as;draw()}catch(e){tcErr(e)}}
-async function tcDone(i,a,on){const l=tcG(i);if(!l)return;try{await fs.collection('links').doc(i).update({['dn.'+a]:on?Date.now():firebase.firestore.FieldValue.delete()});l.dn=l.dn||{};if(on)l.dn[a]=Date.now();else delete l.dn[a];draw()}catch(e){tcErr(e);draw()}}
-function tcUnAsk(i){ask('فك الارتباط؟ يُحذف الربط لدى الطرفين.',async()=>{try{await fs.collection('links').doc(i).delete();tcL=tcL.filter(x=>x.id!=i);tcSel=null;draw()}catch(e){tcErr(e)}},'نعم، افصل')}
-async function tcCleanup(){if(!fu)return;const c=(S.tcCode||{}).c;if(c)await fs.collection('invites').doc(c).delete().catch(dbg);await tcLoad();await Promise.all(tcL.map(l=>fs.collection('links').doc(l.id).delete().catch(dbg)))}
-function tcAsList(l,mine){const A=l.as||[],D=l.dn||{};return A.map(a=>{const dn=!!D[a.id],ov=a.d&&!dn&&a.d<ymd(new Date());return `<div class="tcs"><label class="row" style="flex:1;gap:8px;flex-wrap:nowrap">${mine?`<input type="checkbox" style="width:22px;margin:0" ${dn?'checked':''} data-i="${esc(l.id)}" data-a="${esc(a.id)}" onchange="tcDone(this.dataset.i,this.dataset.a,this.checked)">`:`<span>${dn?'✅':'⏳'}</span>`}<span style="${dn?'text-decoration:line-through;opacity:.6':''}">${esc(a.t)}${a.d?` <span class="m" style="${ov?'color:var(--bad)':''}">• ${esc(a.d)}${ov?' (متأخر)':''}</span>`:''}</span></label>${mine?'':`<button class="g" style="padding:4px 10px" aria-label="حذف الواجب" data-i="${esc(l.id)}" data-a="${esc(a.id)}" onclick="tcAsDel(this.dataset.i,this.dataset.a)">✕</button>`}</div>`}).join('')||'<div class="m">لا توجد واجبات</div>'}
-function tcStu(l){const s=l.sum,mx=s?Math.max(1,...s.wk):1;return `<div class="c"><div class="row sp"><b>${esc(l.sn||'طالب')}</b><span class="row"><button class="g" style="padding:4px 12px" onclick="tcSel=null;draw()">رجوع</button><button class="g" style="padding:4px 12px;color:var(--bad);border-color:var(--bad)" data-i="${esc(l.id)}" onclick="tcUnAsk(this.dataset.i)">فصل</button></span></div>${s?`<div class="row" style="margin:10px 0"><span class="chip">🔥 ${s.st} يوم متتالي</span><span class="chip">📖 ${s.n} سجل</span><span class="chip">✅ ${s.m} متقن</span></div><div class="m">آخر نشاط: ${esc(s.last||'—')}</div><div class="bar" style="margin-top:8px">${s.wk.map(v=>`<div style="height:${Math.max(3,v/mx*100)}%">${v||''}</div>`).join('')}</div><div class="m" style="text-align:center">آخر 7 أيام</div>`:'<div class="m" style="margin:10px 0">لم يرسل الطالب تقدمه بعد (يظهر عند فتحه التطبيق).</div>'}</div><div class="c"><b>الواجبات</b>${tcAsList(l,0)}<input id="tct" placeholder="واجب جديد (مثال: حفظ صفحة 50)" maxlength="200"><input id="tcd" type="date"><button style="width:100%" data-i="${esc(l.id)}" onclick="tcAs(this.dataset.i)">إضافة واجب</button></div>`}
+const tcAsAsk=(i,a)=>ask('حذف هذا الواجب؟',()=>tcAsDel(i,a));
+function tcUnAsk(i){const l=tcG(i);if(!l||l.r!='t')return;ask('فصل هذا الطالب؟ يُحذف الربط وواجباته، ويمكنك إعادة إضافته بكوده لاحقاً.',async()=>{try{await fs.collection('links').doc(i).delete();tcL=tcL.filter(x=>x.id!=i);tcSel=null;draw()}catch(e){tcErr(e)}},'نعم، افصل')}
+/* الطالب: صح / غلط + ملاحظة */
+async function tcMark(i,a,v){const l=tcG(i);if(!l)return;const o=tcSt(l,a),e={v:o.v===v?null:v,t:Date.now(),n:o.n||''};try{await fs.collection('links').doc(i).update({['dn.'+a]:e});(l.dn=l.dn||{})[a]=e;draw()}catch(er){tcErr(er);draw()}}
+async function tcNote(i,a,txt){const l=tcG(i);if(!l)return;const o=tcSt(l,a),e={v:o.v==null?null:o.v,t:Date.now(),n:String(txt||'').trim().slice(0,300)};try{await fs.collection('links').doc(i).update({['dn.'+a]:e});(l.dn=l.dn||{})[a]=e;toast('حُفظت الملاحظة ✅');draw()}catch(er){tcErr(er);draw()}}
+async function tcCleanup(){if(!fu)return;const c=tcCode();if(c)await fs.collection('invites').doc(c).delete().catch(dbg);await tcLoad();await Promise.all(tcL.map(l=>fs.collection('links').doc(l.id).delete().catch(dbg)))}
+const tcOpen=i=>{tcOp=tcOp==i?null:i;draw()};
+/* ---- واجهة الطالب ---- */
+function tcMine(l){const A=(l.as||[]).slice().reverse();if(!A.length)return '<div class="m" style="padding:10px 0">لا توجد واجبات من معلّمك حالياً</div>';
+ return A.map(a=>{const s=tcSt(l,a.id),ov=a.d&&s.v==null&&a.d<ymd(new Date()),d=`data-i="${esc(l.id)}" data-a="${esc(a.id)}"`;
+  return `<div class="tcA ${s.v===1?'ok':s.v===0?'no':''}"><b>${esc(a.t)}</b>${a.d?`<div class="m" style="${ov?'color:var(--bad)':''}">📅 ${esc(a.d)}${ov?' • متأخر':''}</div>`:''}<div class="tcB"><button type="button" class="y ${s.v===1?'on':''}" ${d} onclick="tcMark(this.dataset.i,this.dataset.a,1)">✓ صح</button><button type="button" class="n ${s.v===0?'on':''}" ${d} onclick="tcMark(this.dataset.i,this.dataset.a,0)">✗ غلط</button></div><input placeholder="ملاحظة لمعلّمك (اختياري)" maxlength="300" value="${esc(s.n||'')}" ${d} onchange="tcNote(this.dataset.i,this.dataset.a,this.value)" style="margin:0"></div>`}).join('')}
+function tcStuPage(hd,tb){const M=tcL.filter(x=>x.r=='s'),cd=tcCode();
+ const code=`<div class="c"><b>كود الربط الخاص بك</b><div class="m">كودك ثابت لا يتغيّر. أعطه لمعلّمك مرة واحدة ليضيفك، وسيرى إنجازاتك ويرسل لك الواجبات.</div>${cd?`<div class="tcCd" role="button" onclick="cp('${cd}')">${cd}</div><div class="m" style="text-align:center">اضغط على الكود لنسخه</div>`:'<div class="m" style="text-align:center;padding:18px 0">جارٍ إنشاء كودك…</div>'}</div>`;
+ const ms=M.map(l=>{const A=l.as||[],pend=A.filter(a=>tcSt(l,a.id).v==null).length,o=tcOp==l.id;
+  return `<div class="c"><div class="tcH" role="button" data-i="${esc(l.id)}" onclick="tcOpen(this.dataset.i)"><div class="tcAv">${esc(tcIn(l.tn))}</div><div><b>${esc(l.tn||'معلّم')}</b><div class="m">${A.length?A.length+' واجب • '+(pend?pend+' بانتظار إجابتك':'تمت الإجابة على الكل'):'لا توجد واجبات'}</div></div>${pend?`<span class="tcBadge">${pend}</span>`:''}<span class="m">${o?'▴':'▾'}</span></div>${o?`<div style="margin-top:8px">${tcMine(l)}</div>`:''}</div>`}).join('');
+ return hd+tb+code+`<div class="c" style="margin-bottom:0"><b>معلّموني (${M.length})</b>${M.length?'<div class="m">اضغط على اسم المعلّم لعرض واجباته.</div>':'<div class="m">لا يوجد معلّم مرتبط بعد</div>'}</div>`+ms}
+/* ---- واجهة المعلّم ---- */
+function tcAsT(l){const A=(l.as||[]).slice().reverse();if(!A.length)return '<div class="m" style="padding:10px 0">لا توجد واجبات بعد</div>';
+ return A.map(a=>{const s=tcSt(l,a.id),ov=a.d&&s.v==null&&a.d<ymd(new Date());
+  return `<div class="tcA ${s.v===1?'ok':s.v===0?'no':''}"><div class="row sp" style="flex-wrap:nowrap;gap:8px"><b style="flex:1">${esc(a.t)}</b><button type="button" class="g" style="padding:2px 10px" aria-label="حذف الواجب" data-i="${esc(l.id)}" data-a="${esc(a.id)}" onclick="tcAsAsk(this.dataset.i,this.dataset.a)">✕</button></div><div class="row sp" style="margin-top:6px"><span class="tcS ${s.v===1?'ok':s.v===0?'no':''}">${s.v===1?'✓ صح':s.v===0?'✗ غلط':'⏳ بانتظار الطالب'}</span>${a.d?`<span class="m" style="${ov?'color:var(--bad)':''}">📅 ${esc(a.d)}${ov?' • متأخر':''}</span>`:''}</div>${s.n?`<div class="tcNote">💬 ${esc(s.n)}</div>`:''}</div>`}).join('')}
+function tcPrT(s){const pr=s.pr||{},today=ymd(new Date()),ps=s.ps||'',days=[...Array(7)].map((_,i)=>ymd(new Date(Date.now()-i*864e5)));
+ let m=0,h=0,x=0,ot=0,ft=0,tr=0;for(let i=0;i<30;i++){const k=ymd(new Date(Date.now()-i*864e5)),r=pr[k];if(ps&&k>=ps&&k<=today)tr++;if(!r)continue;for(let j=0;j<5;j++){const c=r[j];if(c=='m')m++;else if(c=='h')h++;else if(c=='x')x++;if(c=='m'||c=='h'){if(r[5+j]=='1')ot++;if(r[5+j]=='2')ft++}}}
+ const un=Math.max(0,tr*5-m-h-x);
+ const rows=days.map(k=>{const r=pr[k],wd=D[new Date(k+'T12:00:00').getDay()];return `<tr><td>${esc(wd)}<small>${esc(k.slice(5))}</small></td>${PK.map((p,j)=>{const c=r?r[j]:'-',t=r?r[5+j]:'0',cl='mhx'.includes(c)?c:'';return `<td><span class="tcDot ${cl}"></span>${(c=='m'||c=='h')&&t=='1'?'<small>✓</small>':(c=='m'||c=='h')&&t=='2'?'<small>✗</small>':'<small>&nbsp;</small>'}</td>`}).join('')}</tr>`}).join('');
+ return `<div class="c"><b>آخر 7 أيام</b><table class="tcP" style="margin-top:8px"><tr><th></th>${PN.map(n=>`<th>${n}</th>`).join('')}</tr>${rows}</table><div class="m" style="margin-top:8px">🟢 في الجامع • 🟡 في البيت • 🔴 لم تُصلَّ • ⚪ غير مسجّل — ✓ بوقتها / ✗ خارج الوقت</div></div>
+<div class="c"><b>ملخص آخر 30 يوماً</b><div class="row" style="margin-top:8px"><span class="chip" style="background:#2e7d32;color:#fff">جامع ${m}</span><span class="chip" style="background:#f9a825">بيت ${h}</span><span class="chip" style="background:#e53935;color:#fff">لم تُصلَّ ${x}</span>${ps?`<span class="chip">غير مسجّل ${un}</span>`:''}<span class="chip">بوقتها ${ot}</span><span class="chip">خارج الوقت ${ft}</span></div>${ps?`<div class="m" style="margin-top:6px">بدأ التتبّع في ${esc(ps)}</div>`:'<div class="m" style="margin-top:6px">لم يحدّد الطالب يوم بداية بعد.</div>'}</div>`}
+function tcLgT(s){const L=s.lg||[],RL={mastered:['🟢','أتقن'],light:['🟡','مراجعة خفيفة'],hard:['🔴','صعوبة']};if(!L.length)return '<div class="c m">لا توجد مراجعات مسجّلة بعد</div>';
+ const k={mastered:0,light:0,hard:0};L.forEach(l=>{if(k[l.r]!==undefined)k[l.r]++});
+ return `<div class="c"><b>آخر ${L.length} مراجعة</b><div class="row" style="margin:8px 0"><span class="chip">🟢 ${k.mastered}</span><span class="chip">🟡 ${k.light}</span><span class="chip">🔴 ${k.hard}</span></div>${L.map(l=>{const r=RL[l.r]||['•',''];return `<div class="prow"><div style="flex:1;min-width:0"><b>${esc(l.s||'—')}</b><div class="m">${esc(l.d)} ${esc(l.tm)}${l.m?' • '+l.m+' د':''}</div></div><span class="chip">${r[0]} ${r[1]}</span></div>`}).join('')}</div>`}
+function tcJzT(s){const J=s.jz||[];if(J.length<30)return '<div class="c m">لا توجد بيانات أجزاء بعد (تظهر عند فتح الطالب للتطبيق).</div>';
+ const P=J.map(x=>x.split(',')),cnt=ks=>P.filter(p=>ks.includes(p[0])).length;
+ const tile=(p,i)=>{const k=p[0],c=(JMC[k]||JMC['0'])[0],a=p[1]===''?null:+p[1],sm=k=='0'||k=='1'?JMC[k][1]:a===null?'لم تُراجع':a==0?'اليوم':'قبل '+a+' ي';return `<div class="exj" style="border-color:${c};background:color-mix(in srgb,${c} 18%,transparent);cursor:default;min-height:62px;padding:8px 0"><b style="font-size:18px">${i+1}</b><small style="font-size:10px;opacity:.85">${sm}</small></div>`};
+ return `<div class="c"><div class="tcK"><div><b>${cnt('gyr')}</b><span>محفوظ من 30</span></div><div><b>${cnt('1')}</b><span>قيد الحفظ</span></div><div><b style="color:${JMC.r[0]}">${cnt('yr')}</b><span>متأخر عن دورته</span></div></div></div><div class="c"><div class="exg">${P.map(tile).join('')}</div><div style="margin-top:10px">${['0','1','g','y','r'].map(k=>`<div class="m" style="padding:2px 0"><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:${JMC[k][0]};vertical-align:middle;margin-inline-end:6px"></span>${JMC[k][1]}</div>`).join('')}</div></div>`}
+function tcAsPanel(l){return `<div class="c"><b>واجب جديد</b><input id="tct" placeholder="مثال: حفظ صفحة 50" maxlength="200"><input id="tcd" type="date"><button type="button" style="width:100%" data-i="${esc(l.id)}" onclick="tcAs(this.dataset.i)">إضافة واجب</button></div><div class="c"><b>الواجبات (${(l.as||[]).length})</b>${tcAsT(l)}</div>`}
+function tcStu(l){const s=l.sum,nm=l.sn||'طالب',mx=s?Math.max(1,...s.wk):1,
+ top=`<div class="c"><div class="row sp" style="flex-wrap:nowrap"><div class="tcH" style="cursor:default"><div class="tcAv">${esc(tcIn(nm))}</div><div><b>${esc(nm)}</b><div class="m">${s?'آخر نشاط: '+esc(s.last||'—'):'لم يرسل تقدمه بعد'}</div></div></div><span class="row" style="flex-wrap:nowrap"><button type="button" class="g" style="padding:6px 12px" onclick="tcSel=null;draw()">رجوع</button><button type="button" class="g" style="padding:6px 12px;color:var(--bad);border-color:var(--bad)" data-i="${esc(l.id)}" onclick="tcUnAsk(this.dataset.i)">فصل</button></span></div>${s?`<div class="tcK"><div><b>🔥 ${s.st}</b><span>يوم متتالي</span></div><div><b>📖 ${s.n}</b><span>سجل مراجعة</span></div><div><b>✅ ${s.m}</b><span>متقن</span></div></div><div class="bar" style="margin-top:10px">${s.wk.map(v=>`<div style="height:${Math.max(3,v/mx*100)}%">${v||''}</div>`).join('')}</div><div class="m" style="text-align:center">آخر 7 أيام</div>`:'<div class="m" style="margin:10px 0">يظهر تقدّم الطالب عند فتحه التطبيق.</div>'}</div>`,
+ T=[['pr','🕌 الصلاة'],['lg','📖 المراجعات'],['jz','🗺️ الأجزاء'],['as','📝 الواجبات']],
+ tabs=`<div class="tcT">${T.map(t=>`<div class="${tcTb==t[0]?'on':''}" role="button" onclick="tcTb='${t[0]}';draw()">${t[1]}</div>`).join('')}</div>`;
+ let body='';if(tcTb=='as'||!s)body=tcAsPanel(l);else body=tcTb=='pr'?tcPrT(s):tcTb=='lg'?tcLgT(s):tcJzT(s);
+ return top+(s?tabs:'')+body}
 function tcPage(){
  const hd=`<div class="row sp" style="padding:14px 16px"><button class="pbtn bk" aria-label="رجوع" onclick="go('se')">${svg('chev')}</button><b style="font-size:19px">المعلّم والطلاب</b><span style="width:40px"></span></div>`;
  if(!fbOK||!fu)return hd+'<div class="c m">سجّل الدخول أولاً لاستخدام هذه الميزة.</div>';
- if(Date.now()-tcAt>3e4){tcAt=Date.now();tcLoad().then(()=>{tcPub(1);if(tab=='tc')draw()})}
+ if(Date.now()-tcAt>3e4){tcAt=Date.now();tcLoad().then(()=>{tcPub(tcPd?0:(tcPd=1));if(tab=='tc'){const a=document.activeElement;if(!(a&&/INPUT|TEXTAREA/.test(a.tagName)))draw()}})}
  const tb=`<div class="row" style="margin:0 12px"><div class="mt ${tcM=='s'?'on':''}" onclick="tcM='s';tcSel=null;draw()">أنا طالب</div><div class="mt ${tcM=='t'?'on':''}" onclick="tcM='t';tcSel=null;draw()">أنا معلّم</div></div>`;
  if(tcM=='t'){const T=tcL.filter(x=>x.r=='t'),sel=tcG(tcSel);if(sel&&sel.r=='t')return hd+tb+tcStu(sel);
-  return hd+tb+`<div class="c"><b>إضافة طالب</b><div class="m">اطلب من الطالب كود الربط من صفحته (أنا طالب).</div><input id="tcc" placeholder="كود الطالب" maxlength="6" dir="ltr" autocapitalize="characters" style="text-align:center;letter-spacing:4px"><button style="width:100%" onclick="tcJoin()">ربط</button></div><div class="c"><b>طلابي (${T.length})</b>${T.map(l=>`<div class="tcs prow act" role="button" data-i="${esc(l.id)}" onclick="tcSel=this.dataset.i;draw()"><span>${esc(l.sn||'طالب')}</span><span class="m">${l.sum?'🔥 '+l.sum.st+' • آخر نشاط '+esc(l.sum.last||'—'):'لم يبدأ'}</span></div>`).join('')||'<div class="m">لا يوجد طلاب بعد</div>'}</div>`}
- const M=tcL.filter(x=>x.r=='s'),cd=S.tcCode&&S.tcCode.exp>Date.now()?S.tcCode.c:'';
- return hd+tb+`<div class="c"><b>كود الربط</b><div class="m">أعطِ الكود لمعلّمك ليضيفك (صالح 7 أيام). سيرى تقدّمك ويضيف لك واجبات.</div>${cd?`<div class="tcb" onclick="cp('${cd}')">${cd}</div>`:''}<button style="width:100%;margin-top:8px" onclick="tcGen()">${cd?'كود جديد':'إنشاء كود'}</button></div><div class="c"><b>معلّموني (${M.length})</b>${M.map(l=>`<div class="tcs"><span>👤 ${esc(l.tn||'معلّم')}</span><button class="g" style="padding:4px 12px" data-i="${esc(l.id)}" onclick="tcUnAsk(this.dataset.i)">فصل</button></div>`).join('')||'<div class="m">لا يوجد معلّم مرتبط</div>'}</div>${M.map(l=>`<div class="c"><b>واجبات ${esc(l.tn||'المعلّم')}</b>${tcAsList(l,1)}</div>`).join('')}`}
+  return hd+tb+`<div class="c"><b>إضافة طالب</b><div class="m">اطلب من الطالب كود الربط من صفحته (أنا طالب).</div><input id="tcc" placeholder="كود الطالب" maxlength="6" dir="ltr" autocapitalize="characters" style="text-align:center;letter-spacing:4px"><button type="button" style="width:100%" onclick="tcJoin()">ربط</button></div><div class="c"><b>طلابي (${T.length})</b>${T.map(l=>{const nm=l.sn||'طالب';return `<div class="prow act" role="button" data-i="${esc(l.id)}" onclick="tcSel=this.dataset.i;tcTb='pr';draw()"><div class="tcAv">${esc(tcIn(nm))}</div><div style="flex:1;min-width:0"><b>${esc(nm)}</b><div class="m">${l.sum?'🔥 '+l.sum.st+' • آخر نشاط '+esc(l.sum.last||'—'):'لم يبدأ'}</div></div><span class="m">‹</span></div>`}).join('')||'<div class="m">لا يوجد طلاب بعد</div>'}</div>`}
+ if(!tcEns&&tcM=='s'){tcEns=1;tcEnsure().then(()=>{if(tab=='tc')draw()})}
+ return tcStuPage(hd,tb)}
 
 function acct(){
  if(!fbOK)return '<b>الحساب والمزامنة</b><p class="m">المزامنة السحابية غير مفعّلة في هذه النسخة. تعمل فقط على نسخة GitHub.</p>';
