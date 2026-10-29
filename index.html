@@ -284,7 +284,7 @@ const $=s=>document.querySelector(s),ymd=d=>d.toLocaleDateString('en-CA'),hm=d=>
 const hij=d=>d.toLocaleDateString(S.lang=='en'?'en-u-ca-islamic-umalqura':'ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='home',qz=null,rev=false,qn=0,qok=0,addDays=[0,1,2,3,4,6];
-const tabs=[['home','📖','اليوم'],['pr','🌙','الصلاة'],['td','✅','المهمات'],['tc','👥','طالب ومعلم'],['nb','📓','الدفتر']];
+const tabs=[['home','📖','اليوم'],['pr','🌙','الصلاة'],['td','✅','المهمات'],['tc','👥','طالب ومعلم'],['ar','🗂','الأرشيف']];
 function go(t){if(typeof exStop=='function'&&t!='ex')exStop();if(t=='se'&&fbOK&&!fu){tab='home';draw();awMode='in';awShow();return}if(tab=='pv'&&t!='pv')pvOk=false;if(tab=='ar'&&t!='ar'){pvOk=false;arPvOpen=false}if(t=='gl'&&tab!='gl'){glOpen=0;glDr=null;glOrd=false}tab=t;draw()}
 let drawnTab=null;
 function draw(){
@@ -1322,7 +1322,7 @@ function prRepY(T,H){const P=prP(),today=ymd(new Date());
 const prof=()=>S.profile||(S.profile={name:'',age:'',gender:''});
 function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">${svg(i)}</span><div><b>${t}</b><small>${x}</small></div><span class="ch">${svg('chev')}</span></a>`;
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
- <div class="dsec">الأرشيف</div>${R("go2('ar')",'folder','الأرشيف','المراجعات والمهام والمتسابقون المؤرشفون')}
+ <div class="dsec">الدفتر</div>${R("go2('nb')",'notebook','الدفتر','دفاترك وصفحاتك')}
  <div class="dsec">الحساب</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}
  <div class="dsec">الحفظ</div>${R("go2('wr')",'book','الورد اليومي','كم تحفظ كل يوم')}${R("go2('kh')",'moon','ختمة رمضان','ختم القرآن بكمية يومية')}${R("go2('hp')",'pin','الصفحات الصعبة','صفحات تُراجَع أكثر')}
  <div class="dsec">المراجعة والمتابعة</div>${R("go2('rv')",'repeat','جدول المراجعة','ما تراجعه اليوم وغداً')}${R("go2('jz')",'grid','الجداول','مراجعات كل جزء')}${R("go2('jm')",'mapfold','خريطة الأجزاء','حالة كل جزء بلون')}${R("go2('st')",'chart','الإحصائيات','تقدّمك وجلساتك')}
