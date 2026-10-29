@@ -254,9 +254,182 @@ html[dir=ltr] .cov{--sd:90deg}.cov:active{transform:scale(.97)}
 .nbc{display:flex;align-items:center;gap:6px;padding-top:8px}.nbt{flex:1;min-width:0}.nbt b{display:block;font-size:15px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nbt small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nbe{width:32px;height:32px;padding:0;border-radius:50%;background:color-mix(in srgb,var(--pri) 10%,transparent);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:none}.nbe .ic{width:17px;height:17px}
 .tkc{min-width:24px;height:24px;border-radius:50%;background:var(--pri);color:var(--on);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;font-variant-numeric:tabular-nums}
+
+/* ===== تصميم v2: «مصحف مُضاء» — سطوح هادئة، زخرفة ذهبية واحدة في الترويسة، شريط تنقّل عائم ===== */
+:root{--sh1:0 1px 2px color-mix(in srgb,var(--h1) 10%,transparent),0 8px 22px -10px color-mix(in srgb,var(--h1) 28%,transparent)}
+html{background:var(--bg)}
+body{padding-bottom:108px;font-size:16px}
+b{font-weight:700}
+.m{font-size:13.5px}
+.big{font-family:'Amiri Quran','Amiri',serif;font-size:28px;line-height:2.3}
+
+/* الترويسة */
+header{padding:14px 12px 24px!important;margin-bottom:12px;border-radius:0 0 30px 30px;box-shadow:0 10px 26px -12px color-mix(in srgb,var(--h1) 55%,transparent);background:radial-gradient(130% 150% at 88% -30%,color-mix(in srgb,var(--h2) 70%,#fff) 0,transparent 58%),linear-gradient(165deg,var(--h1),var(--h2))}
+header::after{content:"";position:absolute;inset-inline:26px;bottom:10px;height:5px;pointer-events:none;opacity:.9;background:linear-gradient(90deg,transparent,var(--gold) 22%,var(--gold) 42%,transparent 42%,transparent 58%,var(--gold) 58%,var(--gold) 78%,transparent) top/100% 1px no-repeat,linear-gradient(90deg,transparent,var(--gold) 22%,var(--gold) 42%,transparent 42%,transparent 58%,var(--gold) 58%,var(--gold) 78%,transparent) bottom/100% 1px no-repeat}
+.hdo{position:absolute;left:50%;bottom:7px;width:11px;height:11px;margin-left:-5.5px;transform:rotate(45deg);border:1.5px solid var(--gold);border-radius:2px;pointer-events:none}
+.hdo::after{content:"";position:absolute;inset:2.5px;background:var(--gold);border-radius:1px}
+header button{box-shadow:none;background:none!important}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Aref Ruqaa','Amiri Quran','Amiri',serif;font-size:27px;font-weight:400;line-height:1.3;letter-spacing:0}
+.brand svg{flex:none;filter:drop-shadow(0 1px 4px #0004)}
+#dtb{top:calc(env(safe-area-inset-top,0px) + 14px)!important;font-size:11.5px!important}
+
+/* البطاقات */
+.c{border:1px solid color-mix(in srgb,var(--pri) 8%,var(--bd));box-shadow:var(--sh1);padding:16px;margin:12px 14px}
+.c>b:first-child{display:block;font-size:17px;margin-bottom:8px}
+.c.m{text-align:center;padding:30px 16px;font-size:15px}
+.tkcard{border-inline-start:4px solid var(--gold)}
+.sec{display:flex;align-items:center;gap:8px;margin:22px 20px 2px;font-size:17px;font-weight:700}
+.pcard{box-shadow:var(--sh1)}
+.ph{font-size:13.5px;font-weight:600;padding:20px 24px 8px}
+
+/* الأزرار والحقول */
+button{font-weight:600}
+button.g{background:color-mix(in srgb,var(--pri) 9%,transparent);border:0;color:var(--pri)}
+button.g:active{background:color-mix(in srgb,var(--pri) 17%,transparent)}
+input,select,textarea{border:1.5px solid transparent;background:color-mix(in srgb,var(--pri) 6%,var(--bg));border-radius:var(--rb);padding:12px 14px}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);background:var(--card);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 16%,transparent)}
+input[type=checkbox],input[type=radio]{padding:0;border:0;background:none;box-shadow:none;accent-color:var(--pri);margin:0 4px}
+select{-webkit-appearance:none;appearance:none;padding-left:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236b7090' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 14px center}
+html[dir=ltr] select{padding-left:14px;padding-right:38px;background-position:right 14px center}
+.chip{padding:7px 14px;border-radius:999px;border-color:transparent;background:color-mix(in srgb,var(--pri) 7%,transparent)}
+.bar div{background:linear-gradient(180deg,color-mix(in srgb,var(--pri) 65%,#fff),var(--pri));border-radius:8px 8px 3px 3px}
+
+/* شريط التنقّل العائم */
+nav{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:6px;gap:2px;border:1px solid color-mix(in srgb,var(--pri) 10%,var(--bd));border-radius:28px;background:color-mix(in srgb,var(--card) 90%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 12px 32px -10px color-mix(in srgb,var(--h1) 50%,transparent),0 2px 6px #0001}
+nav button{box-shadow:none;border-radius:22px;padding:9px 2px 7px;font-size:11.5px;font-weight:500;line-height:1.35;position:relative;transition:background .2s,color .2s}
+nav button.on{background:color-mix(in srgb,var(--pri) 12%,transparent);font-weight:700}
+nav button.on::after{top:3px;left:42%;right:42%;height:3px;border-radius:3px}
+.arb{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.lkb{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+
+/* القائمة الجانبية والنوافذ السفلية */
+.dh{position:relative;overflow:hidden;padding-bottom:26px}
+.dh::before{content:"";position:absolute;inset:0;opacity:.1;pointer-events:none;background-image:var(--hp)}
+.dh>*{position:relative}
+.dh::after{content:"";position:absolute;inset-inline:22px;bottom:8px;height:3px;border-block:1px solid color-mix(in srgb,var(--gold) 85%,transparent);opacity:.85}
+.av{border-color:var(--gold)}
+.di,.pi{border-radius:13px}
+.sh{background:#0008;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.sh>div{border-radius:28px 28px 0 0;padding:12px 18px calc(18px + env(safe-area-inset-bottom,0px));animation:shup .24s ease both}
+.sh>div::before{content:"";display:block;width:42px;height:4px;border-radius:4px;background:var(--bd);margin:0 auto 14px}
+@keyframes shup{from{transform:translateY(32px);opacity:.4}to{transform:none;opacity:1}}
+
+/* حركة هادئة: انتقال واحد للصفحة بدل حركة كل عنصر */
+main>*,.pg{animation:none}
+main:not(.na){animation:fi2 .2s ease both}
+@keyframes fi2{from{opacity:0}to{opacity:1}}
+footer{padding:24px 16px 12px!important;font-size:12px!important;opacity:.75}
+
+/* ===== تصميم v3: شاشة الدخول، القوائم، الاختبارات، الألوان، التفاصيل الدقيقة ===== */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+::selection{background:color-mix(in srgb,var(--gold) 35%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--pri) 30%,transparent) transparent}
+/* الدخول والتسجيل */
+.aw{background:radial-gradient(90% 55% at 50% 0,color-mix(in srgb,var(--h2) 70%,#fff) 0,transparent 70%),linear-gradient(180deg,var(--h1),var(--h2) 55%,color-mix(in srgb,var(--h1) 70%,#000))}
+.awlogo{width:96px;height:96px;border-radius:50%;background:color-mix(in srgb,#fff 10%,transparent);box-shadow:0 0 0 8px color-mix(in srgb,var(--gold) 14%,transparent),0 18px 40px -12px #0007}
+.awb h1{font-family:'Aref Ruqaa','Amiri Quran',serif;font-weight:400;font-size:38px;text-shadow:0 2px 14px #0005}
+.awcard{border-radius:30px;padding:26px 22px;border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);box-shadow:0 24px 60px -20px #000a}
+.awcard h2{font-size:22px}
+.awf input{padding:16px 46px;border-radius:16px;border-color:transparent;background:color-mix(in srgb,var(--pri) 6%,var(--bg))}
+.awf input:focus{border-color:var(--pri);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 16%,transparent)}
+.awbtn,.c>button:not(.g):not(.r),.sh button:not(.g):not(.r){background:linear-gradient(180deg,color-mix(in srgb,var(--pri) 86%,#fff),var(--pri));box-shadow:0 10px 22px -10px color-mix(in srgb,var(--pri) 75%,transparent)}
+.awbtn,.awg{border-radius:16px}
+.c>button:not(.g):not(.r){width:100%;padding:13px;margin-top:8px;font-size:16px;border-radius:14px}
+.sh button{border-radius:14px;padding:13px}
+/* الإعدادات والقوائم */
+.pg{background:var(--bg)}
+.pcard{border:1px solid color-mix(in srgb,var(--pri) 7%,var(--bd));padding:2px 16px}
+.prow{padding:15px 0}
+.prow.act:active{background:color-mix(in srgb,var(--pri) 6%,transparent);margin-inline:-16px;padding-inline:16px}
+.pi{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--pri) 18%,transparent),color-mix(in srgb,var(--pri) 7%,transparent))}
+.sw{width:50px;height:30px;border-radius:15px}.sw::after{width:24px;height:24px}.sw.on::after{inset-inline-start:23px}
+.pd,.pc{border-radius:12px}
+.nbg{gap:24px 16px}
+/* الاختبارات والتقارير تتبع الثيم */
+.exh,.expph{background:linear-gradient(165deg,var(--h1),var(--h2))}
+.exh{border-bottom:1px solid color-mix(in srgb,var(--gold) 70%,transparent)}
+.expaper{border-radius:26px}
+.exdb{border-radius:26px}
+.exr{border-radius:18px}
+#exFoot{box-shadow:0 -10px 24px -14px color-mix(in srgb,var(--h1) 40%,transparent)}
+
+/* ===== v4: الصفحة الرئيسية الجديدة ===== */
+#dd{display:none}
+.hero{margin:0 14px 14px;padding:18px;border-radius:26px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(120% 120% at 100% 0,color-mix(in srgb,var(--h2) 60%,#fff),transparent 55%),linear-gradient(160deg,var(--h1),var(--h2));box-shadow:0 18px 36px -18px color-mix(in srgb,var(--h1) 80%,transparent)}
+.hero::before{content:"";position:absolute;inset:0;opacity:.09;pointer-events:none;background-image:var(--hp)}
+.hero>*{position:relative}
+.hr-t{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.hr-g{font-size:14px;opacity:.85}
+.hr-d{font-family:'Aref Ruqaa','Amiri Quran',serif;font-size:30px;line-height:1.5;margin:2px 0}
+.hr-m{font-size:13px;opacity:.8}
+.ring{position:relative;width:84px;height:84px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:7}
+.ring .rb{stroke:#ffffff26}
+.ring .rf{stroke:var(--gold);stroke-linecap:round;transition:stroke-dasharray .6s ease}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.hr-s{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--gold) 55%,transparent)}
+.hr-s div{text-align:center}.hr-s b{display:block;font-size:22px}.hr-s span{font-size:12px;opacity:.8}
+.qa{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0 14px 6px}
+.qa button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px;font-size:11.5px;font-weight:500;line-height:1.3;background:var(--card);color:var(--tx);border-radius:18px;box-shadow:var(--sh1)}
+.qa .ic{width:26px;height:26px;color:var(--pri)}
+.qa button.on{background:var(--pri);color:var(--on)}.qa button.on .ic{color:var(--on)}
+.c .row button.g .ic{width:1.1em;height:1.1em}
+
+/* ===== v5: عناوين الصفحات، الإحصائيات، الصلاة ===== */
+.ptl{padding:10px 20px 8px!important}
+.ptl b,main>.row.sp[style*="padding:4px 14px"]>b{font-size:23px!important;font-family:'Reem Kufi','Noto Kufi Arabic',var(--ff);font-weight:600}
+main>.row.sp[style*="padding:4px 14px"]{padding:10px 20px 8px!important}
+.flame{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--gold) 22%,transparent);border:2px solid var(--gold);color:var(--gold);flex:none}
+.flame .ic{width:36px;height:36px}
+.bar .tdy{background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 70%,#fff),var(--gold))}
+.qbar{display:flex;gap:3px;height:14px;margin-top:10px;border-radius:8px;overflow:hidden;background:var(--bd)}.qbar i{min-width:0}
+.dt{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px;flex:none}
+.tl{margin-top:8px;position:relative}
+.tl>div{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--bd)}.tl>div:first-child{border-top:0}
+.tl .dt{margin-top:7px;margin-inline-end:0}
+.dots{display:flex;gap:7px}
+.dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--gold);transition:background .3s}
+.dots i.on{background:var(--gold);box-shadow:0 0 12px color-mix(in srgb,var(--gold) 70%,transparent)}
+
+/* ===== v6: اتجاه جديد — فجر زجاجي ومربعات Bento ===== */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(60% 38% at 95% 0,color-mix(in srgb,var(--pri) 24%,transparent),transparent 70%),radial-gradient(50% 34% at 0 28%,color-mix(in srgb,var(--gold) 22%,transparent),transparent 70%),radial-gradient(70% 40% at 50% 100%,color-mix(in srgb,var(--pri) 16%,transparent),transparent 70%)}
+header{background:none!important;box-shadow:none!important;border-radius:0!important;padding:12px 14px 6px!important;margin:0!important}
+header::before,header::after,.hdo{display:none!important}
+header button{width:46px;height:46px;padding:0!important;border-radius:16px!important;color:var(--tx)!important;background:color-mix(in srgb,var(--card) 72%,transparent)!important;border:1px solid var(--bd);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+header span,header .ic,.brand{color:var(--tx)!important}
+.brand{font-family:'Reem Kufi','Noto Kufi Arabic',var(--ff);font-size:23px;font-weight:600}
+.brand svg{filter:none}
+#dtb,#dtb b{color:var(--tx)!important;opacity:1}
+#dtb{top:calc(env(safe-area-inset-top,0px) + 16px)!important}
+.c,.pcard{background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);border:1px solid color-mix(in srgb,var(--pri) 10%,var(--bd));box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 45%,transparent),var(--sh1)}
+.tkcard{border-inline-start:1px solid color-mix(in srgb,var(--pri) 10%,var(--bd))}
+/* مربعات الرئيسية */
+.bento{display:grid;grid-template-columns:1.35fr 1fr;grid-template-areas:"hi rg" "s1 s2";gap:10px;margin:6px 14px 12px}
+.bt{position:relative;overflow:hidden;border-radius:var(--rd);padding:16px;background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid color-mix(in srgb,var(--pri) 10%,var(--bd));box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 45%,transparent),var(--sh1)}
+.bt.hi{grid-area:hi;min-height:170px;display:flex;flex-direction:column;justify-content:flex-end;border:0;color:var(--on);background:linear-gradient(150deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--gold)))}
+.bt.hi::after{content:"";position:absolute;inset-inline-end:-34px;top:-34px;width:140px;height:140px;border-radius:50%;background:color-mix(in srgb,#fff 18%,transparent)}
+.bt.hi>*{position:relative;z-index:1}.bt.hi .hr-d{font-size:27px}
+.bt.rg{grid-area:rg;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+.bt.rg .ring{width:98px;height:98px}.bt.rg .ring .rb{stroke:var(--bd)}.bt.rg .ring .rf{stroke:var(--pri)}.bt .ring b{color:var(--tx);font-size:20px}
+.bt span{font-size:12.5px;color:var(--mut)}
+.bt.s1{grid-area:s1}.bt.s2{grid-area:s2}
+.bt.s1 b,.bt.s2 b{display:block;font-size:36px;line-height:1.15;font-family:'Reem Kufi',var(--ff);font-weight:600}
+.bt.s2 b{color:var(--gold)}
+/* ترويسات الصفحات الأخرى بالاتجاه الجديد */
+.hero{border-radius:32px;color:var(--on);background:linear-gradient(150deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--gold)));box-shadow:0 20px 40px -22px color-mix(in srgb,var(--pri) 90%,transparent)}
+.hero::before{opacity:.07}
+.hr-s{border-top-color:color-mix(in srgb,var(--on) 30%,transparent)}
+.flame{border-color:var(--on);color:var(--on);background:color-mix(in srgb,var(--on) 18%,transparent)}
+.dots i{border-color:var(--on)}.dots i.on{background:var(--on);box-shadow:0 0 12px color-mix(in srgb,var(--on) 60%,transparent)}
+.hero .ring .rb{stroke:color-mix(in srgb,var(--on) 25%,transparent)}.hero .ring .rf{stroke:var(--on)}
+.qa button{background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid color-mix(in srgb,var(--pri) 10%,var(--bd));border-radius:22px}
+nav{border-radius:32px}
+nav button{border-radius:26px}
+.awbtn,.c>button:not(.g):not(.r){border-radius:18px}
 </style></head><body><div id="aw" class="aw" style="display:none"></div>
-<header style="display:flex;align-items:center;gap:6px;padding:10px 8px 4px"><button type="button" onclick="menu()" aria-label="القائمة" style="background:none;color:var(--tx);padding:8px"><svg width="30" height="30" viewBox="0 0 28 28"><path d="M4 8h20M4 14h20M4 20h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button><span style="font-size:20px;font-weight:700">📖 مُثبِّت القرآن</span></header>
-<div id="dtb" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:2;text-align:left;font-size:11px;line-height:1.35;color:var(--mut)"><div id="dd"></div><b id="dtm" style="font-variant-numeric:tabular-nums;color:var(--tx)"></b><div id="dan" data-notr="1" onclick="menu()" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:#fff!important;cursor:pointer"></div></div><div id="ban"></div><main id="v"></main><div id="sh"></div><div id="pv"></div>
+<header style="display:flex;align-items:center;gap:6px;padding:10px 8px 4px"><button type="button" onclick="menu()" aria-label="القائمة" style="background:none;color:var(--tx);padding:8px"><svg width="30" height="30" viewBox="0 0 28 28"><path d="M4 8h20M4 14h20M4 20h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button><span class="brand"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="6" width="20" height="20" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/><rect x="6" y="6" width="20" height="20" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8" transform="rotate(45 16 16)"/><circle cx="16" cy="16" r="3" fill="var(--gold)"/></svg>مُثبِّت القرآن</span><i class="hdo"></i></header>
+<div id="dtb" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:2;text-align:left;font-size:11px;line-height:1.35;color:var(--mut)"><div id="dd"></div><b id="dtm" style="font-variant-numeric:tabular-nums;color:var(--tx)"></b><div id="dan" data-notr="1" onclick="menu()" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:var(--tx);cursor:pointer"></div></div><div id="ban"></div><main id="v"></main><div id="sh"></div><div id="pv"></div>
 <footer style="text-align:center;font-size:11px;color:var(--mut);padding:18px 12px 8px">تم إنشاء هذا الموقع بواسطة عمار العيد بتنفيذ الذكاء الاصطناعي</footer>
 <nav id="nav"></nav>
 <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -284,7 +457,7 @@ const $=s=>document.querySelector(s),ymd=d=>d.toLocaleDateString('en-CA'),hm=d=>
 const hij=d=>d.toLocaleDateString(S.lang=='en'?'en-u-ca-islamic-umalqura':'ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='home',qz=null,rev=false,qn=0,qok=0,addDays=[0,1,2,3,4,6];
-const tabs=[['home','📖','اليوم'],['pr','🌙','الصلاة'],['td','✅','المهمات'],['tc','👥','طالب ومعلم'],['ar','🗂','الأرشيف']];
+const tabs=(I=>[['home',I('<path d="M12 6.5C10.3 5.2 7.8 4.6 4 4.8v13c3.8-.2 6.3.4 8 1.7 1.7-1.3 4.2-1.9 8-1.7v-13c-3.8-.2-6.3.4-8 1.7zM12 6.5v13"/>'),'اليوم'],['pr',I('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),'الصلاة'],['td',I('<rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/>'),'المهمات'],['tc',I('<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.4-3.2 2.7-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.4-.2 4 1.3 4.3 3.8"/>'),'طالب ومعلم'],['ar',I('<rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><path d="M5 9v9a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18V9M10 13h4"/>'),'الأرشيف']])(p=>'<span class="ic"><svg viewBox="0 0 24 24">'+p+'</svg></span>');
 function go(t){if(t!='tc'&&typeof tcChClose=='function')tcChClose();if(typeof exStop=='function'&&t!='ex')exStop();if(t=='se'&&fbOK&&!fu){tab='home';draw();awMode='in';awShow();return}if(tab=='pv'&&t!='pv')pvOk=false;if(tab=='ar'&&t!='ar'){pvOk=false;arPvOpen=false}if(t=='gl'&&tab!='gl'){glOpen=0;glDr=null;glOrd=false}tab=t;draw()}
 let drawnTab=null;
 function draw(){
@@ -295,21 +468,30 @@ function draw(){
 }
 /* ---------- المهام ---------- */
 function due(){const e=new Date();e.setHours(23,59,59);return S.tasks.filter(t=>!t.arch&&new Date(t.next)<=e)}
+let qAdd=false;
+const qIC={timer:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.3 1.6M9.5 3h5"/>',play:'<path d="M8 5.5v13l10.5-6.5z"/>',undo:'<path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v4.5h4.5"/>',check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',box:'<rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><path d="M5 9v9.2c0 .7.6 1.3 1.3 1.3h11.4c.7 0 1.3-.6 1.3-1.3V9M10 13h4"/>',trash:'<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.2c0 .7.6 1.3 1.3 1.3h6.8c.7 0 1.3-.6 1.3-1.3L17.5 7M10 11v6M14 11v6"/>',plus:'<path d="M12 5v14M5 12h14"/>',cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',pen:'<path d="M4 20l1-4.2L16.3 4.5a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19z"/>',grid:'<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',flame:'<path d="M12 3c1 3.2 4.5 5.2 4.5 9.5A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.5c0-2 1-3.2 2-4.2.2 1.2.8 2 1.6 2.4C11 8.5 11.3 5.5 12 3zM9.5 20.5h5"/>',doc:'<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 1 .5-.5zM14 3.5v4h4M9 13h6M9 16.5h6"/>'};
+const qic=n=>`<span class="ic"><svg viewBox="0 0 24 24">${qIC[n]}</svg></span>`;
+function homeHero(){const n=new Date(),d=due(),td=S.logs.filter(l=>l.date==ymd(n)).length,tot=td+d.length,pct=tot?Math.round(td/tot*100):0,st=streak(),h=n.getHours(),
+ gr=h<5?'ليلة مباركة':h<12?'صباح الخير':h<17?'نهارك سعيد':h<20?'مساء الخير':'مساء النور',nm=((prof().name||'').trim().split(' ')[0])||'';
+ let hj='',gd='';try{hj=n.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',year:'numeric'});gd=n.toLocaleDateString('ar-SY-u-nu-latn',{weekday:'long',day:'numeric',month:'long'})}catch(e){}
+ return `<section class="bento"><div class="bt hi"><div class="hr-g">${gr}${nm?'، '+esc(nm):''}</div><div class="hr-d">${hj}</div><div class="hr-m">${gd}</div></div><div class="bt rg"><div class="ring"><svg viewBox="0 0 80 80"><circle class="rb" cx="40" cy="40" r="34"/><circle class="rf" cx="40" cy="40" r="34" stroke-dasharray="${(213.6*pct/100).toFixed(1)} 213.6"/></svg><b>${pct}%</b></div><span>إنجاز اليوم</span></div><div class="bt s1"><b>${d.length}</b><span>مهام متبقية</span></div><div class="bt s2"><b>${st}</b><span>يوم متواصل</span></div></section>`}
+function homeQA(){const A=[['qAdd=!qAdd;draw()','plus','مهمة جديدة',qAdd],["go('rv')",'cal','المراجعة'],["go('ex')",'pen','اختبار'],["go('jm')",'grid','الأجزاء'],["go('pr')",'moon','الصلاة']];
+ return `<div class="qa">${A.map(a=>`<button type="button" class="${a[3]?'on':''}" onclick="${a[0]}">${qic(a[1])}<span>${a[2]}</span></button>`).join('')}</div>`}
 function home(){
  const d=due();
- return `${remBox()}<div class="c" id="tbox">${tbox()}</div>
- <div class="c"><b>المراجعة والحفظ</b>
+ return `${remBox()}${homeHero()}${homeQA()}<div class="c" id="tbox">${tbox()}</div>
+ ${qAdd?`<div class="c frm"><b>مهمة جديدة</b>
  <div class="row" style="flex-wrap:nowrap;gap:6px"><input id="ts" value="${esc(pkTgt?'':pkSum())}" placeholder="اكتب المهمة أو اختر: سور / أجزاء / صفحات" autocomplete="off" oninput="selClear()" style="flex:1;margin:0;min-width:0"><button type="button" onclick="pkOpen()" style="padding:10px 14px">${svg('plus')} اختيار</button></div><input id="tn" placeholder="اسم المهمة (اختياري)" autocomplete="off">
  <div class="row"><input id="ta" type="number" placeholder="من آية" style="flex:1"><input id="tb" type="number" placeholder="إلى آية" style="flex:1"></div>
  <select id="tt"><option>حفظ</option><option>مراجعة</option></select>
  <input id="tc" type="text" autocomplete="off" placeholder="مدة التايمر (اكتبها أنت، مثال 25 أو 1:30)">
  
  <button type="button" onclick="addTask()">إضافة</button>
- <label class="m"><input type="checkbox" style="width:auto" ${S.skipFri?'checked':''} onchange="S.skipFri=this.checked;save()"> استثناء يوم الجمعة من الجدولة</label></div>
- <div class="m" style="margin:0 16px">مهام اليوم (${d.length})</div>`+
- (d.map(t=>{const sub=jl(t),g=isG(t),op=tkOpen[t.id],m=t.tm;return `<div class="c"><div class="row" style="flex-wrap:nowrap;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><b style="${t.mk==1?'text-decoration:line-through;color:var(--mut)':t.mk==2?'color:var(--bad)':''}">${g?esc(t.s):'سورة '+esc(t.s)}</b><div class="m">${t.type}${g?(sub&&sub!==t.s?' • '+esc(sub):''):' • '+t.a+'–'+t.b}</div></div><button type="button" class="g" style="padding:4px 10px" onclick="tkEdit(${t.id})">${svg('edit')}</button><button type="button" class="g" style="padding:4px 10px" onclick="tkUnits(${t.id})">تعديل الأجزاء</button></div>
+ <label class="m"><input type="checkbox" style="width:auto" ${S.skipFri?'checked':''} onchange="S.skipFri=this.checked;save()"> استثناء يوم الجمعة من الجدولة</label></div>`:''}
+ <div class="sec">مهام اليوم<span class="tkc">${d.length}</span></div>`+
+ (d.map(t=>{const sub=jl(t),g=isG(t),op=tkOpen[t.id],m=t.tm;return `<div class="c tkcard"><div class="row" style="flex-wrap:nowrap;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><b style="${t.mk==1?'text-decoration:line-through;color:var(--mut)':t.mk==2?'color:var(--bad)':''}">${g?esc(t.s):'سورة '+esc(t.s)}</b><div class="m">${t.type}${g?(sub&&sub!==t.s?' • '+esc(sub):''):' • '+t.a+'–'+t.b}</div></div><button type="button" class="g" style="padding:4px 10px" onclick="tkEdit(${t.id})">${svg('edit')}</button><button type="button" class="g" style="padding:4px 10px" onclick="tkUnits(${t.id})">تعديل الأجزاء</button></div>
   ${m?tmHtml(t):''}
-  <div class="row" style="margin-top:8px">${m?'':`<button type="button" class="g" onclick="tmNew(${t.id})">⏱ تايمر</button>`}<button type="button" class="g" onclick="startT(${t.id})">${t.st?'⏱ بدأت '+hm(new Date(t.st)):'▶ ابدأ'}</button>${t.st?`<button type="button" class="g" onclick="tkRs(${t.id})">↺ البداية</button>`:''}<button type="button" onclick="rate(${t.id})">✅ تم</button><button type="button" class="g" onclick="archT(${t.id},true)">📦</button><button type="button" class="g" onclick="ask('هل تريد حذف المهمة؟',()=>delT(${t.id}),'نعم، احذف')">🗑</button></div>
+  <div class="row" style="margin-top:8px">${m?'':`<button type="button" class="g" onclick="tmNew(${t.id})">${qic('timer')} تايمر</button>`}<button type="button" class="g" onclick="startT(${t.id})">${t.st?qic('timer')+' بدأت '+hm(new Date(t.st)):qic('play')+' ابدأ'}</button>${t.st?`<button type="button" class="g" onclick="tkRs(${t.id})">${qic('undo')} البداية</button>`:''}<button type="button" onclick="rate(${t.id})">${qic('check')} تم</button><button type="button" class="g" onclick="archT(${t.id},true)">${qic('box')}</button><button type="button" class="g" onclick="ask('هل تريد حذف المهمة؟',()=>delT(${t.id}),'نعم، احذف')">${qic('trash')}</button></div>
   <div class="m" style="margin-top:8px;cursor:pointer" onclick="tkOpen[${t.id}]=!tkOpen[${t.id}];draw()">${op?'▴':'▾'} تفاصيل المهمة</div>${op?`<div class="m" style="line-height:1.9">بدأت: ${t.st?dt(t.st):'لم تبدأ بعد'}<br>انتهت: لم تنتهِ بعد${m?`<br>الوقت الأصلي: ${hms(mOrig(m))} • المستغرق: ${hms(mUsed(m))}${mOver(m)?' • الزائد: '+hms(mOver(m)):''}`:''}</div>`:''}</div>`}).join('')||'<div class="c m">لا مهام اليوم، بارك الله فيك 🌿</div>');
 }
 
@@ -755,16 +937,18 @@ function ask(m,f,l,n){pf=f;$('#sh').innerHTML=`<div class="sh"><div><b>${esc(m)}
 function cf(y){const f=pf;pf=null;$('#sh').innerHTML='';if(y&&f)f()}
 function delStat(id){const l=S.logs.find(x=>x.t==id),t=S.tasks.find(x=>x.id==id),n=(t||l||{}).s||'هذه المهمة';ask('حذف '+n+' من الإحصائيات؟ (تُحذف سجلاتها فقط)',()=>{S.logs=S.logs.filter(x=>x.t!=id);save();draw()})}
 function stats(){
- const ds=new Set(S.logs.map(l=>l.date));let st=0,d=new Date();if(!ds.has(ymd(d)))d=new Date(d-864e5);
- while(ds.has(ymd(d))){st++;d=new Date(d-864e5)}
- const wk=[...Array(7)].map((_,i)=>{const x=new Date(Date.now()-(6-i)*864e5);return[(S.lang=='en'?['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][x.getDay()]:D[x.getDay()].slice(0,3)),S.logs.filter(l=>l.date==ymd(x)).length]});
- const mx=Math.max(1,...wk.map(w=>w[1])),hr={};S.logs.filter(l=>l.r=='mastered').forEach(l=>{const h=l.time.slice(0,2);hr[h]=(hr[h]||0)+1});
- const b=Object.entries(hr).sort((a,b)=>b[1]-a[1])[0];
- return `<div style="padding:8px 12px 0"><button type="button" class="g" onclick="printReport('all')" style="width:100%">📄 حفظ إنجازاتي كملف PDF</button></div><div class="row" style="padding:0 12px"><div class="c" style="flex:1;margin:10px 0">🔥 الاستمرارية<br><b style="font-size:22px">${st} يوم</b></div><div class="c" style="flex:1;margin:10px 0">✅ الإنجازات<br><b style="font-size:22px">${S.logs.length}</b></div></div>
- <div class="c">⏰ أفضل وقت تركيز: <b>${b?'الساعة '+b[0]+':00':'لا بيانات بعد'}</b></div>
+ const en=S.lang=='en',st=streak(),day=i=>new Date(Date.now()-i*864e5),cnt=i=>S.logs.filter(l=>l.date==ymd(day(i))).length,
+ wk=[6,5,4,3,2,1,0].map(i=>{const x=day(i);return[(en?['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][x.getDay()]:D[x.getDay()].slice(0,3)),cnt(i),i==0]}),
+ tw=wk.reduce((a,w)=>a+w[1],0),lw=[13,12,11,10,9,8,7].reduce((a,i)=>a+cnt(i),0),dl=tw-lw,mx=Math.max(1,...wk.map(w=>w[1])),hr={};
+ S.logs.filter(l=>l.r=='mastered').forEach(l=>{const h=l.time.slice(0,2);hr[h]=(hr[h]||0)+1});
+ const b=Object.entries(hr).sort((a,b)=>b[1]-a[1])[0],q={mastered:0,light:0,hard:0};S.logs.forEach(l=>{if(q[l.r]!=null)q[l.r]++});
+ const CL={mastered:'#2e7d32',light:'#f9a825',hard:'#e53935'};
+ return `<div class="row sp ptl"><b>إنجازاتي</b><button type="button" class="g" onclick="printReport('all')">${qic('doc')} PDF</button></div>
+ <section class="hero"><div class="hr-t"><div><div class="hr-g">الاستمرارية</div><div class="hr-d">${st} يوم</div><div class="hr-m">${S.logs.length} جلسة إجمالًا</div></div><div class="flame">${qic('flame')}</div></div><div class="hr-s"><div><b>${tw}</b><span>هذا الأسبوع</span></div><div><b>${dl>0?'+':''}${dl}</b><span>عن الأسبوع الماضي</span></div><div><b>${b?b[0]+':00':'—'}</b><span>أفضل ساعة تركيز</span></div></div></section>
  ${taskStats()}
- <div class="c"><b>آخر 7 أيام</b><div class="bar" style="margin-top:10px">${wk.map(w=>`<div style="height:${w[1]/mx*100}%">${w[1]}</div>`).join('')}</div><div class="row m" style="margin-top:4px">${wk.map(w=>`<span style="flex:1;text-align:center">${w[0]}</span>`).join('')}</div></div>
- <div class="c"><b>آخر العمليات</b>${S.logs.slice(-10).reverse().map(l=>`<div style="padding:8px 0;border-top:1px solid var(--bd)">${{mastered:'🟢',light:'🟡',hard:'🔴'}[l.r]} ${l.day} • ${l.h}<div class="m">${l.date} ${l.time} (${l.dur} د)</div></div>`).join('')||'<div class="m">لا سجلات بعد</div>'}</div>`}
+ <div class="c"><b>آخر 7 أيام</b><div class="bar" style="margin-top:12px">${wk.map(w=>`<div class="${w[2]?'tdy':''}" style="height:${w[1]/mx*100}%">${w[1]||''}</div>`).join('')}</div><div class="row m" style="margin-top:6px">${wk.map(w=>`<span style="flex:1;text-align:center;${w[2]?'color:var(--pri);font-weight:700':''}">${w[0]}</span>`).join('')}</div></div>
+ <div class="c"><b>جودة المراجعات</b><div class="qbar"><i style="flex:${q.mastered};background:${CL.mastered}"></i><i style="flex:${q.light};background:${CL.light}"></i><i style="flex:${q.hard};background:${CL.hard}"></i></div><div class="row sp m" style="margin-top:8px"><span><i class="dt" style="background:${CL.mastered}"></i>متقنة ${q.mastered}</span><span><i class="dt" style="background:${CL.light}"></i>تحتاج مراجعة ${q.light}</span><span><i class="dt" style="background:${CL.hard}"></i>متعثرة ${q.hard}</span></div></div>
+ <div class="c"><b>آخر العمليات</b><div class="tl">${S.logs.slice(-10).reverse().map(l=>`<div><i class="dt" style="background:${CL[l.r]||'var(--mut)'}"></i><div><b>${l.day} • ${l.h}</b><div class="m">${l.date} ${l.time} (${l.dur} د)</div></div></div>`).join('')||'<div class="m">لا سجلات بعد</div>'}</div></div>`}
 /* ---------- جدول الأجزاء ---------- */
 function jAdd(i,auto){S.juz=S.juz||{};const j=S.juz[i]||(S.juz[i]={n:0,h:[]});j.n++;j.last=new Date().toISOString();j.h=[...(j.h||[]),j.last].slice(-60);save();if(!auto)draw()}
 function jSub(i){const j=(S.juz||{})[i];if(!j||!j.n)return;j.n--;(j.h=j.h||[]).pop();j.last=j.h.length?j.h[j.h.length-1]:null;save();draw()}
@@ -957,7 +1141,7 @@ function colApply(){const hx=hsv2hex(cH,cS,cV);$('#sh').innerHTML='';
  else{nbK().c=hx;save();draw();nbEditCover(nbEd)}}
 /* ---------- المظهر واللغة ---------- */
 const TH=[
-{n:'نيلي ملكي',h:231,s:1,g:'#c9a24a',ff:"'IBM Plex Sans Arabic'",rd:20,rb:12},
+{n:'فجر',h:166,s:1,g:'#f0b44c',ff:"'IBM Plex Sans Arabic'",rd:28,rb:18},
 {n:'محيط',h:204,s:1,g:'#e3a94a',ff:"'Almarai'",rd:16,rb:10},
 {n:'بنفسج',h:272,s:.95,g:'#d9a441',ff:"'Cairo'",rd:26,rb:14},
 {n:'كهرمان',h:27,s:.9,g:'#b8862f',ff:"'Mada'",rd:18,rb:12},
@@ -970,7 +1154,7 @@ const hexHsl=x=>{const n=parseInt(x.slice(1),16),r=(n>>16)/255,g=((n>>8)&255)/25
 const th=()=>S.theme||(S.theme={mode:'auto',acc:0});
 function thCur(pv){const t=th(),c=pv||((t.acc<0&&t.custom)?t.custom:null);if(c){const[h,s,l]=hexHsl(c);return{n:'مخصص',h,s:Math.max(.03,Math.min(1.1,s/65)),c,S:s,L:l,g:'#c9a24a',ff:TH[0].ff,rd:20,rb:12}}return TH[t.acc||0]||TH[0]}
 function thPal(T,d){const P=thPal0(T,d);if(T.c){const h=T.h,S=T.S,L=T.L;if(d){P.pri=hslHex(h,S,Math.max(L,62));P.h1=hslHex(h,S*.85,Math.min(Math.max(L*.6,12),30));P.h2=hslHex(h+10,S*.85,Math.min(Math.max(L*.6,12),30)+8)}else{P.pri=T.c;P.h1=T.c;P.h2=hslHex(h+10,S,Math.min(L+10,92));P.on=L>68?'#1a1a1a':'#fff'}}return P}
-function thPal0(T,d){const h=T.h,s=T.s;return d?{bg:hslHex(h,40*s+4,7.5),card:hslHex(h,32*s+4,12.5),tx:hslHex(h,30*s+6,92),mut:hslHex(h,16*s+4,66),bd:hslHex(h,30*s+4,21),pri:hslHex(h,62*s+10,68),h1:hslHex(h,55*s+6,17),h2:hslHex(h+10,48*s+6,25),on:hslHex(h,50*s,9),bad:'#ef7b7b'}:{bg:hslHex(h,34*s+4,96),card:hslHex(h,30*s,99.5),tx:hslHex(h,40*s+6,14),mut:hslHex(h,14*s+4,42),bd:hslHex(h,26*s+4,89),pri:hslHex(h,58*s+6,30),h1:hslHex(h,60*s+6,24),h2:hslHex(h+10,52*s+6,36),on:'#fff',bad:'#c62828'}}
+function thPal0(T,d){const h=T.h,s=T.s;return d?{bg:hslHex(h,40*s+4,7.5),card:hslHex(h,32*s+4,12.5),tx:hslHex(h,30*s+6,92),mut:hslHex(h,16*s+4,66),bd:hslHex(h,30*s+4,21),pri:hslHex(h,62*s+10,68),h1:hslHex(h,55*s+6,17),h2:hslHex(h+10,48*s+6,25),on:hslHex(h,50*s,9),bad:'#ef7b7b'}:{bg:hslHex(h,26*s+3,96.5),card:'#ffffff',tx:hslHex(h,40*s+6,13),mut:hslHex(h,14*s+4,40),bd:hslHex(h,22*s+4,90),pri:hslHex(h,58*s+6,30),h1:hslHex(h,60*s+6,24),h2:hslHex(h+10,52*s+6,36),on:'#fff',bad:'#c62828'}}
 const thPat="url(\"data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><path d='M40 6 74 40 40 74 6 40Z' fill='none' stroke='white' stroke-width='2'/></svg>")+"\")";
 function applyTheme(pv){const t=th(),r=document.documentElement,dm=typeof matchMedia!='undefined'&&matchMedia('(prefers-color-scheme: dark)').matches,dark=t.mode=='dark'||(t.mode=='auto'&&dm);
  if(t.mode=='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t.mode);
@@ -1279,6 +1463,8 @@ const PN=['الفجر','الظهر','العصر','المغرب','العشاء'],
 const prP=()=>S.pr||(S.pr={start:'',days:{}});
 const dkey=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 const prQ=k=>{const d=prP().days[k]||{};return PK.every(p=>!d[p]||!d[p].s)};
+function prSum(P,today){const tdr=P.days[today]||{},ok=r=>r&&r.s&&r.s!='x',dn=PK.filter(p=>ok(tdr[p])).length;let fs=0;for(let i=0;i<90;i++){const k=ymd(new Date(Date.now()-i*864e5)),r=P.days[k]||{};if(PK.every(p=>ok(r[p])))fs++;else if(i>0)break;else continue}
+ return `<section class="hero"><div class="hr-t"><div><div class="hr-g">صلوات اليوم</div><div class="hr-d">${dn} / ${PK.length}</div><div class="hr-m">${fs} يوم متتالٍ بصلوات كاملة</div></div><div class="dots">${PK.map(p=>`<i class="${ok(tdr[p])?'on':''}"></i>`).join('')}</div></div></section>`}
 function prayer(){if(!prY){const n=new Date();prY=n.getFullYear();prM=n.getMonth();prD=n.getDate()}
  const P=prP(),dim=new Date(prY,prM+1,0).getDate(),fd=new Date(prY,prM,1).getDay(),today=ymd(new Date()),cur=new Date().getFullYear();if(prD>dim)prD=dim;
  const en=S.lang=='en',MN=[...Array(12)].map((_,i)=>new Date(2000,i,1).toLocaleDateString(en?'en-US':'ar-SY',{month:'long'})),WD=D.map(x=>x.replace('ال','').slice(0,3)),ys=[];for(let y=Math.min(cur-10,prY);y<=Math.max(cur+30,prY);y++)ys.push(y);
@@ -1287,8 +1473,8 @@ function prayer(){if(!prY){const n=new Date();prY=n.getFullYear();prM=n.getMonth
   if(tr)PK.forEach(p=>{const e=rec[p];if(!e||!e.s)c.u++;else{c[e.s]++;if(e.s!='x'){if(e.t==1)c.ot++;if(e.t==2)c.ft++}}});
   cells+=`<div class="pd${P.start===k?' st':''}${rec.note?' pn':''}${d===prD?' sel':''}${k>today?' fu':''}" onclick="prD=${d};draw()">${d}${q?'<span class="pq">?</span>':''}${(tr&&full&&!q)?'<span class="pk"></span>':''}</div>`}
  const dd=P.days[dkey(prY,prM,prD)]||{},ks=dkey(prY,prM,prD);
- return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">متتبع الصلاة</b><button type="button" class="g" onclick="go('home')">رجوع</button></div>
- ${prRemCard()} <div class="c"><div class="row sp" style="flex-wrap:nowrap"><button type="button" class="pbtn bk" onclick="prNav(-1)">${svg('chev')}</button><div class="row" style="flex-wrap:nowrap;gap:6px"><select onchange="prM=+this.value;draw()" style="margin:0">${MN.map((n,i)=>`<option value="${i}" ${i==prM?'selected':''}>${n}</option>`).join('')}</select><select onchange="prY=+this.value;draw()" style="margin:0">${ys.map(y=>`<option ${y==prY?'selected':''}>${y}</option>`).join('')}</select></div><button type="button" class="pbtn" onclick="prNav(1)">${svg('chev')}</button></div>
+ return `<div class="row sp ptl"><b>متتبع الصلاة</b><button type="button" class="g" onclick="go('home')">رجوع</button></div>
+ ${prSum(P,today)}${prRemCard()} <div class="c"><div class="row sp" style="flex-wrap:nowrap"><button type="button" class="pbtn bk" onclick="prNav(-1)">${svg('chev')}</button><div class="row" style="flex-wrap:nowrap;gap:6px"><select onchange="prM=+this.value;draw()" style="margin:0">${MN.map((n,i)=>`<option value="${i}" ${i==prM?'selected':''}>${n}</option>`).join('')}</select><select onchange="prY=+this.value;draw()" style="margin:0">${ys.map(y=>`<option ${y==prY?'selected':''}>${y}</option>`).join('')}</select></div><button type="button" class="pbtn" onclick="prNav(1)">${svg('chev')}</button></div>
  <div class="row sp" style="margin-top:10px;cursor:pointer" onclick="prOpen=!prOpen;draw()"><span class="m">${prOpen?'▴':'▾'} الأيام</span><span class="m">اليوم المحدد: ${prD}</span></div>${prOpen?`<div class="pcal m" style="margin:6px 0 4px">${WD.map(x=>`<div>${x}</div>`).join('')}</div><div class="pcal">${cells}</div>`:''}
  <div class="row" style="margin-top:10px"><button type="button" style="flex:1" onclick="prStart()">${P.start===ks?'هذا يوم البداية':'تعيين هذا اليوم كيوم بداية'}</button></div><div class="m" style="margin-top:6px">${P.start?'يوم البداية: '+P.start+' (يظهر باللون الأخضر). الأيام التي لم يُسجَّل فيها أي شيء تظهر عليها علامة ؟':'اختر يوماً ثم اضغط «تعيين هذا اليوم كيوم بداية» ليبدأ التتبع.'}</div></div>
  <div class="c"><b>${D[new Date(prY,prM,prD).getDay()]} • ${ks}</b><table class="pt" style="margin-top:6px"><tr><th>الصلاة</th><th>في الجامع</th><th>في البيت</th><th>لم أصلها</th><th>بوقتها؟</th></tr>${PK.map((p,i)=>{const e=dd[p]||{},s=e.s||'';return `<tr><td><b>${PN[i]}</b></td><td class="pc ${s=='m'?'g':''}" onclick="prSet('${p}','m')">${s=='m'?svg('check'):''}</td><td class="pc ${s=='h'?'y':''}" onclick="prSet('${p}','h')">${s=='h'?svg('check'):''}</td><td class="pc ${s=='x'?'r':''}" onclick="prSet('${p}','x')">${s=='x'?svg('check'):''}</td><td>${s&&s!='x'?mk2(e.t||0,`prT('${p}',1)`,`prT('${p}',2)`):'—'}</td></tr>`}).join('')}</table><div class="m" style="margin-top:6px">في الجامع = أخضر • في البيت = أصفر • لم أصلها = أحمر • ✓ بوقتها / ✗ خارج الوقت</div>
@@ -1619,7 +1805,7 @@ const ageOf=P=>{if(P.bd){const b=new Date(P.bd),n=new Date();let a=n.getFullYear
 let pe={on:false};
 const avatar=()=>{const P=prof(),src=P.photo||(fu&&fu.photoURL)||'';return src?`<img src="${esc(src)}" referrerpolicy="no-referrer" alt="">`:svg('user')};
 const handle=()=>prof().user?'@'+prof().user:(fu&&fu.email?'@'+fu.email.split('@')[0]:'@guest');
-function toast(m){const d=document.createElement('div');d.textContent=m;d.setAttribute('role','status');d.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 16px;border-radius:20px;z-index:20;font-size:14px';document.body.appendChild(d);setTimeout(()=>d.remove(),1400)}
+function toast(m){const d=document.createElement('div');d.textContent=m;d.setAttribute('role','status');d.style.cssText='position:fixed;bottom:calc(104px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#1d2036;color:#fff;padding:11px 20px;border-radius:16px;z-index:90;font-size:14px;font-weight:600;box-shadow:0 12px 30px -8px #0008;border:1px solid #ffffff22;max-width:88vw;text-align:center';document.body.appendChild(d);setTimeout(()=>d.remove(),1400)}
 function cp(v){try{navigator.clipboard.writeText(v)}catch(e){dbg(e)}toast('تم النسخ')}
 function pickPhoto(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),z=256,m=Math.min(im.width,im.height);c.width=c.height=z;c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,z,z);prof().photo=c.toDataURL('image/jpeg',.82);save();draw()};im.src=rd.result};rd.readAsDataURL(f)}
 function chPass(){if(!fu)return;const has=(fu.providerData||[]).some(x=>x.providerId==='password');
