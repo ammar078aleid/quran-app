@@ -303,7 +303,7 @@ nav button.on::after{top:3px;left:42%;right:42%;height:3px;border-radius:3px}
 .lkb{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 
 /* القائمة الجانبية والنوافذ السفلية */
-.dh{position:relative;overflow:hidden;padding-bottom:26px}
+.dh{position:relative;overflow:hidden;padding-bottom:26px;flex:none}
 .dh::before{content:"";position:absolute;inset:0;opacity:.1;pointer-events:none;background-image:var(--hp)}
 .dh>*{position:relative}
 .dh::after{content:"";position:absolute;inset-inline:22px;bottom:8px;height:3px;border-block:1px solid color-mix(in srgb,var(--gold) 85%,transparent);opacity:.85}
@@ -441,6 +441,10 @@ nav{background:var(--card)!important;box-shadow:0 2px 14px color-mix(in srgb,var
 .hero{box-shadow:none}
 .brand svg{filter:none!important}
 *{scrollbar-width:auto;scrollbar-color:auto}
+.qa button.on{background:var(--pri)!important;color:var(--on)}
+select{padding:12px 10px 12px 30px;font-size:14px;background-position:left 10px center}
+html[dir=ltr] select{padding:12px 30px 12px 10px;background-position:right 10px center}
+select[onchange^="prM"]{flex:1.8 1 0;min-width:0}select[onchange^="prY"]{flex:1 1 0;min-width:0}
 </style></head><body><div id="aw" class="aw" style="display:none"></div>
 <header style="display:flex;align-items:center;gap:6px;padding:10px 8px 4px"><button type="button" onclick="menu()" aria-label="القائمة" style="background:none;color:var(--tx);padding:8px"><svg width="30" height="30" viewBox="0 0 28 28"><path d="M4 8h20M4 14h20M4 20h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></button><span class="brand"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="6" width="20" height="20" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8"/><rect x="6" y="6" width="20" height="20" rx="1.5" fill="none" stroke="var(--gold)" stroke-width="1.8" transform="rotate(45 16 16)"/><circle cx="16" cy="16" r="3" fill="var(--gold)"/></svg>مُثبِّت القرآن</span><i class="hdo"></i></header>
 <div id="dtb" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:2;text-align:left;font-size:11px;line-height:1.35;color:var(--mut)"><div id="dd"></div><b id="dtm" style="font-variant-numeric:tabular-nums;color:var(--tx)"></b><div id="dan" data-notr="1" onclick="menu()" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:var(--tx);cursor:pointer"></div></div><div id="ban"></div><main id="v"></main><div id="sh"></div><div id="pv"></div>
@@ -1478,7 +1482,7 @@ const prP=()=>S.pr||(S.pr={start:'',days:{}});
 const dkey=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 const prQ=k=>{const d=prP().days[k]||{};return PK.every(p=>!d[p]||!d[p].s)};
 function prSum(P,today){const tdr=P.days[today]||{},ok=r=>r&&r.s&&r.s!='x',dn=PK.filter(p=>ok(tdr[p])).length;let fs=0;for(let i=0;i<90;i++){const k=ymd(new Date(Date.now()-i*864e5)),r=P.days[k]||{};if(PK.every(p=>ok(r[p])))fs++;else if(i>0)break;else continue}
- return `<section class="hero"><div class="hr-t"><div><div class="hr-g">صلوات اليوم</div><div class="hr-d">${dn} / ${PK.length}</div><div class="hr-m">${fs} يوم متتالٍ بصلوات كاملة</div></div><div class="dots">${PK.map(p=>`<i class="${ok(tdr[p])?'on':''}"></i>`).join('')}</div></div></section>`}
+ return `<section class="hero"><div class="hr-t"><div><div class="hr-g">صلوات اليوم</div><div class="hr-d">${dn} من ${PK.length}</div><div class="hr-m">${fs} يوم متتالٍ بصلوات كاملة</div></div><div class="dots">${PK.map(p=>`<i class="${ok(tdr[p])?'on':''}"></i>`).join('')}</div></div></section>`}
 function prayer(){if(!prY){const n=new Date();prY=n.getFullYear();prM=n.getMonth();prD=n.getDate()}
  const P=prP(),dim=new Date(prY,prM+1,0).getDate(),fd=new Date(prY,prM,1).getDay(),today=ymd(new Date()),cur=new Date().getFullYear();if(prD>dim)prD=dim;
  const en=S.lang=='en',MN=[...Array(12)].map((_,i)=>new Date(2000,i,1).toLocaleDateString(en?'en-US':'ar-SY',{month:'long'})),WD=D.map(x=>x.replace('ال','').slice(0,3)),ys=[];for(let y=Math.min(cur-10,prY);y<=Math.max(cur+30,prY);y++)ys.push(y);
