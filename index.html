@@ -442,6 +442,7 @@ nav{background:var(--card)!important;box-shadow:0 2px 14px color-mix(in srgb,var
 .brand svg{filter:none!important}
 *{scrollbar-width:auto;scrollbar-color:auto}
 .qa button.on{background:var(--pri)!important;color:var(--on)}
+.hid{display:none!important}
 select{padding:12px 10px 12px 30px;font-size:14px;background-position:left 10px center}
 html[dir=ltr] select{padding:12px 30px 12px 10px;background-position:right 10px center}
 select[onchange^="prM"]{flex:1.8 1 0;min-width:0}select[onchange^="prY"]{flex:1 1 0;min-width:0}
@@ -486,18 +487,18 @@ function draw(){
 }
 /* ---------- المهام ---------- */
 function due(){const e=new Date();e.setHours(23,59,59);return S.tasks.filter(t=>!t.arch&&new Date(t.next)<=e)}
-let qAdd=false;
+let qAdd=false,qTim=false;
 const qIC={timer:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.3 1.6M9.5 3h5"/>',play:'<path d="M8 5.5v13l10.5-6.5z"/>',undo:'<path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v4.5h4.5"/>',check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',box:'<rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><path d="M5 9v9.2c0 .7.6 1.3 1.3 1.3h11.4c.7 0 1.3-.6 1.3-1.3V9M10 13h4"/>',trash:'<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.2c0 .7.6 1.3 1.3 1.3h6.8c.7 0 1.3-.6 1.3-1.3L17.5 7M10 11v6M14 11v6"/>',plus:'<path d="M12 5v14M5 12h14"/>',cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',pen:'<path d="M4 20l1-4.2L16.3 4.5a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19z"/>',grid:'<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',flame:'<path d="M12 3c1 3.2 4.5 5.2 4.5 9.5A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.5c0-2 1-3.2 2-4.2.2 1.2.8 2 1.6 2.4C11 8.5 11.3 5.5 12 3zM9.5 20.5h5"/>',doc:'<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 1 .5-.5zM14 3.5v4h4M9 13h6M9 16.5h6"/>'};
 const qic=n=>`<span class="ic"><svg viewBox="0 0 24 24">${qIC[n]}</svg></span>`;
 function homeHero(){const n=new Date(),d=due(),td=S.logs.filter(l=>l.date==ymd(n)).length,tot=td+d.length,pct=tot?Math.round(td/tot*100):0,st=streak(),h=n.getHours(),
  gr=h<5?'ليلة مباركة':h<12?'صباح الخير':h<17?'نهارك سعيد':h<20?'مساء الخير':'مساء النور',nm=((prof().name||'').trim().split(' ')[0])||'';
  const dk=ymd(n);if(!homeHero.c||homeHero.c.k!=dk){let hj='',gd='';try{hj=n.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',year:'numeric'});gd=n.toLocaleDateString('ar-SY-u-nu-latn',{weekday:'long',day:'numeric',month:'long'})}catch(e){}homeHero.c={k:dk,hj,gd}}const{hj,gd}=homeHero.c;
  return `<section class="bento"><div class="bt hi"><div class="hr-g">${gr}${nm?'، '+esc(nm):''}</div><div class="hr-d">${hj}</div><div class="hr-m">${gd}</div></div><div class="bt rg"><div class="ring"><svg viewBox="0 0 80 80"><circle class="rb" cx="40" cy="40" r="34"/><circle class="rf" cx="40" cy="40" r="34" stroke-dasharray="${(213.6*pct/100).toFixed(1)} 213.6"/></svg><b>${pct}%</b></div><span>إنجاز اليوم</span></div><div class="bt s1"><b>${d.length}</b><span>مهام متبقية</span></div><div class="bt s2"><b>${st}</b><span>يوم متواصل</span></div></section>`}
-function homeQA(){const A=[['qAdd=!qAdd;draw()','plus','مهمة جديدة',qAdd],["go('rv')",'cal','المراجعة'],["go('ex')",'pen','اختبار'],["go('jm')",'grid','الأجزاء'],["go('pr')",'moon','الصلاة']];
+function homeQA(){const A=[['qAdd=!qAdd;draw()','plus','مهمة جديدة',qAdd],["go('rv')",'cal','المراجعة'],["go('ex')",'pen','اختبار'],["go('jm')",'grid','الأجزاء'],['qTim=!qTim;draw()','timer','المؤقت',qTim]];
  return `<div class="qa">${A.map(a=>`<button type="button" class="${a[3]?'on':''}" onclick="${a[0]}">${qic(a[1])}<span>${a[2]}</span></button>`).join('')}</div>`}
 function home(){
  const d=due();
- return `${remBox()}${homeHero()}${homeQA()}<div class="c" id="tbox">${tbox()}</div>
+ return `${remBox()}${homeHero()}${homeQA()}<div class="c${qTim?'':' hid'}" id="tbox">${tbox()}</div>
  ${qAdd?`<div class="c frm"><b>مهمة جديدة</b>
  <div class="row" style="flex-wrap:nowrap;gap:6px"><input id="ts" value="${esc(pkTgt?'':pkSum())}" placeholder="اكتب المهمة أو اختر: سور / أجزاء / صفحات" autocomplete="off" oninput="selClear()" style="flex:1;margin:0;min-width:0"><button type="button" onclick="pkOpen()" style="padding:10px 14px">${svg('plus')} اختيار</button></div><input id="tn" placeholder="اسم المهمة (اختياري)" autocomplete="off">
  <div class="row"><input id="ta" type="number" placeholder="من آية" style="flex:1"><input id="tb" type="number" placeholder="إلى آية" style="flex:1"></div>
