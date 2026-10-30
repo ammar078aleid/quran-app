@@ -673,10 +673,10 @@ async function doUp(m,u,p){if(!m.includes('@')||!p){sync('⚠️ لإنشاء ح
  try{if(await unGet(u))throw{code:'username-taken'};await fa.createUserWithEmailAndPassword(m,p);await claimUn(u);sync('✅ تم إنشاء الحساب باسم المستخدم @'+u)}catch(e){er(e)}}
 async function aUp(){return doUp($('#ae').value.trim(),$('#au').value.trim().toLowerCase(),$('#ap').value)}
 async function doRs(id){if(!id){sync('⚠️ اكتب بريدك أو اسم المستخدم');return}if(busy)return;busy=1;sync('⏳ جارٍ إرسال الرابط...');
- try{const m=await resolveEmail(id);try{fa.languageCode='en'}catch(e){dbg(e)}
+ try{const m=await resolveEmail(id);try{fa.languageCode='ar'}catch(e){dbg(e)}
   try{const ms=await fa.fetchSignInMethodsForEmail(m);if(ms.length&&!ms.includes('password')){sync('ℹ️ هذا البريد مسجّل بواسطة Google فقط: ادخل بزر Google ثم أنشئ كلمة مرور من «إعدادات الحساب».');try{fa.languageCode='ar'}catch(e){dbg(e)}busy=0;return}}catch(e){dbg(e)}
   await fa.sendPasswordResetEmail(m,{url:location.origin+location.pathname,handleCodeInApp:false});
-  sync('✅ تم إرسال رسالة إلى \u2066'+m.slice(0,3)+'*'.repeat(Math.max(0,m.length-3))+'\u2069')}catch(e){er(e)}try{fa.languageCode='ar'}catch(e){dbg(e)}busy=0}
+  sync('✅ تم إرسال رسالة إلى \u2066'+m.slice(0,3)+'*'.repeat(Math.max(0,m.length-3))+'\u2069 — لم تصلك؟ افحص البريد المزعج (Spam). وإن كان حسابك عبر Google فادخل بزر Google.')}catch(e){er(e)}try{fa.languageCode='ar'}catch(e){dbg(e)}busy=0}
 async function aRs(){return doRs($('#ae').value.trim())}
 async function out(){
  clearTimeout(pt);pt=null;if(!(await pushNow(true))){tab='se';draw();sync('تعذّر رفع بياناتك، لم يتم الخروج ⚠️');return}
