@@ -594,9 +594,16 @@ function fbInit(){
 /* ===== المزامنة: تلقائية دائماً + تتجدد لحالها ===== */
 const INL=300000,PART=300000;let pushing=false,again=false,pushFail=0,unsub=null,dnTry=0;
 function cutParts(d){const a=[];let i=0;while(i<d.length){let j=Math.min(d.length,i+PART);if(j<d.length){const c=d.charCodeAt(j-1);if(c>=0xD800&&c<=0xDBFF)j--}a.push(d.slice(i,j));i=j}return a}
-function synBar(m,bad){let e=document.getElementById('syb');if(!m){if(e)e.remove();return}
- if(!e){e=document.createElement('div');e.id='syb';e.style.cssText='position:fixed;inset-inline:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:25;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;box-shadow:0 4px 18px #0004;text-align:center';document.body.appendChild(e)}
- e.style.background=bad?'var(--bad)':'var(--card)';e.style.color=bad?'#fff':'var(--tx)';e.textContent=m}
+let synDis='';
+function synBar(m,bad){let e=document.getElementById('syb');if(!m){synDis='';if(e)e.remove();return}
+ if(m===synDis)return;
+ if(!e){e=document.createElement('div');e.id='syb';e.setAttribute('role','status');e.style.cssText='position:fixed;inset-inline:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:25;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;box-shadow:0 4px 18px #0004;text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab';document.body.appendChild(e);
+  let x0=null,dx=0;
+  const fin=r=>{if(x0===null)return;x0=null;if(Math.abs(dx)>70){synDis=e.dataset.m||'';e.style.transition='transform .2s,opacity .2s';e.style.transform='translateX('+(dx>0?'':'-')+'110%)';e.style.opacity='0';setTimeout(()=>{if(e.parentNode&&e.style.opacity==='0')e.remove()},220)}else{e.style.transition='transform .2s,opacity .2s';e.style.transform='';e.style.opacity=''}dx=0};
+  e.addEventListener('pointerdown',ev=>{x0=ev.clientX;dx=0;e.style.transition='none';try{e.setPointerCapture(ev.pointerId)}catch(_){}});
+  e.addEventListener('pointermove',ev=>{if(x0===null)return;dx=ev.clientX-x0;e.style.transform='translateX('+dx+'px)';e.style.opacity=String(Math.max(.25,1-Math.abs(dx)/260))});
+  e.addEventListener('pointerup',fin);e.addEventListener('pointercancel',fin)}
+ e.dataset.m=m;e.style.background=bad?'var(--bad)':'var(--card)';e.style.color=bad?'#fff':'var(--tx)';e.textContent=m}
 function pushBad(e){const c=(e&&e.code)||'';let m,bad=1;
  if(c==='permission-denied')m='تعذّر رفع بياناتك: صلاحيات Firestore تحتاج تحديثاً (أضف قاعدة parts)';
  else if(c==='invalid-argument'||/size|large|exceed/i.test((e&&e.message)||''))m='تعذّر رفع بياناتك: حجم البيانات كبير، احذف بعض الصور من الدفاتر';
