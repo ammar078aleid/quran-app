@@ -4,7 +4,7 @@ const FB={apiKey:"AIzaSyDU-xm0U4NFXFa57Auv10967REt8n5PB3Y",authDomain:"quran-app
 const L=[1,3,7,30],D=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SUR='الفاتحة البقرة آل_عمران النساء المائدة الأنعام الأعراف الأنفال التوبة يونس هود يوسف الرعد إبراهيم الحجر النحل الإسراء الكهف مريم طه الأنبياء الحج المؤمنون النور الفرقان الشعراء النمل القصص العنكبوت الروم لقمان السجدة الأحزاب سبأ فاطر يس الصافات ص الزمر غافر فصلت الشورى الزخرف الدخان الجاثية الأحقاف محمد الفتح الحجرات ق الذاريات الطور النجم القمر الرحمن الواقعة الحديد المجادلة الحشر الممتحنة الصف الجمعة المنافقون التغابن الطلاق التحريم الملك القلم الحاقة المعارج نوح الجن المزمل المدثر القيامة الإنسان المرسلات النبأ النازعات عبس التكوير الانفطار المطففين الانشقاق البروج الطارق الأعلى الغاشية الفجر البلد الشمس الليل الضحى الشرح التين العلق القدر البينة الزلزلة العاديات القارعة التكاثر العصر الهمزة الفيل قريش الماعون الكوثر الكافرون النصر المسد الإخلاص الفلق الناس'.split(' ').map(x=>x.replace('_',' '));
 const MSG=['حبيب القرآن، موعدك الآن مع وردك 🌿','خيركم من تعلّم القرآن وعلّمه 📖','دقائق قليلة تثبّت حفظك لأيام طويلة ✨','ورتّل القرآن ترتيلاً.. جلستك بانتظارك'];
-let S={tasks:[],logs:[],alarms:[],mist:[],skipFri:true,id:1};
+let S={tasks:[],logs:[],alarms:[],mist:[],id:1};
 try{Object.assign(S,JSON.parse(localStorage.getItem('qmrm')||'{}'))}catch(e){dbg(e)}
 try{const _l=localStorage.getItem('qmrm_lang');if(_l)S.lang=_l}catch(e){dbg(e)}
 const BOOT_LANG=S.lang=='en'?'en':'ar';S.lang=BOOT_LANG;
@@ -50,7 +50,7 @@ function home(){
  <input id="tc" type="text" autocomplete="off" placeholder="مدة التايمر (اكتبها أنت، مثال 25 أو 1:30)">
  
  <button type="button" onclick="addTask()">إضافة</button>
- <label class="m"><input type="checkbox" style="width:auto" ${S.skipFri?'checked':''} onchange="S.skipFri=this.checked;save()"> استثناء يوم الجمعة من الجدولة</label></div>`:''}
+ </div>`:''}
  <div class="sec">مهام اليوم<span class="tkc">${d.length}</span></div>`+
  (d.map(t=>{const sub=jl(t),g=isG(t),op=tkOpen[t.id],m=t.tm;return `<div class="c tkcard"><div class="row" style="flex-wrap:nowrap;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><b style="${t.mk==1?'text-decoration:line-through;color:var(--mut)':t.mk==2?'color:var(--bad)':''}">${g?esc(t.s):'سورة '+esc(t.s)}</b><div class="m">${t.type}${g?(sub&&sub!==t.s?' • '+esc(sub):''):' • '+t.a+'–'+t.b}</div></div><button type="button" class="g" style="padding:4px 10px" onclick="tkEdit(${t.id})">${svg('edit')}</button><button type="button" class="g" style="padding:4px 10px" onclick="tkUnits(${t.id})">تعديل الأجزاء</button></div>
   ${m?tmHtml(t):''}
@@ -69,7 +69,6 @@ function rvPlan(n){const mem=rvMem(),N=Math.min(rvN(),mem.length||1),t=rvDay(new
  const isT=j=>L[j]&&L[j].getTime()==tk,dn=mem.filter(isT),td=[...dn,...rvOrd(mem.filter(j=>!isT(j)),L).slice(0,Math.max(0,N-dn.length))],pend=td.filter(j=>!isT(j));
  const days=[{d:t,juz:td,pend,done:dn,off:false}];td.forEach(j=>L[j]=t);
  for(let k=1;k<n;k++){const d=new Date(t);d.setDate(t.getDate()+k);
-  if(S.skipFri&&d.getDay()==5){days.push({d,juz:[],off:true});continue}
   const pk=rvOrd(mem,L).slice(0,N);pk.forEach(j=>L[j]=d);days.push({d,juz:pk.slice().sort((a,b)=>a-b),off:false})}
  return days}
 const rvDue=()=>rvPlan(1)[0].pend;
@@ -111,17 +110,17 @@ const WRX=[[0,'حسب موعدي (تلقائي)'],[4,'ربع صفحة'],[8,'نص
 function wrdFix(v){const W=wrdG();if(!W)return;W.fix=+v||0;save();draw()}
 const wrdDate=t=>{const a=String(t).split('-');return new Date(+a[0],a[1]-1,+a[2])};
 const wrdPz=(d,W)=>{const t=ymd(d);return (W.pz||[]).some(p=>t>=p.a&&t<=p.b)};
-function wrdDays(a,b,fr,W){let n=0;const d=new Date(a),e=new Date(b);d.setHours(0,0,0,0);e.setHours(0,0,0,0);for(let i=0;d<=e&&i<6000;i++){if(!(fr&&d.getDay()==5)&&!(W&&wrdPz(d,W)))n++;d.setDate(d.getDate()+1)}return n}
+function wrdDays(a,b,W){let n=0;const d=new Date(a),e=new Date(b);d.setHours(0,0,0,0);e.setHours(0,0,0,0);for(let i=0;d<=e&&i<6000;i++){if(!(W&&wrdPz(d,W)))n++;d.setDate(d.getDate()+1)}return n}
 function wrdCalc(){const W=wrdG();if(!W)return null;const today=new Date();today.setHours(0,0,0,0);const td=ymd(today),
  done=W.base+W.log.reduce((a,x)=>a+x.l,0),dToday=W.log.filter(x=>x.d==td).reduce((a,x)=>a+x.l,0),before=done-dToday,rem=Math.max(0,W.total-done),
- days=wrdDays(today,wrdDate(W.due),W.fr,W),auto=days>0?Math.ceil(Math.max(0,W.total-before)/days):0,fix=W.fix||0,daily=fix||auto;
- let eta=null,etaD=0;if(fix&&rem>0){const need=Math.ceil(Math.max(0,W.total-before)/fix),d=new Date(today);let n=0;for(let i=0;i<20000;i++){if(!(W.fr&&d.getDay()==5)&&!wrdPz(d,W)){n++;if(n>=need)break}d.setDate(d.getDate()+1)}eta=d;etaD=Math.round((wrdDate(W.due)-d)/864e5)}
+ days=wrdDays(today,wrdDate(W.due),W),auto=days>0?Math.ceil(Math.max(0,W.total-before)/days):0,fix=W.fix||0,daily=fix||auto;
+ let eta=null,etaD=0;if(fix&&rem>0){const need=Math.ceil(Math.max(0,W.total-before)/fix),d=new Date(today);let n=0;for(let i=0;i<20000;i++){if(!wrdPz(d,W)){n++;if(n>=need)break}d.setDate(d.getDate()+1)}eta=d;etaD=Math.round((wrdDate(W.due)-d)/864e5)}
  return{W,tot:W.total,done,dToday,rem,days,daily,auto,fix,eta,etaD,paused:wrdPz(today,W),pct:Math.min(100,Math.round(done/W.total*100)),late:wrdDate(W.due)<today,fin:rem<=0}}
 const wrdCard=()=>{const c=wrdCalc();if(!c||c.fin||c.paused||((c.late||c.days<=0)&&!c.fix)||c.dToday>=c.daily)return '';return `<div class="c" onclick="go('wr')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>📖 وردك اليوم</b><span class="ch">${svg('chev')}</span></div><div class="m">${wrdTxt(c.daily-c.dToday)}${c.dToday?' (متبقٍ من وردك)':''}</div></div>`};
 function wrdQ(m){const d=new Date();d.setMonth(d.getMonth()+m);const i=$('#wrdd');if(i)i.value=ymd(d)}
 function wrdSave(){const tot=Math.min(604,Math.max(1,wrdPgOf($('#wrdt').value,$('#wrdtu').value,1))),base=Math.min(tot,wrdPgOf($('#wrdb').value,$('#wrdbu').value,1)),due=$('#wrdd').value;
  if(!due||wrdDate(due)<new Date(new Date().setHours(0,0,0,0))){toast('اختر موعد إنهاء قادماً');return}
- const old=S.wrd||{};S.wrd={total:wrdLn(tot),base:wrdLn(base),due,fr:$('#wrdf').checked,start:old.start||ymd(new Date()),log:old.log||[],fix:old.fix||0,pz:old.pz||[],rr:old.rr||0};
+ const old=S.wrd||{};S.wrd={total:wrdLn(tot),base:wrdLn(base),due,start:old.start||ymd(new Date()),log:old.log||[],fix:old.fix||0,pz:old.pz||[],rr:old.rr||0};
  wrdEdit=0;save();toast('تم حفظ الخطة');draw()}
 function wrdAdd(l){const c=wrdCalc();if(!c||l<=0)return;S.wrd.log.push({id:S.id++,d:ymd(new Date()),l:Math.min(l,c.rem)});save();draw()}
 function wrdAddT(){const c=wrdCalc();if(c)wrdAdd(Math.max(0,c.daily-c.dToday))}
@@ -139,7 +138,6 @@ function wrdForm(){wrdS={t:new Set(),b:new Set()};const W=S.wrd,c=W?wrdCalc():nu
  <div class="m">كم صفحة حفظت حتى الآن؟</div><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="wrdb" type="number" inputmode="decimal" min="0" step="0.5" value="${W?wrdPg(W.base):0}" placeholder="مثال: 5" style="flex:1;margin:0;min-width:0"><select id="wrdbu" style="width:auto;margin:0">${wrdUn()}</select></div><div class="m" style="color:var(--pri);cursor:pointer;margin-top:4px" onclick="wrdOpen('b')">▾ أو اختر الأجزاء التي حفظتها</div><div id="wrdgb" style="display:none;margin:6px 0"></div><div class="m" id="wrdib"></div>
  <div class="m" style="margin-top:6px">الجزء = 20 صفحة تقريباً، والحزب = 10 صفحات (و30 جزءاً = المصحف كاملاً 604 صفحة)</div><div class="m">موعد إنهاء الحفظ</div><input id="wrdd" type="date" value="${W?W.due:''}">
  <div style="margin:6px 0">${[['6 أشهر',6],['سنة',12],['سنتان',24],['3 سنوات',36]].map(([t,m])=>`<span class="chip" onclick="wrdQ(${m})">${t}</span>`).join('')}</div>
- <label class="m"><input id="wrdf" type="checkbox" style="width:auto" ${!W||W.fr?'checked':''}> استثناء يوم الجمعة من أيام الحفظ</label>
  <button type="button" onclick="wrdSave()" style="width:100%;margin-top:10px">${W?'حفظ التعديل':'احسب وردي وابدأ'}</button></div>`}
 function wrdPage(){const c=wrdCalc();if(!c||wrdEdit)return wrdForm();
  const rem=c.fin?'':`<div class="m" style="margin-top:6px">المتبقي ${wrdTxt(c.rem)} • ${c.days} يوم حفظ حتى ${c.W.due}</div>${c.fix&&c.eta?`<div class="m" style="margin-top:4px">بهذا الورد تنهي في ${ymd(c.eta)} ${c.etaD>0?'(قبل موعدك بـ '+c.etaD+' يوماً)':c.etaD<0?'(بعد موعدك بـ '+(-c.etaD)+' يوماً)':'(في موعدك تماماً)'}</div>`:''}<div class="row" style="flex-wrap:nowrap;gap:8px;margin-top:10px;align-items:center"><span class="m" style="white-space:nowrap">مقدار الورد:</span><select onchange="wrdFix(this.value)" style="margin:0">${WRX.map(x=>`<option value="${x[0]}" ${x[0]==c.fix?'selected':''}>${x[1]}</option>`).join('')}</select></div>${wrdRr(c)}`,
@@ -189,7 +187,7 @@ function jmRev(j){jAdd(j,1);$('#sh').innerHTML='';toast('سُجّلت مراجع
 /* ---------- أيام النشاط (تُستعمل في تقرير المعلم) ---------- */
 const wkAct=()=>{const a=new Set();(S.logs||[]).forEach(l=>l.date&&a.add(l.date));((S.wrd||{}).log||[]).forEach(x=>a.add(x.d));Object.values(S.juz||{}).forEach(j=>(j.h||[]).forEach(h=>a.add(new Date(h).toLocaleDateString('en-CA'))));return a};
 function wkRun(){const A=wkAct();if(!A.size)return{cur:0,best:0};const t=new Date();t.setHours(0,0,0,0);const end=A.has(ymd(t))?t:new Date(t-864e5),d=new Date([...A].sort()[0]+'T00:00:00');let run=0,best=0;
- for(let i=0;d<=end&&i<9000;i++){if(A.has(ymd(d))){run++;best=Math.max(best,run)}else if(!(S.skipFri&&d.getDay()==5))run=0;d.setDate(d.getDate()+1)}return{cur:run,best}}
+ for(let i=0;d<=end&&i<9000;i++){if(A.has(ymd(d))){run++;best=Math.max(best,run)}else run=0;d.setDate(d.getDate()+1)}return{cur:run,best}}
 
 /* ---------- التقرير الأسبوعي للمعلم (آخر 7 أيام) ---------- */
 function repWk(T,H,K){const t=new Date();t.setHours(0,0,0,0);const days=[...Array(7)].map((_,i)=>{const d=new Date(t);d.setDate(t.getDate()-6+i);return d}),ks=new Set(days.map(ymd)),A=wkAct(),act=days.filter(d=>A.has(ymd(d))).length,
@@ -337,7 +335,7 @@ function done(id,r){
  const t=S.tasks.find(x=>x.id==id);if(!t)return;const n=new Date(),st=t.st?new Date(t.st):n;
  S.logs.push({t:id,s:t.s,a:t.a,b:t.b,n:isG(t)?1:0,date:ymd(n),h:hij(n),day:D[n.getDay()],time:hm(n),start:hm(st),dur:Math.max(1,Math.round((n-st)/60000)),r});
  const nx=r=='mastered'?(t.type=='حفظ'?0:Math.min(t.stage+1,3)):r=='light'?t.stage:0;
- let nd=new Date(n.getTime()+(r=='hard'?1:L[nx])*864e5);if(S.skipFri&&nd.getDay()==5)nd=new Date(nd.getTime()+864e5);
+ let nd=new Date(n.getTime()+(r=='hard'?1:L[nx])*864e5);
  const tm=t.tm,us=tm?mUsed(tm):Math.max(1,Math.round((n-st)/1000));
  const snap=JSON.parse(JSON.stringify(t));snap.st=null;snap.mk=0;snap.next=new Date().toISOString();if(tm)snap.tm=mkT(mOrig(tm));
  (S.arc=S.arc||[]).push({id:S.id++,tid:id,ty:t.type,name:t.s,sub:isG(t)?jl(t):'',r,st:st.toISOString(),en:n.toISOString(),us,ov:tm?Math.max(mOver(tm),Math.max(0,us-mOrig(tm))):0,og:tm?mOrig(tm):0,mk:t.mk||0,tk:snap,lg:{t:id,date:ymd(n),time:hm(n)}});
@@ -539,7 +537,7 @@ window.addEventListener('unhandledrejection',e=>{try{sync('⚠️ '+((e.reason&&
 
 /* ---------- الحساب والمزامنة السحابية ---------- */
 let fa=null,fs=null,fu=null,fbOK=false,sm='',pt=null,busy=0;
-const EMPTY=()=>({tasks:[],logs:[],alarms:[],mist:[],skipFri:true,id:1});
+const EMPTY=()=>({tasks:[],logs:[],alarms:[],mist:[],id:1});
 function sync(m){sm=m;const e=$('#sm');if(e)e.textContent=m;const w=document.getElementById('awm');if(w){w.textContent=m;w.classList.toggle('ok',/^✅/.test(m))}}
 /* ---------- تعدد الحسابات والتبديل السريع ---------- */
 /* كل حساب إضافي يعمل في تطبيق Firebase مسمّى مستقل، فتبقى جلسته محفوظة ويكون التبديل فورياً */
