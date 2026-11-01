@@ -436,3 +436,5 @@ nav{background:var(--card)!important;box-shadow:0 2px 14px color-mix(in srgb,var
 select{padding:12px 10px 12px 30px;font-size:14px;background-position:left 10px center}
 html[dir=ltr] select{padding:12px 30px 12px 10px;background-position:right 10px center}
 select[onchange^="prM"]{flex:1.8 1 0;min-width:0}select[onchange^="prY"]{flex:1 1 0;min-width:0}
+
+.pd.qy{background:#2e7d32;color:#fff;border-color:#2e7d32}.pd.qn{background:#e53935;color:#fff;border-color:#e53935}.pd.qy.pn::after,.pd.qn.pn::after{background:#fff}
