@@ -77,6 +77,8 @@ const rvGap=()=>{const M=rvMem().length;return M?Math.ceil(M/Math.min(rvN(),M)):
 const rvDT=n=>n==1?'يوم':n==2?'يومان':n<=10?n+' أيام':n+' يوماً';
 const rvCard=()=>{const n=rvDue().length;return n?`<div class="c" onclick="go('rv')" style="cursor:pointer;border-color:var(--pri)"><div class="row sp"><b>🗓 جدول المراجعة</b><span class="ch">${svg('chev')}</span></div><div class="m">${n==1?'جزء واحد':n==2?'جزءان':n<=10?n+' أجزاء':n+' جزءاً'} للمراجعة اليوم</div></div>`:''};
 function rvRev(j){jAdd(j,1);toast('سُجّلت مراجعة الجزء '+j);draw()}
+function rvTask(j){if((S.tasks||[]).some(t=>!t.arch&&t.type=='مراجعة'&&t.j==j&&!t.pg&&!t.js&&!t.sur)){toast('المراجعة موجودة في مهامك');return}
+ S.tasks.push({id:S.id++,s:'الجزء '+j,j:j,tm:null,a:1,b:1,type:'مراجعة',stage:0,next:new Date().toISOString(),g:1});save();toast('أُضيف الجزء '+j+' إلى مهام اليوم');draw()}
 function rvUndo(j){jSub(j);toast('أُلغيت مراجعة الجزء '+j)}
 function rvSetN(v){S.rvn=Math.max(1,Math.min(10,+v||1));save();draw()}
 function revPage(){
@@ -88,7 +90,7 @@ function revPage(){
  <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center;margin:8px 0"><span class="m" style="white-space:nowrap">كم جزءاً تراجع في اليوم؟</span><select onchange="rvSetN(this.value)" style="margin:0">${opts}</select></div>
  <div class="m">بهذه الخطة يعود إليك كل جزء كل ${rvDT(cyc)} تقريباً. تُراجَع الأجزاء كلها بالترتيب، الأقدم مراجعةً أولاً، فلا يُنسى جزء.</div></div>
  <div class="c"><b>مراجعة اليوم</b><div class="m">${T.pend.length?'تبقّى '+T.pend.length+' من '+T.juz.length:'أتممت مراجعة اليوم، بارك الله فيك 🌿'}</div>${T.juz.map(j=>{const dn=T.done.includes(j),ag=jmAge(j);
-  return `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:8px 0;border-top:1px solid var(--bd)"><div style="flex:1"><b>الجزء ${j}</b><div class="m">${exPages(j)} صفحة • ${ag===null?'لم يُراجع بعد':'آخر مراجعة '+(ag==0?'اليوم':'قبل '+ag+' يوم')}</div></div>${dn?'<span class="row" style="gap:8px;flex-wrap:nowrap"><span class="m" style="color:var(--pri);font-weight:700">✅ تمت</span><button type="button" class="g" style="padding:6px 12px" onclick="rvUndo('+j+')">↩ تراجع</button></span>':`<button type="button" style="padding:6px 12px" onclick="rvRev(${j})">✅ راجعته</button>`}</div>`}).join('')}</div>
+  return `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:8px 0;border-top:1px solid var(--bd)"><div style="flex:1"><b>الجزء ${j}</b><div class="m">${exPages(j)} صفحة • ${ag===null?'لم يُراجع بعد':'آخر مراجعة '+(ag==0?'اليوم':'قبل '+ag+' يوم')}</div></div>${dn?'<span class="row" style="gap:8px;flex-wrap:nowrap"><span class="m" style="color:var(--pri);font-weight:700">✅ تمت</span><button type="button" class="g" style="padding:6px 12px" onclick="rvUndo('+j+')">↩ تراجع</button></span>':`<span class="row" style="gap:6px;flex-wrap:nowrap"><button type="button" class="g" style="padding:6px 12px" onclick="rvTask(${j})">➕ إضافة إلى المهام</button><button type="button" style="padding:6px 12px" onclick="rvRev(${j})">✅ راجعته</button></span>`}</div>`}).join('')}</div>
  <div class="c"><b>الخطة الشهرية</b><div class="m" style="margin-bottom:4px">الأيام الثلاثون القادمة، وتتحدّث تلقائياً كلما سجّلت مراجعة.</div>${P.map((r,i)=>`<div class="row" style="flex-wrap:nowrap;gap:8px;padding:7px 6px;border-top:1px solid var(--bd);${i==0?'background:color-mix(in srgb,var(--pri) 10%,transparent);border-radius:8px':''}"><span class="m" style="width:86px;flex:none">${i==0?'اليوم':D[r.d.getDay()]+' '+ymd(r.d).slice(5)}</span><b style="flex:1;font-size:14px">${r.off?'<span class="m">إجازة</span>':nm(r.juz)}</b></div>`).join('')}</div>`}
 
 /* ---------- الورد اليومي المقترح: يحسب كمية الحفظ اليومية لتنهي هدفك في موعد تحدده ---------- */
@@ -265,6 +267,8 @@ function khPage(){const K=khG();if(!K||khEdit){setTimeout(khPrev,0);return khFor
  <div class="c"><b>جدول الأيام</b><div class="m" style="margin-bottom:4px">اضغط على أي يوم لوضع علامة الإنجاز أو إزالتها.</div>${rows}</div>
  <div class="row" style="padding:0 14px;gap:6px"><button type="button" class="g" style="flex:1" onclick="khEdit=1;draw()">تعديل الخطة</button><button type="button" class="g" style="flex:1" onclick="khReset()">حذف الخطة</button></div>`}
 
+
+Object.assign(EN,{'➕ إضافة إلى المهام':'➕ Add to tasks','المراجعة موجودة في مهامك':'The review is already in your tasks'});
 
 /* ---------- التذكيرات: تظهر عادياً، ويمكن إخفاؤها واستعادتها بالسحب ---------- */
 let remOpen=0,remY=null;
@@ -852,7 +856,8 @@ function goalsPage(){if(glDr)return glForm();const g=glL().find(x=>x.id==glOpen)
 /* ---------- تذكير تتبع الصلاة ---------- */
 const prRem=()=>Object.assign({on:true,t:'21:00'},prP().rem||{});
 function prRemSet(k,v){const P=prP();P.rem=Object.assign(prRem(),{[k]:v});save();draw()}
-const prRemCard=()=>{const R=prRem();return `<div class="c"><div class="row sp" style="flex-wrap:nowrap"><span><b>تذكير تتبع الصلاة</b><div class="m">يظهر في صفحة «اليوم» إذا بقيت صلوات بلا تسجيل</div></span><span class="sw ${R.on?'on':''}" onclick="prRemSet('on',${!R.on})"></span></div>${R.on?`<div class="row sp" style="margin-top:8px"><span class="m">يبدأ التذكير من الساعة</span><input type="time" value="${R.t}" onchange="prRemSet('t',this.value||'21:00')" style="width:auto;margin:0"></div>`:''}</div>`};
+let prRemOpen=false;
+const prRemCard=()=>{const R=prRem();return `<div class="c"><div class="row sp" style="flex-wrap:nowrap;align-items:center"><span onclick="prRemOpen=!prRemOpen;draw()" style="cursor:pointer;flex:1;display:flex;align-items:center;gap:8px"><b>تذكير تتبع الصلاة</b><span style="font-size:12px;color:var(--mut);display:inline-block;transition:transform .2s;transform:rotate(${prRemOpen?180:0}deg)">▾</span></span><span class="sw ${R.on?'on':''}" onclick="prRemSet('on',${!R.on})"></span></div>${prRemOpen?`<div class="m" style="margin-top:4px">يظهر في صفحة «اليوم» إذا بقيت صلوات بلا تسجيل</div>${R.on?`<div class="row sp" style="margin-top:8px"><span class="m">يبدأ التذكير من الساعة</span><input type="time" value="${R.t}" onchange="prRemSet('t',this.value||'21:00')" style="width:auto;margin:0"></div>`:''}`:''}</div>`};
 const prRemHtml=()=>{const P=prP(),R=prRem(),now=new Date(),today=ymd(now);if(!R.on||!P.start||today<P.start)return '';
  const rec=P.days[today]||{},miss=PK.map((p,i)=>(!rec[p]||!rec[p].s)?PN[i]:'').filter(Boolean);let past=0;
  for(let i=1;i<=7;i++){const d=new Date(now);d.setDate(d.getDate()-i);const k=ymd(d);if(k<P.start)break;if(prQ(k))past++}
