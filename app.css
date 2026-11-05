@@ -479,3 +479,9 @@ select[onchange^="prM"]{flex:1.8 1 0;min-width:0}select[onchange^="prY"]{flex:1 
 .tqNav button{flex:none;display:flex;align-items:center;gap:8px;max-width:190px;padding:5px 14px 5px 6px;margin:0;min-height:0;border-radius:26px;background:var(--card);color:var(--tx);border:1px solid var(--bd);box-shadow:none;font-weight:600;font-size:13px}
 .tqNav button b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.tqNav .tqAv{width:28px;height:28px;min-width:28px;font-size:13px;flex:none}
 .tqNav button.on{background:var(--pri);color:var(--on);border-color:var(--pri)}.tqNav button.on .tqAv{background:#fff3;color:#fff;border-color:transparent}.tqNav em{font-style:normal;background:#e53935;color:#fff;border-radius:10px;padding:0 6px;font-size:11px}
+
+.hwYN{display:flex;gap:8px;flex-wrap:wrap}.hwYN button{width:auto;margin:0;min-height:0;padding:6px 14px;font-size:13px;font-weight:600;border-radius:20px;background:transparent;color:var(--tx);border:1.5px solid var(--bd);box-shadow:none}
+.hwYN button.y.on{background:#2e7d32;color:#fff;border-color:#2e7d32}.hwYN button.n.on{background:#c62828;color:#fff;border-color:#c62828}
+.hwTa{width:100%;min-height:96px;margin:0 0 4px;resize:vertical;line-height:1.6}
+.hwDel{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:16px 0 0;padding:10px;min-height:0;background:transparent;color:#c62828;border:1.5px solid #c6282866;border-radius:12px;font-weight:600;font-size:13.5px;box-shadow:none}
+.hwPill.nw{background:#e53935;color:#fff}.hwPill.hp{background:#c6282826;color:#c62828}
