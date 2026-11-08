@@ -1,11 +1,13 @@
-/* Service Worker — مُثبِّت القرآن. النسخة: 3278e00d */
-const CACHE='qm-3278e00d',FONTS='qm-fonts';
-const SHELL=['./','index.html','app.css?v=3278e00d','app.js?v=3278e00d','i18n-en.js?v=3278e00d','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
+/* Service Worker — مُثبِّت القرآن. النسخة: dd904e00 */
+const CACHE='qm-dd904e00',FONTS='qm-fonts';
+const SHELL=['./','index.html','app.css?v=dd904e00','app.js?v=dd904e00','i18n-en.js?v=dd904e00','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>c.add(new Request(u,{cache:'reload'}))))))});
 self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('qm-')&&k!==CACHE&&k!==FONTS).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
- const r=e.request;if(r.method!=='GET')return;const u=new URL(r.url);
+ const r=e.request;
+ if(r.method==='POST'&&new URL(r.url).pathname.endsWith('/share-target')){e.respondWith((async()=>{try{const fd=await r.formData(),c=await caches.open('share-inbox');let i=0;for(const f of fd.getAll('files')){if(!f||!f.name)continue;await c.put(new Request(self.registration.scope+'_s/'+Date.now()+'_'+(i++)),new Response(f,{headers:{'X-Name':encodeURIComponent(f.name),'Content-Type':f.type||'application/octet-stream'}}))}}catch(x){}return Response.redirect(self.registration.scope+'?share=1',303)})());return}
+ if(r.method!=='GET')return;const u=new URL(r.url);
  if(u.origin===location.origin){
   if(r.mode==='navigate'){
    const home=/\/(index\.html)?$/.test(u.pathname);

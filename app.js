@@ -26,7 +26,7 @@ let drawnTab=null;
 function draw(){
  $('#nav').innerHTML=tabs.map(([k,i,n])=>`<button type="button" class="${k==tab||(k=='td'&&tab=='gl')?'on':''}" onclick="go('${k}')">${i}<br>${n}</button>`).join('');
  const vm=$('#v'),chg=tab!==drawnTab,y0=window.scrollY;drawnTab=tab;vm.classList.toggle('na',!chg);
- vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,hp:hpPage,kh:khPage,tc:tcPage}[tab]();
+ vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,hp:hpPage,kh:khPage,tc:tcPage,lb:libPage}[tab]();
  if(!chg&&Math.abs(window.scrollY-y0)>1){try{window.scrollTo({top:y0,behavior:'instant'})}catch(e){window.scrollTo(0,y0)}}
 }
 /* ---------- المهام ---------- */
@@ -1128,7 +1128,7 @@ function menu(){const P=prof(),R=(f,i,t,x)=>`<a onclick="${f}"><span class="di">
  $('#sh').innerHTML=`<div class="sh dr" onclick="if(event.target==this)$('#sh').innerHTML=''"><aside><div class="dh"><div class="av">${avatar()}</div><b style="font-size:18px">${esc(P.name||(fu&&fu.displayName)||'ضيف')}</b><div style="font-size:13px;opacity:.85;margin-top:3px" dir="ltr">${fu?esc(fu.email||''):'غير مسجّل الدخول'}</div></div>${accBar()}
  <div class="dsec">الدفتر</div>${R("go2('nb')",'notebook','الدفتر','دفاترك وصفحاتك')}
  <div class="dsec">الحساب</div>${R("go2('se')",'user','معلومات الحساب','الملف الشخصي وتسجيل الدخول')}${R("go2('re')",'bell','الإشعارات','تذكيرات بمهامك وأوقاتها')}${R("go2('bk')",'download','النسخ الاحتياطي والتقارير','ملف على جهازك وتصدير PDF')}
- <div class="dsec">الحفظ</div>${R("go2('wr')",'book','الورد اليومي','كم تحفظ كل يوم')}${R("go2('kh')",'moon','ختمة رمضان','ختم القرآن بكمية يومية')}${R("go2('hp')",'pin','الصفحات الصعبة','صفحات تُراجَع أكثر')}
+ <div class="dsec">الحفظ</div>${R("go2('wr')",'book','الورد اليومي','كم تحفظ كل يوم')}${R("go2('kh')",'moon','ختمة رمضان','ختم القرآن بكمية يومية')}${R("go2('hp')",'pin','الصفحات الصعبة','صفحات تُراجَع أكثر')}  <div class="dsec">المكتبة</div>${R("go2('lb')",'book','المكتبة','كتبك وملفاتك وسلة المحذوفات')}
  <div class="dsec">المراجعة والمتابعة</div>${R("go2('rv')",'repeat','جدول المراجعة','ما تراجعه اليوم وغداً')}${R("go2('jz')",'grid','الجداول','مراجعات كل جزء')}${R("go2('jm')",'mapfold','خريطة الأجزاء','حالة كل جزء بلون')}${R("go2('st')",'chart','الإحصائيات','تقدّمك وجلساتك')}
  <div class="dsec">المسابقات</div>${R("go2('ct')",'users','المتسابقون','الأجزاء والتايمر والإحصائيات')}${R("go2('ex')",'clipcheck','الاختبارات','سحب المواضع وتقييم الأخطاء')}
  <div class="dsec">اللغة والمظهر</div>${R("go2('ap')",'palette','اللغة والمظهر','الوضع الليلي والألوان واللغة')}</aside></div>`}
@@ -2033,6 +2033,61 @@ async function aGoogle(){if(busy)return;busy=1;got=0;sync('⏳ جارٍ فتح �
  }catch(e){try{await gPopup();sync('✅ تم تسجيل الدخول')}catch(e2){er(e2)}fin()}}
 
 Object.assign(EN,{'قيام الليل':'Night prayer (Qiyam)','ما يستطيع المعلّم رؤيته':'What the teacher can see','مسموح ✓':'Allowed ✓','ممنوع ✗':'Blocked ✗','أخفى الطالب هذا القسم':'The student hid this section'});
+
+/* ===== المكتبة: كتب وملفات تُحفظ على جهازك (IndexedDB) + سلة محذوفات بمدّة تحدّدها ===== */
+const LIB_MAX=200*1048576;
+let libTab='sv',libM=[],libLoaded=false;
+const libCfg=()=>{try{return Object.assign({days:7},JSON.parse(localStorage.getItem('libCfg')||'{}'))}catch(e){return{days:7}}};
+const libCfgSet=o=>{try{localStorage.setItem('libCfg',JSON.stringify(Object.assign(libCfg(),o)))}catch(e){}};
+const libDB=(()=>{let p=null;const open=()=>p||(p=new Promise((ok,no)=>{try{const r=indexedDB.open('qlib_db',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta',{keyPath:'id'});d.createObjectStore('blob')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
+ const tx=async(st,m,f)=>{const d=await open();return new Promise((ok,no)=>{const t=d.transaction(st,m),q=f(t);t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)})};
+ return{all:()=>tx('meta','readonly',t=>t.objectStore('meta').getAll()),putMeta:m=>tx('meta','readwrite',t=>t.objectStore('meta').put(m)),putBlob:(id,b)=>tx('blob','readwrite',t=>t.objectStore('blob').put(b,id)),getBlob:id=>tx('blob','readonly',t=>t.objectStore('blob').get(id)),del:id=>tx(['meta','blob'],'readwrite',t=>{t.objectStore('meta').delete(id);t.objectStore('blob').delete(id)})}})();
+const libUid=()=>'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const libSz=n=>n<1024?n+' B':n<1048576?Math.round(n/1024)+' KB':(n/1048576).toFixed(1)+' MB';
+const libExt=n=>{const m=/\.([A-Za-z0-9]{1,5})$/.exec(n||'');return m?m[1].toUpperCase():'FILE'};
+const libCol=e=>({PDF:'#d32f2f',DOC:'#1565c0',DOCX:'#1565c0',TXT:'#546e7a',EPUB:'#2e7d32',PPT:'#e65100',PPTX:'#e65100',XLS:'#2e7d32',XLSX:'#2e7d32'})[e]||'#6d4c41';
+const libAgo=ts=>{const n=Math.floor((Date.now()-ts)/864e5);return n<1?'اليوم':n==1?'أمس':'قبل '+n+' أيام'};
+const libLeft=m=>{const ms=m.trashAt+libCfg().days*864e5-Date.now();if(ms<=0)return 'ينتهي الآن';const h=Math.ceil(ms/36e5);return h<24?'يُحذف نهائياً بعد '+h+' ساعة':'يُحذف نهائياً بعد '+libDw(Math.ceil(h/24))};
+const libDw=n=>n==1?'يوم':n==2?'يومان':n<=10?n+' أيام':n+' يوماً';
+const libM_=id=>libM.find(x=>x.id==id);
+async function libLoad(){try{libM=await libDB.all()}catch(e){libM=[];dbg(e)}libLoaded=true;await libPurge(true)}
+async function libPurge(quiet){const lim=libCfg().days*864e5,dead=libM.filter(m=>m.trashAt&&Date.now()-m.trashAt>=lim);if(!dead.length)return;for(const m of dead){try{await libDB.del(m.id)}catch(e){dbg(e)}}libM=libM.filter(m=>!dead.includes(m));if(!quiet&&tab=='lb')draw()}
+function libTrimOp(){const op=libM.filter(m=>!m.trashAt&&m.k=='op').sort((a,b)=>b.at-a.at);op.slice(30).forEach(m=>{m.trashAt=Date.now();libDB.putMeta(m).catch(dbg)})}
+function libShow(b,name){const url=URL.createObjectURL(b),t=b.type||'';if(/^(image|audio|video|text)\//.test(t)||t=='application/pdf'){const w=window.open(url,'_blank');if(!w)libDlUrl(url,name)}else libDlUrl(url,name);setTimeout(()=>URL.revokeObjectURL(url),120000)}
+function libDlUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name||'file';document.body.appendChild(a);a.click();a.remove()}
+async function libAdd(files,k){files=[...(files||[])];if(!files.length)return;if(!libLoaded)await libLoad();try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+ let ok=0;for(const f of files){if(f.size>LIB_MAX){toast('«'+f.name+'» أكبر من 200MB');continue}const m={id:libUid(),name:f.name||'ملف',size:f.size,type:f.type||'',k,at:Date.now(),trashAt:0};
+  try{await libDB.putBlob(m.id,f);await libDB.putMeta(m);libM.push(m);ok++}catch(e){toast('تعذّر حفظ «'+f.name+'» — قد تكون المساحة ممتلئة');dbg(e);break}}
+ if(k=='op')libTrimOp();if(ok)toast(ok==1?'تمت الإضافة ✅':'تمت إضافة '+ok+' ملفات ✅');libTab=k;if(tab!='lb')go('lb');else draw()}
+/* فتح ملف بدون رفعه مسبقاً: يُفتح فوراً ثم يُسجَّل في «فتحتها بالتطبيق» */
+function libPickOp(files){const f=(files||[])[0];if(!f)return;libShow(f,f.name);libAdd([f],'op')}
+async function libOpen(id){const m=libM_(id);if(!m)return;const b=await libDB.getBlob(id).catch(()=>null);if(!b){toast('الملف غير موجود على هذا الجهاز');return}libShow(b,m.name)}
+async function libDl(id){const m=libM_(id);if(!m)return;const b=await libDB.getBlob(id).catch(()=>null);if(!b){toast('الملف غير موجود على هذا الجهاز');return}
+ const f=new File([b],m.name,{type:m.type||b.type||'application/octet-stream'});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:m.name});return}}catch(e){if(e&&e.name=='AbortError')return}
+ const url=URL.createObjectURL(f);libDlUrl(url,m.name);setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function libDel(id){const m=libM_(id);if(!m)return;m.trashAt=Date.now();try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('نُقل إلى السلة — يُحذف نهائياً بعد '+libDw(libCfg().days));draw()}
+async function libRestore(id){const m=libM_(id);if(!m)return;m.trashAt=0;try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('تم الاسترجاع ✅');libTab=m.k;draw()}
+function libKill(id){const m=libM_(id);if(!m)return;ask('حذف «'+m.name+'» نهائياً؟ لا يمكن التراجع.',async()=>{try{await libDB.del(id)}catch(e){dbg(e)}libM=libM.filter(x=>x.id!=id);toast('تم الحذف نهائياً');draw()},'نعم، احذف الآن')}
+function libEmpty(){const t=libM.filter(m=>m.trashAt);if(!t.length)return;ask('إفراغ السلة؟ سيُحذف '+t.length+' ملف نهائياً ولا يمكن التراجع.',async()=>{for(const m of t){try{await libDB.del(m.id)}catch(e){dbg(e)}}libM=libM.filter(m=>!m.trashAt);toast('أُفرغت السلة');draw()},'نعم، أفرغ السلة')}
+async function libRen(id){const m=libM_(id);if(!m)return;const n=(prompt('اسم الملف',m.name)||'').trim();if(!n)return;m.name=n.slice(0,120);try{await libDB.putMeta(m)}catch(e){dbg(e)}draw()}
+async function libToSaved(id){const m=libM_(id);if(!m)return;m.k='sv';m.at=Date.now();try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('حُفظ في ملفاتي ✅');libTab='sv';draw()}
+function libDays(v){libCfgSet({days:Math.max(1,Math.min(365,+v||7))});libPurge();toast('مدة السلة: '+libDw(libCfg().days));draw()}
+const libCard=m=>{const e=libExt(m.name),d=`data-i="${esc(m.id)}"`,tr=!!m.trashAt;
+ return `<div class="libC"><div class="libR"><div class="libI" style="background:${libCol(e)}">${esc(e.slice(0,4))}</div><div class="libN"><b>${esc(m.name)}</b><div class="m">${libSz(m.size||0)} • ${tr?libLeft(m):(m.k=='op'?'فُتح ':'أُضيف ')+libAgo(m.at)}</div></div></div>
+ <div class="libA">${tr?`<button type="button" ${d} onclick="libRestore(this.dataset.i)">↺ استرجاع</button><button type="button" class="g bad" ${d} onclick="libKill(this.dataset.i)">🗑 حذف الآن</button>`
+ :`<button type="button" ${d} onclick="libOpen(this.dataset.i)">فتح</button><button type="button" class="g" ${d} onclick="libDl(this.dataset.i)">📥 تنزيل / مشاركة</button>${m.k=='op'?`<button type="button" class="g" ${d} onclick="libToSaved(this.dataset.i)">＋ حفظ في ملفاتي</button>`:`<button type="button" class="g" ${d} onclick="libRen(this.dataset.i)">✎ تسمية</button>`}<button type="button" class="g bad" ${d} onclick="libDel(this.dataset.i)">🗑 حذف</button>`}</div></div>`};
+function libPage(){if(!libLoaded){libLoad().then(()=>{if(tab=='lb')draw()});return '<div class="m" style="text-align:center;padding:40px">جارٍ التحميل…</div>'}
+ const cfg=libCfg(),live=libM.filter(m=>!m.trashAt),L={sv:live.filter(m=>m.k=='sv').sort((a,b)=>b.at-a.at),op:live.filter(m=>m.k=='op').sort((a,b)=>b.at-a.at),tr:libM.filter(m=>m.trashAt).sort((a,b)=>b.trashAt-a.trashAt)},cur=libTab,tot=live.reduce((s,m)=>s+(m.size||0),0);
+ if(L.tr.some(m=>Date.now()-m.trashAt>=cfg.days*864e5))setTimeout(libPurge,0);
+ const tabs=`<div class="hwTabs">${[['sv','ملفاتي المحفوظة'],['op','فتحتها بالتطبيق'],['tr','السلة']].map(([k,t])=>`<button type="button" class="${cur==k?'on':''}" onclick="libTab='${k}';draw()"><b>${L[k].length}</b>${t}</button>`).join('')}</div>`;
+ const top=cur=='sv'?`<div style="padding:0 14px"><input type="file" id="libFs" multiple hidden onchange="libAdd(this.files,'sv');this.value=''"><button type="button" style="width:100%" onclick="$('#libFs').click()">${svg('plus')} رفع كتاب أو ملف</button><div class="m" style="margin:6px 4px">PDF أو Word أو أي نوع ملف — يُحفظ على جهازك (الحد 200MB للملف). المساحة المستخدمة: ${libSz(tot)}</div></div>`
+  :cur=='op'?`<div style="padding:0 14px"><input type="file" id="libFo" hidden onchange="libPickOp(this.files);this.value=''"><button type="button" style="width:100%" onclick="$('#libFo').click()">${svg('book')} فتح ملف بالتطبيق</button><div class="m" style="margin:6px 4px">الملفات التي تفتحها هنا أو تشاركها إلى التطبيق تظهر في هذه القائمة لتعود إليها، ويمكنك حفظ أي منها في «ملفاتي».</div></div>`
+  :`<div class="libT"><div class="m" style="line-height:1.7">الملفات المحذوفة تبقى هنا للاسترجاع، ثم تُحذف نهائياً بعد المدة التي تحدّدها.</div><div class="row" style="flex-wrap:nowrap;margin-top:8px"><span style="flex:1">مدة الاحتفاظ</span><select onchange="libDays(this.value)" style="width:auto;margin:0">${[...new Set([1,3,7,14,30,60,90,cfg.days])].sort((a,b)=>a-b).map(d=>`<option value="${d}" ${d==cfg.days?'selected':''}>${libDw(d)}</option>`).join('')}</select></div>${L.tr.length?`<button type="button" class="g bad" style="width:100%;margin-top:10px" onclick="libEmpty()">🗑 إفراغ السلة الآن</button>`:''}</div>`;
+ const em={sv:['book','لا توجد ملفات محفوظة','ارفع كتبك وملفاتك لتجدها هنا دائماً'],op:['clipcheck','لا توجد ملفات مفتوحة بعد','افتح ملفاً أو شاركه إلى التطبيق'],tr:['check','السلة فارغة','الملفات المحذوفة تظهر هنا']};
+ return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">المكتبة</b><button type="button" class="g" onclick="go('home')">رجوع</button></div>${tabs}${top}${L[cur].length?L[cur].map(libCard).join(''):tqEmp(...em[cur])}`}
+/* استلام ملفات مُشارَكة من تطبيقات أخرى (يحتاج share_target في manifest) */
+async function libShareIn(){try{if(!('caches' in window))return;const c=await caches.open('share-inbox'),ks=await c.keys();if(!ks.length)return;const files=[];for(const r of ks){const res=await c.match(r);if(!res)continue;const b=await res.blob();let nm='ملف';try{nm=decodeURIComponent(res.headers.get('X-Name')||'')||nm}catch(e){}files.push(new File([b],nm,{type:b.type}));await c.delete(r)}if(files.length)await libAdd(files,'op')}catch(e){dbg(e)}}
+(function(){const b=()=>{try{if(/[?&]share=1/.test(location.search)){history.replaceState(null,'',location.pathname);libShareIn()}else libLoad().catch(dbg)}catch(e){dbg(e)}};if(document.readyState=='complete')setTimeout(b,800);else addEventListener('load',()=>setTimeout(b,800))})();
 
 /* ---------- دفتر الملاحظات ---------- */
 const NB_ST=[['lined','📏 مسطّر'],['grid','▦ مربعات'],['dot','⠿ منقّط'],['plain','📄 سادة'],['school','🎓 مدرسي'],['en','ABC']];
