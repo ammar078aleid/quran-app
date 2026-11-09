@@ -1,6 +1,6 @@
-/* Service Worker — مُثبِّت القرآن. النسخة: dd904e00 */
-const CACHE='qm-dd904e00',FONTS='qm-fonts';
-const SHELL=['./','index.html','app.css?v=dd904e00','app.js?v=dd904e00','i18n-en.js?v=dd904e00','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
+/* Service Worker — مُثبِّت القرآن. النسخة: d3ae1b71 */
+const CACHE='qm-d3ae1b71',FONTS='qm-fonts';
+const SHELL=['./','index.html','app.css?v=d3ae1b71','app.js?v=d3ae1b71','i18n-en.js?v=d3ae1b71','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>c.add(new Request(u,{cache:'reload'}))))))});
 self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('qm-')&&k!==CACHE&&k!==FONTS).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
@@ -13,6 +13,7 @@ self.addEventListener('fetch',e=>{
    const home=/\/(index\.html)?$/.test(u.pathname);
    e.respondWith(fetch(r).then(x=>{if(home&&x.ok){const cp=x.clone();caches.open(CACHE).then(c=>c.put('index.html',cp))}return x}).catch(()=>caches.match(home?'index.html':r).then(x=>x||caches.match('index.html'))));return}
   e.respondWith(caches.match(r).then(h=>h||fetch(r).then(x=>{if(x.ok){const cp=x.clone();caches.open(CACHE).then(c=>c.put(r,cp))}return x})));return}
+ if((u.hostname==='cdnjs.cloudflare.com'&&/pdf\.js/.test(u.pathname))||(u.hostname==='cdn.jsdelivr.net'&&/pdfjs-dist/.test(u.pathname))){e.respondWith(caches.open(FONTS).then(c=>c.match(r).then(h=>h||fetch(r).then(x=>{if(x.ok&&x.type==='cors')c.put(r,x.clone());return x}))));return}
  if(u.hostname==='fonts.googleapis.com'||u.hostname==='fonts.gstatic.com'){
   e.respondWith(caches.open(FONTS).then(c=>c.match(r).then(h=>{const n=fetch(r).then(x=>{if(x.ok||x.type==='opaque')c.put(r,x.clone());return x}).catch(()=>h);return h||n})))}
 });

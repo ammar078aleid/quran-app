@@ -2034,60 +2034,195 @@ async function aGoogle(){if(busy)return;busy=1;got=0;sync('⏳ جارٍ فتح �
 
 Object.assign(EN,{'قيام الليل':'Night prayer (Qiyam)','ما يستطيع المعلّم رؤيته':'What the teacher can see','مسموح ✓':'Allowed ✓','ممنوع ✗':'Blocked ✗','أخفى الطالب هذا القسم':'The student hid this section'});
 
-/* ===== المكتبة: كتب وملفات تُحفظ على جهازك (IndexedDB) + سلة محذوفات بمدّة تحدّدها ===== */
-const LIB_MAX=200*1048576;
-let libTab='sv',libM=[],libLoaded=false;
+/* ===== المكتبة: كتب وملفات في حسابك (Firestore) + نسخة على الجهاز اختيارية + قارئ PDF داخلي ===== */
+Object.assign(IC,{share:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/>',minus:'<path d="M5 12h14"/>',x:'<path d="m6 6 12 12M18 6 6 18"/>',eye:'<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'});
+const LIB_CH=900000,LIB_FMAX=40*1048576,LIB_TMAX=250*1048576;
+let libTab='sv',libM=[],libLoaded=false,libSyncT=0,libSyncing=0,libUpQ=Promise.resolve();
 const libCfg=()=>{try{return Object.assign({days:7},JSON.parse(localStorage.getItem('libCfg')||'{}'))}catch(e){return{days:7}}};
 const libCfgSet=o=>{try{localStorage.setItem('libCfg',JSON.stringify(Object.assign(libCfg(),o)))}catch(e){}};
 const libDB=(()=>{let p=null;const open=()=>p||(p=new Promise((ok,no)=>{try{const r=indexedDB.open('qlib_db',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta',{keyPath:'id'});d.createObjectStore('blob')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
  const tx=async(st,m,f)=>{const d=await open();return new Promise((ok,no)=>{const t=d.transaction(st,m),q=f(t);t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)})};
- return{all:()=>tx('meta','readonly',t=>t.objectStore('meta').getAll()),putMeta:m=>tx('meta','readwrite',t=>t.objectStore('meta').put(m)),putBlob:(id,b)=>tx('blob','readwrite',t=>t.objectStore('blob').put(b,id)),getBlob:id=>tx('blob','readonly',t=>t.objectStore('blob').get(id)),del:id=>tx(['meta','blob'],'readwrite',t=>{t.objectStore('meta').delete(id);t.objectStore('blob').delete(id)})}})();
+ return{all:()=>tx('meta','readonly',t=>t.objectStore('meta').getAll()),putMeta:m=>tx('meta','readwrite',t=>t.objectStore('meta').put(m)),putBlob:(id,b)=>tx('blob','readwrite',t=>t.objectStore('blob').put(b,id)),getBlob:id=>tx('blob','readonly',t=>t.objectStore('blob').get(id)),delBlob:id=>tx('blob','readwrite',t=>t.objectStore('blob').delete(id)),del:id=>tx(['meta','blob'],'readwrite',t=>{t.objectStore('meta').delete(id);t.objectStore('blob').delete(id)})}})();
 const libUid=()=>'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const libSz=n=>n<1024?n+' B':n<1048576?Math.round(n/1024)+' KB':(n/1048576).toFixed(1)+' MB';
 const libExt=n=>{const m=/\.([A-Za-z0-9]{1,5})$/.exec(n||'');return m?m[1].toUpperCase():'FILE'};
-const libCol=e=>({PDF:'#d32f2f',DOC:'#1565c0',DOCX:'#1565c0',TXT:'#546e7a',EPUB:'#2e7d32',PPT:'#e65100',PPTX:'#e65100',XLS:'#2e7d32',XLSX:'#2e7d32'})[e]||'#6d4c41';
+const libIsPdf=m=>m.type=='application/pdf'||libExt(m.name)=='PDF';
+const libCol_=e=>({PDF:'#d32f2f',DOC:'#1565c0',DOCX:'#1565c0',TXT:'#546e7a',EPUB:'#2e7d32',PPT:'#e65100',PPTX:'#e65100',XLS:'#2e7d32',XLSX:'#2e7d32'})[e]||'#6d4c41';
 const libAgo=ts=>{const n=Math.floor((Date.now()-ts)/864e5);return n<1?'اليوم':n==1?'أمس':'قبل '+n+' أيام'};
-const libLeft=m=>{const ms=m.trashAt+libCfg().days*864e5-Date.now();if(ms<=0)return 'ينتهي الآن';const h=Math.ceil(ms/36e5);return h<24?'يُحذف نهائياً بعد '+h+' ساعة':'يُحذف نهائياً بعد '+libDw(Math.ceil(h/24))};
 const libDw=n=>n==1?'يوم':n==2?'يومان':n<=10?n+' أيام':n+' يوماً';
+const libLeft=m=>{const ms=m.trashAt+libCfg().days*864e5-Date.now();if(ms<=0)return 'ينتهي الآن';const h=Math.ceil(ms/36e5);return h<24?'يُحذف نهائياً بعد '+h+' ساعة':'يُحذف نهائياً بعد '+libDw(Math.ceil(h/24))};
 const libM_=id=>libM.find(x=>x.id==id);
-async function libLoad(){try{libM=await libDB.all()}catch(e){libM=[];dbg(e)}libLoaded=true;await libPurge(true)}
-async function libPurge(quiet){const lim=libCfg().days*864e5,dead=libM.filter(m=>m.trashAt&&Date.now()-m.trashAt>=lim);if(!dead.length)return;for(const m of dead){try{await libDB.del(m.id)}catch(e){dbg(e)}}libM=libM.filter(m=>!dead.includes(m));if(!quiet&&tab=='lb')draw()}
-function libTrimOp(){const op=libM.filter(m=>!m.trashAt&&m.k=='op').sort((a,b)=>b.at-a.at);op.slice(30).forEach(m=>{m.trashAt=Date.now();libDB.putMeta(m).catch(dbg)})}
+const libPut=m=>libDB.putMeta(libLocal(m)).catch(dbg);
+/* ما يُحفظ محلياً من البطاقة (بدون حقول وقت التشغيل _x) */
+const libLocal=m=>{const o={};Object.keys(m).forEach(k=>{if(k[0]!='_')o[k]=m[k]});return o};
+const libCloudMeta=m=>({name:m.name,size:m.size,type:m.type||'',k:m.k,at:m.at,trashAt:m.trashAt||0,th:m.th||'',lp:m.lp||1,np:m.np||0,n:m.n||0});
+const libCloudOK=()=>{try{return !!(fbOK&&fu&&fs)}catch(e){return false}};
+const libColl=()=>fs.collection('users').doc(fu.uid).collection('lib');
+const libCid=i=>String(i).padStart(4,'0');
+const libCloudTotal=()=>libM.filter(m=>m.cl).reduce((s,m)=>s+(m.size||0),0);
+let libDrawT=0;const libRedraw=()=>{if(tab!='lb'||document.getElementById('libV'))return;clearTimeout(libDrawT);libDrawT=setTimeout(draw,120)};
+function libProg(m){const e=document.querySelector('[data-pg="'+m.id+'"]');if(!e)return libRedraw();const v=m._up!=null?m._up:m._dp;if(v==null)return libRedraw();const i=e.querySelector('i'),t=e.querySelector('span');if(i)i.style.width=v+'%';if(t)t.textContent=v+'%'}
+
+/* ---------- تحميل وتزامن ---------- */
+async function libLoad(){try{libM=await libDB.all()}catch(e){libM=[];dbg(e)}libLoaded=true;await libPurge(true);libCloudSync()}
+async function libPurge(quiet){const lim=libCfg().days*864e5,dead=libM.filter(m=>m.trashAt&&Date.now()-m.trashAt>=lim&&(!m.cl||libCloudOK()));if(!dead.length)return;for(const m of dead){try{await libDestroy(m,true)}catch(e){dbg(e)}}if(!quiet&&tab=='lb')draw()}
+async function libCloudSync(){if(libSyncing||!libCloudOK()||!libLoaded)return;libSyncing=1;libSyncT=Date.now();
+ try{const snap=await libColl().get(),cloud=new Map();snap.forEach(d=>cloud.set(d.id,d.data()));
+  for(const [id,c] of cloud){let m=libM_(id);
+   if(!m){m={id,name:c.name||'ملف',size:c.size||0,type:c.type||'',k:c.k||'sv',at:c.at||Date.now(),trashAt:c.trashAt||0,th:c.th||'',lp:c.lp||1,np:c.np||0,n:c.n||0,cl:true,dl:false};libM.push(m);await libPut(m)}
+   else if(m.sy){try{await libColl().doc(id).set(libCloudMeta(m),{merge:true});m.sy=false;m.cl=true;await libPut(m)}catch(e){dbg(e)}}
+   else{Object.assign(m,{name:c.name||m.name,k:c.k||m.k,trashAt:c.trashAt||0,th:c.th||m.th,np:c.np||m.np,n:c.n||m.n,cl:true});if((c.lp||1)>(m.lp||1))m.lp=c.lp;await libPut(m)}}
+  for(const m of [...libM]){if(m.cl&&!cloud.has(m.id)&&!m._up){try{await libDB.del(m.id)}catch(e){dbg(e)}libM=libM.filter(x=>x!==m)}}
+  libM.filter(m=>!m.cl&&m.dl&&m.k=='sv'&&!m.trashAt&&m._up==null&&!m._err).forEach(m=>libUpQ=libUpQ.then(()=>libUpload(m)).catch(dbg));
+  await libPurge(true)}catch(e){dbg(e)}
+ libSyncing=0;libRedraw()}
+/* ---------- الرفع إلى الحساب ---------- */
+async function libUpload(m){if(!libCloudOK()||m._up!=null||m.cl)return;const b=await libDB.getBlob(m.id).catch(()=>null);if(!b)return;
+ if(b.size>LIB_FMAX){m._err='أكبر من '+libSz(LIB_FMAX)+' — بقي على الجهاز فقط';libRedraw();return}
+ if(libCloudTotal()+b.size>LIB_TMAX){m._err='تجاوزت مساحة حسابك ('+libSz(LIB_TMAX)+') — بقي على الجهاز فقط';libRedraw();return}
+ m._up=0;m._ab=0;m._err='';libRedraw();const n=Math.ceil(b.size/LIB_CH)||1,done=[];
+ try{for(let i=0;i<n;i++){if(m._ab)throw new Error('abort');const u8=new Uint8Array(await b.slice(i*LIB_CH,(i+1)*LIB_CH).arrayBuffer());await libColl().doc(m.id).collection('c').doc(libCid(i)).set({b:firebase.firestore.Blob.fromUint8Array(u8)});done.push(i);m._up=Math.round((i+1)/n*100);libProg(m)}
+  m.n=n;await libColl().doc(m.id).set(libCloudMeta(m));m.cl=true;m.sy=false;await libPut(m);toast('رُفع «'+m.name+'» إلى حسابك ✅')}
+ catch(e){if(done.length)libCloudChunksDel(m.id,done.length).catch(dbg);if(m._ab)toast('أُلغي الرفع');else{m._err='تعذّر الرفع — سيُعاد عند الاتصال';dbg(e)}}
+ m._up=null;m._ab=0;libRedraw()}
+async function libCloudChunksDel(id,n){const b=fs.batch();for(let i=0;i<n;i++)b.delete(libColl().doc(id).collection('c').doc(libCid(i)));await b.commit()}
+async function libCloudDel(m){const n=m.n||0;if(n)await libCloudChunksDel(m.id,n);await libColl().doc(m.id).delete()}
+/* ---------- التنزيل من الحساب ---------- */
+async function libFetch(m,prog){if(!libCloudOK())throw new Error('offline');const n=m.n||0,out=[];
+ for(let i=0;i<n;i+=3){if(m._ab)throw new Error('abort');const ids=[0,1,2].map(x=>i+x).filter(x=>x<n),rs=await Promise.all(ids.map(x=>libColl().doc(m.id).collection('c').doc(libCid(x)).get()));
+  if(m._ab)throw new Error('abort');rs.forEach(d=>{if(!d.exists)throw new Error('missing');out.push(d.data().b.toUint8Array())});prog&&prog(Math.round(out.length/n*100))}
+ return new Blob(out,{type:m.type||'application/octet-stream'})}
+async function libDownload(id){const m=libM_(id);if(!m||m.dl||m._dp!=null)return;m._dp=0;m._ab=0;libRedraw();
+ try{const b=await libFetch(m,p=>{m._dp=p;libProg(m)});await libDB.putBlob(m.id,b);m.dl=true;await libPut(m);toast('تم التنزيل على الجهاز ✅')}
+ catch(e){if(m._ab)toast('أُلغي التنزيل');else{toast('تعذّر التنزيل — تأكد من الاتصال');dbg(e)}}
+ m._dp=null;m._ab=0;libRedraw()}
+function libCancel(id){const m=libM_(id);if(m){m._ab=1}}
+async function libRemoveLocal(id){const m=libM_(id);if(!m||!m.dl||!m.cl)return;try{await libDB.delBlob(id)}catch(e){dbg(e)}m.dl=false;await libPut(m);toast('أُزيل من الجهاز وبقي في حسابك');draw()}
+async function libBlob(m){if(m.dl){const b=await libDB.getBlob(m.id).catch(()=>null);if(b)return b}
+ if(!m.cl){toast('الملف غير موجود على هذا الجهاز');return null}
+ if(!libCloudOK()){toast('سجّل الدخول واتصل بالإنترنت لفتح هذا الملف');return null}
+ m._dp=0;m._ab=0;libRedraw();try{const b=await libFetch(m,p=>{m._dp=p;libProg(m)});m._dp=null;libRedraw();return b}catch(e){m._dp=null;libRedraw();if(!m._ab){toast('تعذّر جلب الملف — تأكد من الاتصال');dbg(e)}m._ab=0;return null}}
+/* ---------- إضافة وفتح وحذف ---------- */
 function libShow(b,name){const url=URL.createObjectURL(b),t=b.type||'';if(/^(image|audio|video|text)\//.test(t)||t=='application/pdf'){const w=window.open(url,'_blank');if(!w)libDlUrl(url,name)}else libDlUrl(url,name);setTimeout(()=>URL.revokeObjectURL(url),120000)}
 function libDlUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name||'file';document.body.appendChild(a);a.click();a.remove()}
 async function libAdd(files,k){files=[...(files||[])];if(!files.length)return;if(!libLoaded)await libLoad();try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
- let ok=0;for(const f of files){if(f.size>LIB_MAX){toast('«'+f.name+'» أكبر من 200MB');continue}const m={id:libUid(),name:f.name||'ملف',size:f.size,type:f.type||'',k,at:Date.now(),trashAt:0};
-  try{await libDB.putBlob(m.id,f);await libDB.putMeta(m);libM.push(m);ok++}catch(e){toast('تعذّر حفظ «'+f.name+'» — قد تكون المساحة ممتلئة');dbg(e);break}}
+ let ok=0;for(const f of files){const m={id:libUid(),name:f.name||'ملف',size:f.size,type:f.type||(/\.pdf$/i.test(f.name||'')?'application/pdf':''),k,at:Date.now(),trashAt:0,th:'',lp:1,np:0,n:0,cl:false,dl:true};
+  try{await libDB.putBlob(m.id,f);try{const t=await libThumb(f,m);m.th=t.th||'';m.np=t.np||0}catch(e){dbg(e)}await libPut(m);libM.push(m);ok++;if(k=='sv'&&libCloudOK())libUpQ=libUpQ.then(()=>libUpload(m)).catch(dbg)}catch(e){toast('تعذّر حفظ «'+f.name+'» — قد تكون المساحة ممتلئة');dbg(e);break}}
  if(k=='op')libTrimOp();if(ok)toast(ok==1?'تمت الإضافة ✅':'تمت إضافة '+ok+' ملفات ✅');libTab=k;if(tab!='lb')go('lb');else draw()}
-/* فتح ملف بدون رفعه مسبقاً: يُفتح فوراً ثم يُسجَّل في «فتحتها بالتطبيق» */
-function libPickOp(files){const f=(files||[])[0];if(!f)return;libShow(f,f.name);libAdd([f],'op')}
-async function libOpen(id){const m=libM_(id);if(!m)return;const b=await libDB.getBlob(id).catch(()=>null);if(!b){toast('الملف غير موجود على هذا الجهاز');return}libShow(b,m.name)}
-async function libDl(id){const m=libM_(id);if(!m)return;const b=await libDB.getBlob(id).catch(()=>null);if(!b){toast('الملف غير موجود على هذا الجهاز');return}
- const f=new File([b],m.name,{type:m.type||b.type||'application/octet-stream'});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:m.name});return}}catch(e){if(e&&e.name=='AbortError')return}
- const url=URL.createObjectURL(f);libDlUrl(url,m.name);setTimeout(()=>URL.revokeObjectURL(url),60000)}
-async function libDel(id){const m=libM_(id);if(!m)return;m.trashAt=Date.now();try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('نُقل إلى السلة — يُحذف نهائياً بعد '+libDw(libCfg().days));draw()}
-async function libRestore(id){const m=libM_(id);if(!m)return;m.trashAt=0;try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('تم الاسترجاع ✅');libTab=m.k;draw()}
-function libKill(id){const m=libM_(id);if(!m)return;ask('حذف «'+m.name+'» نهائياً؟ لا يمكن التراجع.',async()=>{try{await libDB.del(id)}catch(e){dbg(e)}libM=libM.filter(x=>x.id!=id);toast('تم الحذف نهائياً');draw()},'نعم، احذف الآن')}
-function libEmpty(){const t=libM.filter(m=>m.trashAt);if(!t.length)return;ask('إفراغ السلة؟ سيُحذف '+t.length+' ملف نهائياً ولا يمكن التراجع.',async()=>{for(const m of t){try{await libDB.del(m.id)}catch(e){dbg(e)}}libM=libM.filter(m=>!m.trashAt);toast('أُفرغت السلة');draw()},'نعم، أفرغ السلة')}
-async function libRen(id){const m=libM_(id);if(!m)return;const n=(prompt('اسم الملف',m.name)||'').trim();if(!n)return;m.name=n.slice(0,120);try{await libDB.putMeta(m)}catch(e){dbg(e)}draw()}
-async function libToSaved(id){const m=libM_(id);if(!m)return;m.k='sv';m.at=Date.now();try{await libDB.putMeta(m)}catch(e){dbg(e)}toast('حُفظ في ملفاتي ✅');libTab='sv';draw()}
+function libTrimOp(){libM.filter(m=>!m.trashAt&&m.k=='op').sort((a,b)=>b.at-a.at).slice(30).forEach(m=>{m.trashAt=Date.now();libPut(m)})}
+function libPickOp(files){const f=(files||[])[0];if(!f)return;libAdd([f],'op').then(()=>{const m=libM.filter(x=>x.k=='op').sort((a,b)=>b.at-a.at)[0];if(m)libOpen(m.id)})}
+async function libOpen(id){const m=libM_(id);if(!m)return;if(libIsPdf(m)){libView(id);return}const b=await libBlob(m);if(b)libShow(b,m.name)}
+async function libShare(id){const m=libM_(id);if(!m)return;const b=await libBlob(m);if(!b)return;const f=new File([b],m.name,{type:m.type||b.type||'application/octet-stream'});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:m.name});return}}catch(e){if(e&&e.name=='AbortError')return}libShow(f,m.name)}
+async function libDel(id){const m=libM_(id);if(!m)return;m.trashAt=Date.now();m.sy=!!m.cl;await libPut(m);if(m.cl&&libCloudOK())libColl().doc(id).set({trashAt:m.trashAt},{merge:true}).then(()=>{m.sy=false;libPut(m)}).catch(dbg);toast('نُقل إلى السلة — يُحذف نهائياً بعد '+libDw(libCfg().days));draw()}
+async function libRestore(id){const m=libM_(id);if(!m)return;m.trashAt=0;m.sy=!!m.cl;await libPut(m);if(m.cl&&libCloudOK())libColl().doc(id).set({trashAt:0},{merge:true}).then(()=>{m.sy=false;libPut(m)}).catch(dbg);toast('تم الاسترجاع ✅');libTab=m.k;draw()}
+async function libDestroy(m,quiet){if(m.cl){if(!libCloudOK()){if(!quiet)toast('سجّل الدخول واتصل بالإنترنت لحذفه من حسابك');return false}await libCloudDel(m)}await libDB.del(m.id);libM=libM.filter(x=>x!==m);return true}
+function libKill(id){const m=libM_(id);if(!m)return;ask('حذف «'+m.name+'» نهائياً من جهازك وحسابك؟ لا يمكن التراجع.',async()=>{try{if(await libDestroy(m))toast('تم الحذف نهائياً')}catch(e){toast('تعذّر الحذف');dbg(e)}draw()},'نعم، احذف الآن')}
+function libEmpty(){const t=libM.filter(m=>m.trashAt);if(!t.length)return;ask('إفراغ السلة؟ سيُحذف '+t.length+' ملف نهائياً من جهازك وحسابك ولا يمكن التراجع.',async()=>{for(const m of t){try{await libDestroy(m,true)}catch(e){dbg(e)}}toast('أُفرغت السلة');draw()},'نعم، أفرغ السلة')}
+async function libRen(id){const m=libM_(id);if(!m)return;const n=(prompt('اسم الملف',m.name)||'').trim();if(!n)return;m.name=n.slice(0,120);m.sy=!!m.cl;await libPut(m);if(m.cl&&libCloudOK())libColl().doc(id).set({name:m.name},{merge:true}).then(()=>{m.sy=false;libPut(m)}).catch(dbg);draw()}
+async function libToSaved(id){const m=libM_(id);if(!m)return;m.k='sv';m.at=Date.now();await libPut(m);toast('حُفظ في ملفاتي ✅');libTab='sv';if(libCloudOK())libUpQ=libUpQ.then(()=>libUpload(m)).catch(dbg);draw()}
+function libRetry(id){const m=libM_(id);if(!m)return;m._err='';libUpQ=libUpQ.then(()=>libUpload(m)).catch(dbg);draw()}
 function libDays(v){libCfgSet({days:Math.max(1,Math.min(365,+v||7))});libPurge();toast('مدة السلة: '+libDw(libCfg().days));draw()}
-const libCard=m=>{const e=libExt(m.name),d=`data-i="${esc(m.id)}"`,tr=!!m.trashAt;
- return `<div class="libC"><div class="libR"><div class="libI" style="background:${libCol(e)}">${esc(e.slice(0,4))}</div><div class="libN"><b>${esc(m.name)}</b><div class="m">${libSz(m.size||0)} • ${tr?libLeft(m):(m.k=='op'?'فُتح ':'أُضيف ')+libAgo(m.at)}</div></div></div>
- <div class="libA">${tr?`<button type="button" ${d} onclick="libRestore(this.dataset.i)">↺ استرجاع</button><button type="button" class="g bad" ${d} onclick="libKill(this.dataset.i)">🗑 حذف الآن</button>`
- :`<button type="button" ${d} onclick="libOpen(this.dataset.i)">فتح</button><button type="button" class="g" ${d} onclick="libDl(this.dataset.i)">📥 تنزيل / مشاركة</button>${m.k=='op'?`<button type="button" class="g" ${d} onclick="libToSaved(this.dataset.i)">＋ حفظ في ملفاتي</button>`:`<button type="button" class="g" ${d} onclick="libRen(this.dataset.i)">✎ تسمية</button>`}<button type="button" class="g bad" ${d} onclick="libDel(this.dataset.i)">🗑 حذف</button>`}</div></div>`};
+
+/* ---------- pdf.js (يُحمَّل عند أول استعمال؛ يفضَّل وضعه بجانب التطبيق) ---------- */
+const LIB_PDFV='3.11.174',LIB_PDF_SRC=['pdf.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+LIB_PDFV+'/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@'+LIB_PDFV+'/build/pdf.min.js'],LIB_PDF_WK=['pdf.worker.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+LIB_PDFV+'/pdf.worker.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@'+LIB_PDFV+'/build/pdf.worker.min.js'];
+let libPdfP=null;
+function libPdfJs(){if(window.pdfjsLib&&window.pdfjsLib.GlobalWorkerOptions.workerSrc)return Promise.resolve(window.pdfjsLib);if(libPdfP)return libPdfP;
+ const loadS=u=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.crossOrigin='anonymous';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('script'))};document.head.appendChild(s)});
+ libPdfP=(async()=>{if(!window.pdfjsLib){let err;for(const u of LIB_PDF_SRC){try{await loadS(u);if(window.pdfjsLib)break}catch(e){err=e}}if(!window.pdfjsLib)throw err||new Error('pdfjs')}
+  let wk=null;for(const u of LIB_PDF_WK){try{const r=await fetch(u);if(r.ok){wk=URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}));break}}catch(e){}}
+  if(!wk)throw new Error('worker');window.pdfjsLib.GlobalWorkerOptions.workerSrc=wk;return window.pdfjsLib})().catch(e=>{libPdfP=null;throw e});return libPdfP}
+async function libThumb(f,m){const t=f.type||m.type||'',o={th:'',np:0};
+ if(/^image\//.test(t)&&window.createImageBitmap){const bm=await createImageBitmap(f),c=document.createElement('canvas'),w=150,h=Math.round(bm.height/bm.width*w);c.width=w;c.height=h;c.getContext('2d').drawImage(bm,0,0,w,h);o.th=c.toDataURL('image/jpeg',.6);return o}
+ if(!libIsPdf(m))return o;
+ const lib=await Promise.race([libPdfJs(),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),9000))]),pdf=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;o.np=pdf.numPages;
+ const pg=await pdf.getPage(1),v1=pg.getViewport({scale:1}),sc=150/v1.width,vp=pg.getViewport({scale:sc}),c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+ await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;o.th=c.toDataURL('image/jpeg',.62);try{pdf.destroy()}catch(e){}return o}
+
+/* ---------- واجهة القائمة ---------- */
+const libCard=m=>{const e=libExt(m.name),d=`data-i="${esc(m.id)}"`,tr=!!m.trashAt,pdf=libIsPdf(m),busy=m._up!=null||m._dp!=null,v=m._up!=null?m._up:m._dp,
+ icon=m.th?`<div class="libI th"><img src="${m.th}" alt=""><b style="background:${libCol_(e)}">${esc(e.slice(0,4))}</b></div>`:`<div class="libI" style="background:${libCol_(e)}">${esc(e.slice(0,4))}</div>`,
+ chips=m.cl?`<span class="libS ok">${svg('cloud')} بحسابك</span>${m.dl?'<span class="libS dv">على الجهاز</span>':''}`:'<span class="libS dv">على الجهاز فقط</span>',
+ rd=pdf&&m.np&&m.lp>1?`<div class="libRd"><i style="width:${Math.min(100,Math.round(m.lp/m.np*100))}%"></i></div><div class="m" style="font-size:11.5px">وصلت للصفحة ${m.lp} من ${m.np}</div>`:'',
+ bar=busy?`<div class="libP" data-pg="${esc(m.id)}"><i style="width:${v}%"></i><span>${v}%</span></div><div class="m" style="font-size:11.5px">${m._up!=null?'جارٍ الرفع إلى حسابك…':'جارٍ التنزيل على الجهاز…'}</div>`:'',
+ err=m._err?`<div class="libE">${esc(m._err)}</div>`:'';
+ let btn;
+ if(tr)btn=`<button type="button" ${d} onclick="libRestore(this.dataset.i)">${svg('refresh')} استرجاع</button><button type="button" class="g bad" ${d} onclick="libKill(this.dataset.i)">${svg('trash')} حذف الآن</button>`;
+ else if(busy)btn=`<button type="button" class="g bad" ${d} onclick="libCancel(this.dataset.i)">${svg('x')} ${m._up!=null?'إلغاء الرفع':'إلغاء التنزيل'}</button>`;
+ else btn=`<button type="button" ${d} onclick="libOpen(this.dataset.i)">${svg(pdf?'book':'eye')} ${pdf&&m.lp>1?'متابعة القراءة':'فتح'}</button>${m.cl&&!m.dl?`<button type="button" class="g" ${d} onclick="libDownload(this.dataset.i)">${svg('download')} تنزيل على الجهاز</button>`:''}${m.cl&&m.dl?`<button type="button" class="g" ${d} onclick="libRemoveLocal(this.dataset.i)">${svg('phone')} إزالة من الجهاز</button>`:''}${!m.cl&&m.dl&&m._err&&libCloudOK()&&m.size<=LIB_FMAX?`<button type="button" class="g" ${d} onclick="libRetry(this.dataset.i)">${svg('cloud')} إعادة الرفع</button>`:''}`;
+ const sub=tr||busy?'':`<div class="libA sm"><button type="button" class="g" ${d} onclick="libShare(this.dataset.i)">${svg('share')} مشاركة</button>${m.k=='op'?`<button type="button" class="g" ${d} onclick="libToSaved(this.dataset.i)">${svg('plus')} حفظ في ملفاتي</button>`:`<button type="button" class="g" ${d} onclick="libRen(this.dataset.i)">${svg('edit')} تسمية</button>`}<button type="button" class="g bad" ${d} onclick="libDel(this.dataset.i)">${svg('trash')} حذف</button></div>`;
+ return `<div class="libC"><div class="libR">${icon}<div class="libN"><b>${esc(m.name)}</b><div class="m">${libSz(m.size||0)}${m.np?' • '+m.np+' صفحة':''} • ${tr?libLeft(m):(m.k=='op'?'فُتح ':'أُضيف ')+libAgo(m.at)}</div>${tr?'':`<div class="libCh">${chips}</div>`}${rd}</div></div>${bar}${err}<div class="libA">${btn}</div>${sub}</div>`};
 function libPage(){if(!libLoaded){libLoad().then(()=>{if(tab=='lb')draw()});return '<div class="m" style="text-align:center;padding:40px">جارٍ التحميل…</div>'}
- const cfg=libCfg(),live=libM.filter(m=>!m.trashAt),L={sv:live.filter(m=>m.k=='sv').sort((a,b)=>b.at-a.at),op:live.filter(m=>m.k=='op').sort((a,b)=>b.at-a.at),tr:libM.filter(m=>m.trashAt).sort((a,b)=>b.trashAt-a.trashAt)},cur=libTab,tot=live.reduce((s,m)=>s+(m.size||0),0);
+ if(libCloudOK()&&Date.now()-libSyncT>45000)setTimeout(libCloudSync,0);
+ const cfg=libCfg(),live=libM.filter(m=>!m.trashAt),L={sv:live.filter(m=>m.k=='sv').sort((a,b)=>b.at-a.at),op:live.filter(m=>m.k=='op').sort((a,b)=>b.at-a.at),tr:libM.filter(m=>m.trashAt).sort((a,b)=>b.trashAt-a.trashAt)},cur=libTab,onDev=live.filter(m=>m.dl).reduce((s,m)=>s+(m.size||0),0);
  if(L.tr.some(m=>Date.now()-m.trashAt>=cfg.days*864e5))setTimeout(libPurge,0);
  const tabs=`<div class="hwTabs">${[['sv','ملفاتي المحفوظة'],['op','فتحتها بالتطبيق'],['tr','السلة']].map(([k,t])=>`<button type="button" class="${cur==k?'on':''}" onclick="libTab='${k}';draw()"><b>${L[k].length}</b>${t}</button>`).join('')}</div>`;
- const top=cur=='sv'?`<div style="padding:0 14px"><input type="file" id="libFs" multiple hidden onchange="libAdd(this.files,'sv');this.value=''"><button type="button" style="width:100%" onclick="$('#libFs').click()">${svg('plus')} رفع كتاب أو ملف</button><div class="m" style="margin:6px 4px">PDF أو Word أو أي نوع ملف — يُحفظ على جهازك (الحد 200MB للملف). المساحة المستخدمة: ${libSz(tot)}</div></div>`
-  :cur=='op'?`<div style="padding:0 14px"><input type="file" id="libFo" hidden onchange="libPickOp(this.files);this.value=''"><button type="button" style="width:100%" onclick="$('#libFo').click()">${svg('book')} فتح ملف بالتطبيق</button><div class="m" style="margin:6px 4px">الملفات التي تفتحها هنا أو تشاركها إلى التطبيق تظهر في هذه القائمة لتعود إليها، ويمكنك حفظ أي منها في «ملفاتي».</div></div>`
-  :`<div class="libT"><div class="m" style="line-height:1.7">الملفات المحذوفة تبقى هنا للاسترجاع، ثم تُحذف نهائياً بعد المدة التي تحدّدها.</div><div class="row" style="flex-wrap:nowrap;margin-top:8px"><span style="flex:1">مدة الاحتفاظ</span><select onchange="libDays(this.value)" style="width:auto;margin:0">${[...new Set([1,3,7,14,30,60,90,cfg.days])].sort((a,b)=>a-b).map(d=>`<option value="${d}" ${d==cfg.days?'selected':''}>${libDw(d)}</option>`).join('')}</select></div>${L.tr.length?`<button type="button" class="g bad" style="width:100%;margin-top:10px" onclick="libEmpty()">🗑 إفراغ السلة الآن</button>`:''}</div>`;
- const em={sv:['book','لا توجد ملفات محفوظة','ارفع كتبك وملفاتك لتجدها هنا دائماً'],op:['clipcheck','لا توجد ملفات مفتوحة بعد','افتح ملفاً أو شاركه إلى التطبيق'],tr:['check','السلة فارغة','الملفات المحذوفة تظهر هنا']};
+ const acct=libCloudOK()?`<div class="m" style="margin:6px 4px">${svg('cloud')} في حسابك: ${libSz(libCloudTotal())} من ${libSz(LIB_TMAX)} • على هذا الجهاز: ${libSz(onDev)}</div>`:`<div class="libE" style="margin:8px 0">سجّل الدخول لتُحفظ ملفاتك بحسابك وتبقى بعد إعادة تثبيت التطبيق. الملفات الحالية محفوظة على هذا الجهاز فقط. <button type="button" style="width:auto;margin:8px 0 0;padding:6px 14px" onclick="go('se')">تسجيل الدخول</button></div>`;
+ const top=cur=='sv'?`<div style="padding:0 14px"><input type="file" id="libFs" multiple hidden onchange="libAdd(this.files,'sv');this.value=''"><button type="button" style="width:100%" onclick="$('#libFs').click()">${svg('plus')} رفع كتاب أو ملف</button><div class="m" style="margin:6px 4px">يُحفظ في حسابك ويبقى معك بعد إعادة تثبيت التطبيق. تنزيله على الجهاز اختياري ويمكنك إزالته لتوفير المساحة.</div>${acct}</div>`
+  :cur=='op'?`<div style="padding:0 14px"><input type="file" id="libFo" hidden onchange="libPickOp(this.files);this.value=''"><button type="button" style="width:100%" onclick="$('#libFo').click()">${svg('book')} فتح ملف بالتطبيق</button><div class="m" style="margin:6px 4px">الملفات التي تفتحها هنا أو تشاركها إلى التطبيق تظهر في هذه القائمة على جهازك، ويمكنك حفظ أي منها في «ملفاتي» لترفع إلى حسابك.</div></div>`
+  :`<div class="libT"><div class="m" style="line-height:1.7">الملفات المحذوفة تبقى هنا للاسترجاع، ثم تُحذف نهائياً من جهازك وحسابك بعد المدة التي تحدّدها.</div><div class="row" style="flex-wrap:nowrap;margin-top:8px"><span style="flex:1">مدة الاحتفاظ</span><select onchange="libDays(this.value)" style="width:auto;margin:0">${[...new Set([1,3,7,14,30,60,90,cfg.days])].sort((a,b)=>a-b).map(d=>`<option value="${d}" ${d==cfg.days?'selected':''}>${libDw(d)}</option>`).join('')}</select></div>${L.tr.length?`<button type="button" class="g bad" style="width:100%;margin-top:10px" onclick="libEmpty()">${svg('trash')} إفراغ السلة الآن</button>`:''}</div>`;
+ const em={sv:['book','لا توجد ملفات محفوظة','ارفع كتبك وملفاتك لتجدها في حسابك دائماً'],op:['clipcheck','لا توجد ملفات مفتوحة بعد','افتح ملفاً أو شاركه إلى التطبيق'],tr:['check','السلة فارغة','الملفات المحذوفة تظهر هنا']};
  return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">المكتبة</b><button type="button" class="g" onclick="go('home')">رجوع</button></div>${tabs}${top}${L[cur].length?L[cur].map(libCard).join(''):tqEmp(...em[cur])}`}
-/* استلام ملفات مُشارَكة من تطبيقات أخرى (يحتاج share_target في manifest) */
+
+/* ---------- قارئ PDF داخل التطبيق ---------- */
+let LV=null;
+const lvPrefs=()=>{try{return Object.assign({dir:'v',bg:'orig',snap:false,keep:false},JSON.parse(localStorage.getItem('libVP')||'{}'))}catch(e){return{dir:'v',bg:'orig',snap:false,keep:false}}};
+const lvPrefSet=o=>{try{localStorage.setItem('libVP',JSON.stringify(Object.assign(lvPrefs(),o)))}catch(e){}};
+const LV_ZOOM=[1,1.25,1.5,2,2.5,3];
+async function libView(id){const m=libM_(id);if(!m||LV)return;const b=await libBlob(m);if(!b)return;toast('جارٍ فتح الكتاب…');
+ let lib;try{lib=await libPdfJs()}catch(e){dbg(e);toast('تعذّر تحميل قارئ PDF — اتصل بالإنترنت مرة واحدة. سيُفتح بتطبيق آخر');libShow(b,m.name);return}
+ let pdf;try{pdf=await lib.getDocument({data:new Uint8Array(await b.arrayBuffer())}).promise}catch(e){dbg(e);toast('تعذّر قراءة الملف (قد يكون تالفاً أو محمياً بكلمة سر)');libShow(b,m.name);return}
+ const P=lvPrefs();LV={m,pdf,np:pdf.numPages,cur:Math.min(Math.max(1,m.lp||1),pdf.numPages),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,zi:0,els:[],done:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0};
+ if(m.np!=LV.np){m.np=LV.np;libPut(m)}lvBuild()}
+function lvBuild(){const o=document.createElement('div');o.id='libV';o.className='lv bg-'+LV.bg+(LV.dir=='h'?' hz':'');
+ o.innerHTML=`<div class="lvt"><button type="button" class="lvx" onclick="lvClose()" aria-label="إغلاق">${svg('x')}</button><div class="lvn">${esc(LV.m.name)}</div><button type="button" class="lvpg" id="lvPg" onclick="lvGoAsk()">${LV.cur} / ${LV.np}</button><button type="button" class="lvx" onclick="lvSet(1)" aria-label="الإعدادات">${svg('sliders')}</button></div>
+ <div class="lvs" id="lvS"></div>
+ <div class="lvbar"><button type="button" onclick="lvStep(-1)">→ السابقة</button><button type="button" class="lvz" onclick="lvZoom(-1)" aria-label="تصغير">${svg('minus')}</button><span id="lvZt">100%</span><button type="button" class="lvz" onclick="lvZoom(1)" aria-label="تكبير">${svg('plus')}</button><button type="button" onclick="lvStep(1)">التالية ←</button></div>
+ <div class="lvbk" id="lvBk" onclick="lvSet(0)"></div><div class="lvp" id="lvP"></div>`;
+ document.body.appendChild(o);$('#lvP').innerHTML=lvSetHtml();$('#lvS').addEventListener('scroll',lvScroll,{passive:true});lvLayout();if(LV.keep)lvWake(true)}
+function lvSetHtml(){return `<div class="lvph"></div><div class="lvl">اتجاه القراءة</div><div class="lvo">${[['v','رأسي','⇅'],['h','أفقي','⇄']].map(([k,t,i])=>`<button type="button" class="${LV.dir==k?'on':''}" onclick="lvDir('${k}')"><span>${i}</span>${t}</button>`).join('')}</div>
+ <div class="lvl">الخلفية</div><div class="lvo">${[['orig','الأصل'],['paper','ورق'],['eye','راحة العين'],['night','ليلي']].map(([k,t])=>`<button type="button" class="lvbg ${k} ${LV.bg==k?'on':''}" onclick="lvBg('${k}')"><span>Aa</span>${t}</button>`).join('')}</div>
+ <label class="lvtg"><span>صفحة بصفحة</span><input type="checkbox" ${LV.snap?'checked':''} onchange="lvSnap(this.checked)"></label>
+ <label class="lvtg"><span>إبقاء الشاشة قيد التشغيل</span><input type="checkbox" ${LV.keep?'checked':''} onchange="lvKeep(this.checked)"></label>
+ <button type="button" class="g" style="width:100%;margin-top:6px" onclick="libShare('${esc(LV.m.id)}')">${svg('share')} مشاركة الملف</button>`}
+function lvSet(on){const p=$('#lvP'),k=$('#lvBk');if(!p)return;p.classList.toggle('open',!!on);k.classList.toggle('open',!!on)}
+function lvLayout(){const S=$('#lvS'),h=LV.dir=='h';S.className='lvs '+(h?'h':'v')+(LV.snap&&!h?' snap':'');S.innerHTML='';LV.els=[];LV.done=new Set();
+ for(let i=1;i<=LV.np;i++){const g=document.createElement('div');g.className='lvg';g.dataset.p=i;g.innerHTML='<canvas></canvas>';if(!h)g.style.aspectRatio='1/'+LV.ratio;LV.els.push(g);S.appendChild(g)}
+ lvZoomApply();lvObserve();$('#libV').classList.toggle('hz',h);requestAnimationFrame(()=>lvGo(LV.cur,false))}
+function lvObserve(){if(LV.obs)LV.obs.disconnect();const h=LV.dir=='h';LV.obs=new IntersectionObserver(es=>{es.forEach(e=>{const i=+e.target.dataset.p;if(e.isIntersecting)lvRender(i);else lvFree(i)})},{root:$('#lvS'),rootMargin:h?'0px 1400px':'1400px 0px'});LV.els.forEach(g=>LV.obs.observe(g))}
+async function lvRender(i){if(!LV||LV.done.has(i))return;LV.done.add(i);const g=LV.els[i-1];if(!g)return;const c=g.querySelector('canvas'),h=LV.dir=='h',k=g._k=(g._k||0)+1;
+ try{const pg=await LV.pdf.getPage(i);if(!LV||!LV.done.has(i)||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS');if(!h)g.style.aspectRatio=v1.width+'/'+v1.height;
+  const cssW=h?Math.min(S.clientWidth,S.clientHeight*v1.width/v1.height):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const px=v1.width*v1.height*sc*sc;if(px>9e6)sc*=Math.sqrt(9e6/px);
+  const vp=pg.getViewport({scale:sc});c.width=Math.round(vp.width);c.height=Math.round(vp.height);c.style.width=Math.round(cssW)+'px';c.style.height='auto';
+  const t=pg.render({canvasContext:c.getContext('2d'),viewport:vp});g._t=t;await t.promise;g.classList.add('ok')}
+ catch(e){if(LV&&g._k===k&&!(e&&e.name=='RenderingCancelledException'))LV.done.delete(i)}}
+function lvFree(i){if(!LV||!LV.done.has(i))return;LV.done.delete(i);const g=LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;try{g._t&&g._t.cancel()}catch(e){}const c=g.querySelector('canvas');c.width=c.height=0;g.classList.remove('ok')}
+function lvScroll(){if(!LV||LV.raf)return;LV.raf=requestAnimationFrame(()=>{if(!LV)return;LV.raf=0;const S=$('#lvS'),r=S.getBoundingClientRect(),h=LV.dir=='h',mid=h?(r.left+r.right)/2:(r.top+r.bottom)/2,pos=g=>{const q=g.getBoundingClientRect();return h?(q.left+q.right)/2:(q.top+q.bottom)/2};
+  let best=LV.cur,bd=1e9;for(let i=Math.max(1,LV.cur-8);i<=Math.min(LV.np,LV.cur+8);i++){const d=Math.abs(pos(LV.els[i-1])-mid);if(d<bd){bd=d;best=i}}
+  if(bd>(h?r.width:r.height)){bd=1e9;for(let i=1;i<=LV.np;i++){const d=Math.abs(pos(LV.els[i-1])-mid);if(d<bd){bd=d;best=i}}}
+  if(best!=LV.cur){LV.cur=best;lvPgTxt();lvSave()}})}
+function lvPgTxt(){const e=$('#lvPg');if(e)e.textContent=LV.cur+' / '+LV.np}
+function lvGo(n,smooth){if(!LV)return;n=Math.max(1,Math.min(LV.np,Math.round(+n)||1));LV.cur=n;const g=LV.els[n-1];if(g)g.scrollIntoView({block:LV.dir=='v'?'start':'nearest',inline:LV.dir=='h'?'center':'nearest',behavior:smooth?'smooth':'instant'});lvPgTxt();lvSave()}
+const lvStep=d=>LV&&lvGo(LV.cur+d,true);
+function lvZoomApply(){const S=$('#lvS'),t=$('#lvZt');if(!S)return;S.style.setProperty('--z',LV.dir=='h'?1:LV_ZOOM[LV.zi]);if(t)t.textContent=Math.round(LV_ZOOM[LV.zi]*100)+'%'}
+function lvZoom(d){if(!LV||LV.dir=='h')return;const z=Math.max(0,Math.min(LV_ZOOM.length-1,LV.zi+d));if(z==LV.zi)return;LV.zi=z;lvZoomApply();[...LV.done].forEach(i=>{lvFree(i);lvRender(i)});lvGo(LV.cur,false)}
+function lvDir(k){if(!LV||LV.dir==k)return;LV.dir=k;lvPrefSet({dir:k});$('#lvP').innerHTML=lvSetHtml();lvLayout()}
+function lvBg(k){LV.bg=k;lvPrefSet({bg:k});const o=$('#libV');o.className=o.className.replace(/bg-\w+/,'bg-'+k);$('#lvP').innerHTML=lvSetHtml()}
+function lvSnap(on){LV.snap=!!on;lvPrefSet({snap:LV.snap});$('#lvS').classList.toggle('snap',LV.snap&&LV.dir=='v')}
+async function lvWake(on){try{if(on){if(navigator.wakeLock&&LV&&!LV.wake){LV.wake=await navigator.wakeLock.request('screen');LV.wake.addEventListener('release',()=>{if(LV)LV.wake=null})}}else if(LV&&LV.wake){await LV.wake.release();LV.wake=null}}catch(e){dbg(e)}}
+function lvKeep(on){LV.keep=!!on;lvPrefSet({keep:LV.keep});lvWake(LV.keep)}
+let lvRz=0;window.addEventListener('resize',()=>{if(!LV)return;clearTimeout(lvRz);lvRz=setTimeout(()=>{if(LV){[...LV.done].forEach(i=>{lvFree(i);lvRender(i)})}},250)});
+document.addEventListener('visibilitychange',()=>{if(LV&&LV.keep&&document.visibilityState=='visible')lvWake(true)});
+function lvSave(){if(!LV)return;clearTimeout(LV.st);LV.st=setTimeout(()=>{if(!LV)return;const m=LV.m;if(m.lp!=LV.cur){m.lp=LV.cur;m.sy=!!m.cl;libPut(m)}},900)}
+function lvGoAsk(){if(!LV||$('#lvD'))return;const o=document.createElement('div');o.className='lvd';o.id='lvD';o.innerHTML=`<div class="lvdb"><b>اذهب إلى الصفحة</b><input id="lvGi" type="number" inputmode="numeric" min="1" max="${LV.np}" placeholder="ادخل رقم الصفحة (1-${LV.np})" onkeydown="if(event.key=='Enter')lvDOk()"><div class="row" style="gap:10px;margin-top:14px;flex-wrap:nowrap"><button type="button" class="g" style="flex:1" onclick="lvDX()">إلغاء</button><button type="button" style="flex:1" onclick="lvDOk()">موافق</button></div></div>`;$('#libV').appendChild(o);setTimeout(()=>{const i=$('#lvGi');if(i)i.focus()},60)}
+const lvDX=()=>{const d=$('#lvD');if(d)d.remove()};
+function lvDOk(){const i=$('#lvGi'),n=parseInt(i&&i.value,10);lvDX();if(n>=1)lvGo(n,false)}
+function lvClose(fromPop){if(!LV)return;const v=LV;LV=null;clearTimeout(v.st);try{v.obs&&v.obs.disconnect()}catch(e){}v.els.forEach(g=>{try{g._t&&g._t.cancel()}catch(e){}});try{v.wake&&v.wake.release()}catch(e){}
+ const m=v.m;m.lp=v.cur;m.sy=!!m.cl;libPut(m);if(m.cl&&libCloudOK())libColl().doc(m.id).set({lp:m.lp,np:m.np},{merge:true}).then(()=>{m.sy=false;libPut(m)}).catch(dbg);
+ try{v.pdf.destroy()}catch(e){}const o=document.getElementById('libV');if(o)o.remove();if(tab=='lb')draw()}
+
+/* ---------- استلام ملفات من «مشاركة» تطبيقات أخرى + الإقلاع ---------- */
 async function libShareIn(){try{if(!('caches' in window))return;const c=await caches.open('share-inbox'),ks=await c.keys();if(!ks.length)return;const files=[];for(const r of ks){const res=await c.match(r);if(!res)continue;const b=await res.blob();let nm='ملف';try{nm=decodeURIComponent(res.headers.get('X-Name')||'')||nm}catch(e){}files.push(new File([b],nm,{type:b.type}));await c.delete(r)}if(files.length)await libAdd(files,'op')}catch(e){dbg(e)}}
-(function(){const b=()=>{try{if(/[?&]share=1/.test(location.search)){history.replaceState(null,'',location.pathname);libShareIn()}else libLoad().catch(dbg)}catch(e){dbg(e)}};if(document.readyState=='complete')setTimeout(b,800);else addEventListener('load',()=>setTimeout(b,800))})();
+(function(){const b=()=>{try{if(/[?&]share=1/.test(location.search)){history.replaceState(null,'',location.pathname);libShareIn()}else libLoad().catch(dbg);setTimeout(()=>{if(libLoaded)libCloudSync()},4000)}catch(e){dbg(e)}};if(document.readyState=='complete')setTimeout(b,800);else addEventListener('load',()=>setTimeout(b,800))})();
 
 /* ---------- دفتر الملاحظات ---------- */
 const NB_ST=[['lined','📏 مسطّر'],['grid','▦ مربعات'],['dot','⠿ منقّط'],['plain','📄 سادة'],['school','🎓 مدرسي'],['en','ABC']];
@@ -2416,6 +2551,7 @@ let bbArmed=false,bbExit=false,bbTm=0;
 function bbArm(){if(bbArmed||bbExit)return;try{history.pushState({qmrm:1},'');bbArmed=true}catch(e){dbg(e)}}
 function bbQuit(){bbExit=true;try{history.back()}catch(e){dbg(e)}setTimeout(()=>{try{window.close()}catch(e){dbg(e)}},120);setTimeout(()=>{try{toast('اضغط زر الرجوع مرة أخرى للخروج')}catch(e){dbg(e)}},700);clearTimeout(bbTm);bbTm=setTimeout(()=>{bbExit=false;bbArmed=false;bbArm()},5000)}
 function bbStep(){
+ if(typeof LV!='undefined'&&LV){if(document.getElementById('lvD')){lvDX();return true}const lp=document.getElementById('lvP');if(lp&&lp.classList.contains('open')){lvSet(0);return true}lvClose(true);return true}
  const dg=document.querySelector('.exdg');if(dg){const c=dg.querySelector('button[data-k="0"]');c?c.click():dg.remove();return true}
  if(document.getElementById('exPp')){exPaperX();return true}
  if(document.getElementById('exOv')){exClose();return true}
