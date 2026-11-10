@@ -655,3 +655,22 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvfb input{flex:1;margin:0;min-width:0;background:transparent;border:0;color:#fff;font-size:15px;padding:8px 6px}.lvfb span{color:#aab;font-size:12.5px;white-space:nowrap}
 .lvfb button{width:36px;height:36px;min-height:0;padding:0;margin:0;border-radius:11px;background:#ffffff18;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:none}.lvfb button .ic{width:18px;height:18px}.lvfb button:nth-of-type(1) .ic{transform:rotate(180deg)}
 .lvnt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+
+/* ===== المكتبة: عرض القائمة (غلاف مصغّر يمين، الاسم ثم «تاريخ • حجم»، وقائمة ⋮ يسار) ===== */
+.lbml{display:none}.lbL .lbmg{display:none}.lbL .lbml{display:block}
+.lbG.lbL{gap:0;padding:0 6px 4px}
+.lbL .lbk{gap:16px;padding:11px 12px;border-radius:18px;background:transparent;border:0;box-shadow:none;transition:background .15s}
+.lbL .lbk:active{background:color-mix(in srgb,var(--mut) 12%,transparent)}
+.lbL .lbc-w{width:84px}
+.lbL .lbc{border-radius:5px;box-shadow:0 1px 3px #0003,inset 0 0 0 1px #0000001f}
+.lbL .lbsp{display:none}
+.lbL .lbi{gap:7px;padding:0;flex:1;min-width:0}
+.lbL .lbi b{display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:17px;font-weight:600;line-height:1.4}
+.lbL .lbi>span{font-size:13.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.lbL .lbm{position:static;transform:none;flex:none;width:40px;height:40px;margin-inline-start:-4px}
+.lbL .lbt .lbi b{white-space:normal}.lbL .lbt .lbi>span{white-space:normal}
+/* ===== تقليب الصفحات: لا تخطّي أثناء السحب السريع + حركة دخول ناعمة ===== */
+.lvs.v.snap .lvg,.lvs.h .lvg{scroll-snap-stop:always}
+.lvg.lvfl .lvi{animation:lvflip var(--fd,640ms) cubic-bezier(.22,.7,.2,1)}
+@keyframes lvflip{from{opacity:.55;transform:scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.lvg.lvfl .lvi{animation:none}}

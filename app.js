@@ -2050,8 +2050,8 @@ Object.assign(IC,{share:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12
  lbOpen:'<path d="M5 4.5h8l5 5V19a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 5 19zM13 4.5v5h5"/>'});
 const LIB_FMAX=200*1048576;
 let libM=[],libLoaded=false,libTabF='all',libQ='',libImp=null,libTQ=Promise.resolve(),libPdfP=null,libPdfV='',libWarmed=0,libRT=0;
-const libCfg=()=>{try{return Object.assign({days:7,view:'g',sort:'rec'},JSON.parse(localStorage.getItem('libCfg')||'{}'))}catch(e){return{days:7,view:'g',sort:'rec'}}};
-const libCfgSet=o=>{try{localStorage.setItem('libCfg',JSON.stringify(Object.assign(libCfg(),o)))}catch(e){}};
+const libCfg=()=>{const D={days:7,view:'l',sort:'rec'};try{const o=JSON.parse(localStorage.getItem('libCfg')||'{}');if(o.vv!==2)delete o.view;return Object.assign(D,o)}catch(e){return D}};
+const libCfgSet=o=>{try{localStorage.setItem('libCfg',JSON.stringify(Object.assign(libCfg(),o,{vv:2})))}catch(e){}};
 const libDB=(()=>{let p=null;const open=()=>p||(p=new Promise((ok,no)=>{try{const r=indexedDB.open('qlib_db',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta',{keyPath:'id'});d.createObjectStore('blob')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
  const tx=async(st,m,f)=>{const d=await open();return new Promise((ok,no)=>{const t=d.transaction(st,m),q=f(t);t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)})};
  return{all:()=>tx('meta','readonly',t=>t.objectStore('meta').getAll()),putMeta:m=>tx('meta','readwrite',t=>t.objectStore('meta').put(m)),putBlob:(id,b)=>tx('blob','readwrite',t=>t.objectStore('blob').put(b,id)),getBlob:id=>tx('blob','readonly',t=>t.objectStore('blob').get(id)),del:id=>tx(['meta','blob'],'readwrite',t=>{t.objectStore('meta').delete(id);t.objectStore('blob').delete(id)})}})();
@@ -2068,6 +2068,7 @@ const libDw=n=>n==1?'يوم':n==2?'يومان':n<=10?n+' أيام':n+' يوما�
 const libLeft=m=>{const ms=m.trashAt+libCfg().days*864e5-Date.now();if(ms<=0)return 'ينتهي الآن';const h=Math.ceil(ms/36e5);return h<24?'يُحذف نهائياً بعد '+h+' ساعة':'يُحذف نهائياً بعد '+libDw(Math.ceil(h/24))};
 const libM_=id=>libM.find(x=>x.id==id);
 const libHas=m=>m.dl!==false;
+const libDate=ts=>{const d=new Date(ts||Date.now()),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()};
 const libTitle=m=>m.name.replace(/\.pdf$/i,'');
 const libLocal=m=>{const o={};Object.keys(m).forEach(k=>{if(k[0]!='_')o[k]=m[k]});return o};
 const libPut=m=>libDB.putMeta(libLocal(m)).catch(dbg);
@@ -2121,7 +2122,7 @@ async function libAdd(files){files=[...(files||[])].filter(f=>f&&f.size!=null);i
   try{const hd=new Uint8Array(await f.slice(0,1024).arrayBuffer());if(ex0=='PDF'&&!new TextDecoder('latin1').decode(hd).includes('%PDF')){bad.push('«'+nm+'»: ملف PDF تالف');continue}if(ex0=='DOCX'&&!(hd[0]==0x50&&hd[1]==0x4B)){bad.push('«'+nm+'»: ملف Word تالف');continue}if(f.size<8){bad.push('«'+nm+'»: الملف فارغ');continue}}catch(e){bad.push('«'+nm+'»: تعذّرت قراءة الملف');continue}
   const ex=libM.find(x=>x.name==nm&&x.size==f.size);
   if(ex){if(ex.trashAt){ex.trashAt=0;await libPut(ex)}out.push(ex);dup++;continue}
-  const m={id:libUid(),name:nm,size:f.size,type:f.type||(/\.pdf$/i.test(nm)?'application/pdf':''),at:Date.now(),lo:0,trashAt:0,th:'',lp:1,np:0,fav:false,bk:[],dl:true};
+  const m={id:libUid(),name:nm,size:f.size,type:f.type||(/\.pdf$/i.test(nm)?'application/pdf':''),at:Date.now(),lm:f.lastModified||Date.now(),lo:0,trashAt:0,th:'',lp:1,np:0,fav:false,bk:[],dl:true};
   try{await libDB.putBlob(m.id,f);await libPut(m);libM.push(m);out.push(m);ok++;libQThumb(m)}catch(e){fail++;dbg(e)}
   if(libImp.i%3==0)libRefresh()}
  libImp=null;libTabF=libTabF=='tr'?'all':libTabF;
@@ -2146,13 +2147,14 @@ function libMenu(id){const m=libM_(id);if(!m)return;const d=`'${esc(m.id)}'`,pdf
 
 /* ---------- واجهة المكتبة ---------- */
 const libPct=m=>m.np&&m.lp>1?Math.min(100,Math.round((m.lp-1)/Math.max(1,m.np-1)*100)):0;
+const libMetaL=m=>{const p=libPct(m);return libDate(m.lm||m.at)+' • '+libSz(m.size||0)+(p&&p<98?' • '+p+'%':'')};
 const libMeta=m=>[m.np&&!libIsDoc(m)?m.np+' صفحة':'',libSz(m.size||0)].filter(Boolean).join(' • ');
 const libCover=m=>{const e=libExt(m.name),p=libPct(m);return `<div class="lbc" style="--c:${libCol_(e)}">${m.th?`<img src="${m.th}" alt="" decoding="async">`:`<div class="lbe"><span>${esc(e.slice(0,4))}</span><i>${esc(libTitle(m).slice(0,46))}</i></div>`}<u class="lbsp"></u>${p?`<i class="lbp"><b style="width:${p}%"></b></i>`:''}${m.fav?`<span class="lbf">${svg('star')}</span>`:''}${m.trashAt?'':p>=98?'<em class="lbn ok">مكتمل</em>':!m.lo?'<em class="lbn">جديد</em>':''}</div>`};
 function libFiltered(){const cfg=libCfg(),q=libNorm(libQ.trim());let a=libM.filter(m=>libTabF=='tr'?!!m.trashAt:!m.trashAt);if(libTabF=='fav')a=a.filter(m=>m.fav);if(q)a=a.filter(m=>libNorm(m.name).includes(q));const s=cfg.sort;
  a.sort(libTabF=='tr'?(x,y)=>y.trashAt-x.trashAt:s=='name'?(x,y)=>x.name.localeCompare(y.name,'ar'):s=='size'?(x,y)=>(y.size||0)-(x.size||0):s=='add'?(x,y)=>y.at-x.at:(x,y)=>(y.lo||y.at)-(x.lo||x.at));return a}
 function libCard(m){const d=esc(m.id),p=libPct(m);
  if(m.trashAt)return `<div class="lbk lbt"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span>${libSz(m.size||0)} • ${libLeft(m)}</span><div class="lbq"><button type="button" onclick="libRestore('${d}')">${svg('refresh')} استرجاع</button><button type="button" class="g bad" onclick="libKill('${d}')">${svg('trash')} حذف الآن</button></div></div></div>`;
- return `<div class="lbk" role="button" tabindex="0" onclick="libOpen('${d}')"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span>${libMeta(m)}${p&&p<98?' • '+p+'%':''}</span></div><button type="button" class="lbm" aria-label="خيارات" onclick="event.stopPropagation();libMenu('${d}')">${svg('lbDots')}</button></div>`}
+ return `<div class="lbk" role="button" tabindex="0" onclick="libOpen('${d}')"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span class="lbmg">${libMeta(m)}${p&&p<98?' • '+p+'%':''}</span><span class="lbml">${libMetaL(m)}</span></div><button type="button" class="lbm" aria-label="خيارات" onclick="event.stopPropagation();libMenu('${d}')">${svg('lbDots')}</button></div>`}
 function libList(){const a=libFiltered();if(!a.length)return `<div class="lbNo">${libQ.trim()?'لا توجد نتائج مطابقة':libTabF=='fav'?'لم تضف ملفات إلى المفضلة بعد':libTabF=='tr'?'السلة فارغة':'لا توجد ملفات'}</div>`;return a.map(libCard).join('')}
 function libSortMenu(){const c=libCfg().sort;$('#sh').innerHTML=`<div class="sh" onclick="if(event.target===this)libSX()"><div class="lbS"><div class="lbSh"><b>ترتيب الملفات</b></div>${[['rec','الأحدث فتحاً'],['add','الأحدث إضافة'],['name','الاسم (أ - ي)'],['size','الحجم (الأكبر أولاً)']].map(([k,t])=>`<button type="button" class="lbSb ${c==k?'cur':''}" onclick="libCfgSet({sort:'${k}'});libSX();draw()">${svg('check')} ${t}</button>`).join('')}</div></div>`}
 function libPage(){
@@ -2177,10 +2179,10 @@ function libPage(){
 /* ---------- قارئ PDF ---------- */
 let LV=null;
 const LV_COL=['#111111','#e53935','#1e88e5','#2e7d32','#fb8c00','#8e24aa','#ffd600'],LV_W={pen:[2.5,5,9],hl:[16,26,40],ul:[2.5,4.5,7],txt:[22,30,42],er:[10,18,30]};
-const lvPrefs=()=>{const d={dir:'v',bg:'orig',snap:false,keep:false,sz:1,cols:{pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'}};try{const o=Object.assign(d,JSON.parse(localStorage.getItem('libVP')||'{}'));o.cols=Object.assign({pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'},o.cols);return o}catch(e){return d}};
+const lvPrefs=()=>{const d={dir:'v',bg:'orig',snap:false,keep:false,sz:1,fl:1,cols:{pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'}};try{const o=Object.assign(d,JSON.parse(localStorage.getItem('libVP')||'{}'));o.cols=Object.assign({pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'},o.cols);return o}catch(e){return d}};
 const lvPrefSet=o=>{try{localStorage.setItem('libVP',JSON.stringify(Object.assign(lvPrefs(),o)))}catch(e){}};
 async function libView(id,sp){const m=libM_(id);if(!m||LV)return;const P=lvPrefs();try{sessionStorage.setItem('qmLV',JSON.stringify({id,p:sp||m.lp||1}))}catch(e){}
- const L=LV={m,pdf:null,np:m.np||1,cur:Math.max(1,sp||m.lp||1),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,z:1,ed:false,tool:null,cols:P.cols,sz:P.sz,undo:[],redo:[],live:null,ta:null,ign:0,els:[],done:new Set(),run:new Set(),want:new Set(),stale:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0,sheet:'',nt:'th',busy:0,txt:{},fid:0,padT:60,padB:110,lt:0,pz:0,tp:{t:0,x:0,y:0,tm:0}};
+ const L=LV={m,pdf:null,np:m.np||1,cur:Math.max(1,sp||m.lp||1),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,z:1,ed:false,tool:null,cols:P.cols,sz:P.sz,fl:P.fl,ar:0,anim:0,undo:[],redo:[],live:null,ta:null,ign:0,els:[],done:new Set(),run:new Set(),want:new Set(),stale:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0,sheet:'',nt:'th',busy:0,txt:{},fid:0,padT:60,padB:110,lt:0,pz:0,tp:{t:0,x:0,y:0,tm:0}};
  lvBuild();
  const b=await libBlob(m);if(LV!==L)return;if(!b){lvClose(true);return}
  let pdf;try{pdf=await libOpenDoc(b)}catch(e){dbg(e);if(LV!==L)return;const pw=e&&e.name=='PasswordException';lvClose(true);toast(pw?'لم تُدخل كلمة سر صحيحة':'تعذّر قراءة الملف — سيُفتح بتطبيق آخر');if(!pw)libShow(b,m.name);return}
@@ -2215,32 +2217,41 @@ async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g)return;L.run.add(i);L.bus
 function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;try{g._t&&g._t.cancel()}catch(e){}g._t=null;const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}const tl=g._i&&g._i.querySelector('.textLayer');if(tl)tl.remove();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
 function lvRatio(g,i,v1){const r=v1.height/v1.width,c=g._r||LV.ratio;if(Math.abs(r-c)/c<.004)return;const S=$('#lvS'),b=g.offsetHeight;g._r=r;g.style.aspectRatio='1/'+r;if(LV.m.an&&LV.m.an[i])lvAnRender(i);if(i<LV.cur){const d=g.offsetHeight-b;if(d)S.scrollTop+=d}}
 async function lvSizes(){const L=LV;if(!L||L.dir=='h')return;for(let s=1;s<=L.np;s+=16){const ids=[];for(let i=s;i<s+16&&i<=L.np;i++)ids.push(i);await Promise.all(ids.map(async i=>{try{const pg=await L.pdf.getPage(i);if(LV===L&&L.dir=='v')lvRatio(L.els[i-1],i,pg.getViewport({scale:1}))}catch(e){}}));if(LV!==L)return;await new Promise(r=>setTimeout(r,40))}}
-function lvScroll(){if(!LV||LV.raf)return;LV.raf=requestAnimationFrame(()=>{if(!LV)return;LV.raf=0;const S=$('#lvS'),h=LV.dir=='h';let best=LV.cur;
+function lvScroll(){if(!LV||LV.raf||LV.anim)return;LV.raf=requestAnimationFrame(()=>{if(!LV)return;LV.raf=0;const S=$('#lvS'),h=LV.dir=='h';let best=LV.cur;
   if(!h){const y=S.scrollTop+LV.padT+(S.clientHeight-LV.padT-LV.padB)*.3;let lo=0,hi=LV.np-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(LV.els[mid].offsetTop<=y)lo=mid;else hi=mid-1}best=lo+1}
   else{const r=S.getBoundingClientRect(),line=(r.left+r.right)/2;let bd=1e9;for(let i=Math.max(1,LV.cur-6);i<=Math.min(LV.np,LV.cur+6);i++){const q=LV.els[i-1].getBoundingClientRect(),d=Math.abs((q.left+q.right)/2-line);if(d<bd){bd=d;best=i}}if(bd>r.width)for(let i=1;i<=LV.np;i++){const q=LV.els[i-1].getBoundingClientRect(),d=Math.abs((q.left+q.right)/2-line);if(d<bd){bd=d;best=i}}}
   if(best!=LV.cur){LV.cur=best;lvUi();lvSave();lvPump()}})}
 function lvUi(){if(!LV)return;const s=$('#lvSub'),r=$('#lvR'),a=$('#lvA'),bb=$('#lvB'),bm=$('#lvBm'),pct=LV.np>1?Math.round((LV.cur-1)/(LV.np-1)*100):100;if(s)s.textContent='صفحة '+LV.cur+' من '+LV.np+' • '+pct+'%';if(r){r.max=LV.np;r.value=LV.cur}if(a&&document.activeElement!==a)a.value=LV.cur;if(bb)bb.textContent=LV.np;{const pr=$('#lvPr i');if(pr)pr.style.width=pct+'%'}if(bm)bm.classList.toggle('on',(LV.m.bk||[]).includes(LV.cur))}
-function lvGo(n,smooth){if(!LV)return;n=Math.max(1,Math.min(LV.np,Math.round(+n)||1));LV.cur=n;const g=LV.els[n-1],S=$('#lvS');
- if(g){if(LV.dir=='v')S.scrollTo({top:Math.max(0,g.offsetTop-LV.padT),behavior:smooth?'smooth':'auto'});else g.scrollIntoView({block:'nearest',inline:'center',behavior:smooth?'smooth':'auto'})}lvUi();lvSave();lvPump()}
-const lvStep=d=>LV&&lvGo(LV.cur+d,true);
+function lvGo(n,smooth){if(!LV)return;n=Math.max(1,Math.min(LV.np,Math.round(+n)||1));lvAnimStop(1);const ms=smooth&&Math.abs(n-LV.cur)<=2?lvFlipMs():0;LV.cur=n;const g=LV.els[n-1],S=$('#lvS');
+ if(g){if(LV.dir=='v'){const to=Math.max(0,g.offsetTop-LV.padT);if(ms)lvAnim(S,'scrollTop',to,ms,g);else S.scrollTo({top:to,behavior:'auto'})}else if(ms){const r=S.getBoundingClientRect(),q=g.getBoundingClientRect();lvAnim(S,'scrollLeft',S.scrollLeft+((q.left+q.right)/2-(r.left+r.right)/2),ms,g)}else g.scrollIntoView({block:'nearest',inline:'center',behavior:'auto'})}lvUi();lvSave();lvPump()}
+/* تقليب هادئ: حركة بتسارع وتباطؤ، مدتها من الإعدادات (سريع/متوسط/بطيء)، وتُلغى بلمسة المستخدم */
+const LV_FD=[360,640,980];
+function lvFlipMs(){try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return 0}catch(e){}const v=LV_FD[LV.fl];return v==null?LV_FD[1]:v}
+function lvAnimStop(q){const L=LV;if(!L)return;if(L.ar){cancelAnimationFrame(L.ar);L.ar=0}if(!L.anim)return;L.anim=0;const S=$('#lvS');if(S)S.style.scrollSnapType='';L.els.forEach(g=>g.classList.remove('lvfl'));if(!q)lvScroll()}
+function lvAnim(S,prop,to,ms,g){const L=LV;lvAnimStop(1);const from=S[prop],d=to-from;if(Math.abs(d)<2){S[prop]=to;return}
+ L.anim=1;S.style.scrollSnapType='none';if(g){g.style.setProperty('--fd',ms+'ms');g.classList.add('lvfl')}
+ const t0=performance.now(),ez=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+ const tick=now=>{if(LV!==L||!L.anim)return;const t=Math.min(1,(now-t0)/ms);S[prop]=from+d*ez(t);if(t<1)L.ar=requestAnimationFrame(tick);else{L.ar=0;S[prop]=to;lvAnimStop()}};L.ar=requestAnimationFrame(tick)}
+function lvFlip(k){if(!LV)return;LV.fl=k;lvPrefSet({fl:k});$('#lvP').innerHTML=lvSetHtml()}
+function lvStep(d){if(!LV)return;const t=LV.cur+d;if(t<1||t>LV.np){lvNote(t<1?'هذه الصفحة الأولى':'هذه آخر صفحة');return}lvGo(t,true);lvNote('صفحة '+t+' من '+LV.np)}
 const lvScrub=v=>{if(!LV)return;const n=Math.max(1,Math.min(LV.np,+v||1));if(n!=LV.cur)lvGo(n,false);const a=$('#lvA');if(a&&document.activeElement!==a)a.value=n};
 function lvZoomTo(z,cx,cy){if(!LV||LV.dir=='h')return;z=Math.max(1,Math.min(4,z));const z0=LV.z;if(Math.abs(z-z0)<.01)return;const S=$('#lvS'),W=$('#lvW'),r=z/z0,x=S.scrollLeft+cx,y=S.scrollTop+cy-LV.padT;LV.z=z;W.style.width=(z*100)+'%';S.scrollLeft=x*r-cx;S.scrollTop=y*r+LV.padT-cy;LV.done.forEach(i=>LV.stale.add(i));lvPump();lvPadSet()}
 function lvPadSet(){const t=$('#lvZt');if(t)t.textContent=Math.round(LV.z*100)+'%'}
 function lvZoomBy(d){const S=$('#lvS');lvZoomTo(LV.z*(d>0?1.25:.8),S.clientWidth/2,S.clientHeight/2)}
 function lvTapAt(x,y){if(LV.tool)return;const T=LV.tp,n=Date.now();if(n-T.t<300&&Math.hypot(x-T.x,y-T.y)<36){clearTimeout(T.tm);T.t=0;if(LV.dir=='v')lvZoomTo(LV.z<1.6?2.5:1,x,y);return}T.t=n;T.x=x;T.y=y;T.tm=setTimeout(()=>{if(!LV)return;T.t=0;lvTap(x,y)},260)}
-function lvTap(x,y){if(LV.sheet)return;const S=$('#lvS');if(LV.dir=='h'){const w=S.clientWidth;if(x<w*.28){lvStep(1);return}if(x>w*.72){lvStep(-1);return}}$('#libV').classList.toggle('lvh')}
+function lvTap(x,y){if(LV.sheet)return;const S=$('#lvS');if(LV.dir=='h'){const w=S.clientWidth;if(x<w*.28){lvStep(1);return}if(x>w*.72){lvStep(-1);return}}if(LV.snap&&LV.dir=='v'&&LV.z<1.2){const hh=S.clientHeight;if(y<hh*.22){lvStep(-1);return}if(y>hh*.78){lvStep(1);return}}$('#libV').classList.toggle('lvh')}
 function lvTouch(){const S=$('#lvS'),W=$('#lvW');let pn=0,p0=0,z0=1,cx=0,cy=0,k=1,sx=0,sy=0,st=0,mv=0,pan=0,lx=0,ly=0;
  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
- S.addEventListener('touchstart',e=>{if(!LV)return;LV.lt=Date.now();if(LV.tool&&e.touches.length>=2){LV.ign=1;lvCancelLive();pan=1;lx=(e.touches[0].clientX+e.touches[1].clientX)/2;ly=(e.touches[0].clientY+e.touches[1].clientY)/2}else if(e.touches.length==2&&LV.dir=='v'){pn=1;p0=dist(e.touches)||1;z0=LV.z;k=1;const r=S.getBoundingClientRect();cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;W.style.transformOrigin=(S.scrollLeft+cx)+'px '+(S.scrollTop+cy)+'px';clearTimeout(LV.tp.tm);LV.tp.t=0}else if(e.touches.length==1){sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();mv=0}},{passive:true});
+ S.addEventListener('touchstart',e=>{if(!LV)return;lvAnimStop();LV.lt=Date.now();if(LV.tool&&e.touches.length>=2){LV.ign=1;lvCancelLive();pan=1;lx=(e.touches[0].clientX+e.touches[1].clientX)/2;ly=(e.touches[0].clientY+e.touches[1].clientY)/2}else if(e.touches.length==2&&LV.dir=='v'){pn=1;p0=dist(e.touches)||1;z0=LV.z;k=1;const r=S.getBoundingClientRect();cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;W.style.transformOrigin=(S.scrollLeft+cx)+'px '+(S.scrollTop+cy)+'px';clearTimeout(LV.tp.tm);LV.tp.t=0}else if(e.touches.length==1){sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();mv=0}},{passive:true});
  S.addEventListener('touchmove',e=>{if(!LV)return;if(pan&&e.touches.length>=2){e.preventDefault();const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;S.scrollLeft-=mx-lx;S.scrollTop-=my-ly;lx=mx;ly=my;return}if(pn&&e.touches.length==2){e.preventDefault();k=Math.max(1/z0,Math.min(4/z0,dist(e.touches)/p0));W.style.transform='scale('+k+')'}else if(e.touches.length==1&&Math.hypot(e.touches[0].clientX-sx,e.touches[0].clientY-sy)>10)mv=1},{passive:false});
  S.addEventListener('touchend',e=>{if(!LV)return;LV.lt=Date.now();if(e.touches.length==0){pan=0;LV.ign=0}if(pn){if(e.touches.length<2){pn=0;W.style.transform='';W.style.transformOrigin='';lvZoomTo(z0*k,cx,cy);LV.pz=Date.now()}return}
   if(e.touches.length==0&&e.changedTouches.length==1&&!mv&&Date.now()-st<300&&Date.now()-LV.pz>400){const cm=e.target.closest&&e.target.closest('.cm');if(cm){lvCm(+cm.dataset.p,+cm.dataset.i);return}const r=S.getBoundingClientRect(),t=e.changedTouches[0];lvTapAt(t.clientX-r.left,t.clientY-r.top)}},{passive:true});
  S.addEventListener('click',e=>{if(!LV)return;const cm=e.target.closest&&e.target.closest('.cm');if(cm){lvCm(+cm.dataset.p,+cm.dataset.i);return}if(LV.tool||Date.now()-LV.lt<700)return;const r=S.getBoundingClientRect();lvTapAt(e.clientX-r.left,e.clientY-r.top)});
  S.addEventListener('pointerdown',lvPD);S.addEventListener('pointermove',lvPM);S.addEventListener('pointerup',lvPU);S.addEventListener('pointercancel',lvPU);
- S.addEventListener('wheel',e=>{if(!LV||!e.ctrlKey)return;e.preventDefault();const r=S.getBoundingClientRect();lvZoomTo(LV.z*(e.deltaY<0?1.12:1/1.12),e.clientX-r.left,e.clientY-r.top)},{passive:false})}
+ S.addEventListener('wheel',e=>{if(LV)lvAnimStop();if(!LV||!e.ctrlKey)return;e.preventDefault();const r=S.getBoundingClientRect();lvZoomTo(LV.z*(e.deltaY<0?1.12:1/1.12),e.clientX-r.left,e.clientY-r.top)},{passive:false})}
 function lvKey(e){if(!LV)return;const t=e.target&&e.target.tagName;if((t=='INPUT'||t=='TEXTAREA')&&e.key!='Escape')return;const k=e.key,h=LV.dir=='h';
  if(k=='Escape'){lvBack();e.preventDefault()}else if(k=='PageDown'||k==' '&&!e.shiftKey||h&&k=='ArrowLeft'){lvStep(1);e.preventDefault()}else if(k=='PageUp'||k==' '&&e.shiftKey||h&&k=='ArrowRight'){lvStep(-1);e.preventDefault()}else if(k=='Home'){lvGo(1,false);e.preventDefault()}else if(k=='End'){lvGo(LV.np,false);e.preventDefault()}else if(k=='+'||k=='='){lvZoomBy(1)}else if(k=='-'){lvZoomBy(-1)}}
-function lvNote(msg){const o=$('#libV');if(!o)return;const d=document.createElement('div');d.className='lvnt';d.textContent=msg;o.appendChild(d);setTimeout(()=>d.classList.add('out'),1400);setTimeout(()=>d.remove(),1800)}
+function lvNote(msg){const o=$('#libV');if(!o)return;o.querySelectorAll('.lvnt').forEach(x=>x.remove());const d=document.createElement('div');d.className='lvnt';d.textContent=msg;o.appendChild(d);setTimeout(()=>d.classList.add('out'),1400);setTimeout(()=>d.remove(),1800)}
 function lvMark(){const m=LV.m,a=m.bk=m.bk||[],i=a.indexOf(LV.cur);if(i<0){a.push(LV.cur);lvNote('أُضيفت علامة في الصفحة '+LV.cur)}else{a.splice(i,1);lvNote('أُزيلت العلامة')}libPut(m);lvUi()}
 function lvMarkDel(p){const m=LV.m;m.bk=(m.bk||[]).filter(x=>x!=p);libPut(m);lvUi();if(LV.sheet=='nav'&&LV.nt=='mk')lvNavBody()}
 
@@ -2272,6 +2283,7 @@ function lvHlAll(){LV.els.forEach((g,i)=>{if(LV.done.has(i+1))lvHlSpans(g)})}
 function lvSetHtml(){return `<div class="lvph"></div><div class="lvl">اتجاه القراءة</div><div class="lvo">${[['v','رأسي','⇅'],['h','أفقي','⇄']].map(([k,t,i])=>`<button type="button" class="${LV.dir==k?'on':''}" onclick="lvDir('${k}')"><span>${i}</span>${t}</button>`).join('')}</div>
  <div class="lvl">الخلفية</div><div class="lvo">${[['orig','الأصل'],['paper','ورق'],['eye','راحة العين'],['night','ليلي']].map(([k,t])=>`<button type="button" class="lvbg ${k} ${LV.bg==k?'on':''}" onclick="lvBg('${k}')"><span>Aa</span>${t}</button>`).join('')}</div>
  ${LV.dir=='v'?`<div class="lvtg"><span>التكبير</span><div class="lvzm"><button type="button" onclick="lvZoomBy(-1)" aria-label="تصغير">${svg('minus')}</button><b id="lvZt">${Math.round(LV.z*100)}%</b><button type="button" onclick="lvZoomBy(1)" aria-label="تكبير">${svg('plus')}</button></div></div>`:''}
+ <div class="lvl">سرعة تقليب الصفحات</div><div class="lvo">${[[0,'سريع','»»'],[1,'متوسط','»'],[2,'بطيء','›']].map(([k,t,i])=>`<button type="button" class="${LV.fl==k?'on':''}" onclick="lvFlip(${k})"><span>${i}</span>${t}</button>`).join('')}</div>
  <label class="lvtg"><span>صفحة بصفحة</span><input type="checkbox" ${LV.snap?'checked':''} onchange="lvSnap(this.checked)"></label>
  <label class="lvtg"><span>إبقاء الشاشة قيد التشغيل</span><input type="checkbox" ${LV.keep?'checked':''} onchange="lvKeep(this.checked)"></label>
  <button type="button" class="lvsh" onclick="lvExport()">${svg('download')} حفظ نسخة PDF بالتعديلات</button>
@@ -2288,7 +2300,7 @@ function lvGoAsk(){if(!LV||$('#lvD')||!LV.pdf)return;const o=document.createElem
 const lvDX=()=>{const d=$('#lvD');if(d)d.remove()};
 function lvDOk(){const i=$('#lvGi'),n=parseInt(i&&i.value,10);lvDX();if(n>=1)lvGo(n,false)}
 function lvBack(){if(LD){if(LD.find){ldFind(0);return true}ldClose();return true}if(!LV)return false;if($('#lvD')){lvDX();return true}if(LV.ed&&!LV.sheet){lvEdToggle(false);return true}if(LV.sheet){lvSheet('');return true}lvClose(true);return true}
-function lvClose(){if(!LV)return;try{lvTaDone()}catch(e){}const v=LV;LV=null;try{sessionStorage.removeItem('qmLV')}catch(e){}clearTimeout(v.st);document.removeEventListener('keydown',lvKey);try{v.obs&&v.obs.disconnect();v.tobs&&v.tobs.disconnect()}catch(e){}v.els.forEach(g=>{try{g._t&&g._t.cancel()}catch(e){}});try{v.wake&&v.wake.release()}catch(e){}
+function lvClose(){if(!LV)return;try{lvAnimStop(1)}catch(e){}try{lvTaDone()}catch(e){}const v=LV;LV=null;try{sessionStorage.removeItem('qmLV')}catch(e){}clearTimeout(v.st);document.removeEventListener('keydown',lvKey);try{v.obs&&v.obs.disconnect();v.tobs&&v.tobs.disconnect()}catch(e){}v.els.forEach(g=>{try{g._t&&g._t.cancel()}catch(e){}});try{v.wake&&v.wake.release()}catch(e){}
  const m=v.m;if(v.pdf){m.lp=v.cur;libPut(m)}try{v.pdf&&v.pdf.destroy()}catch(e){}const o=document.getElementById('libV');if(o)o.remove();if(tab=='lb')draw()}
 
 function libResume(){try{const o=JSON.parse(sessionStorage.getItem('qmLV')||'null'),m=o&&o.id&&libM_(o.id);if(m&&!LV&&!LD){if(libIsDoc(m))libDocView(o.id,o.p||0);else libView(o.id,o.p)}}catch(e){dbg(e)}}
