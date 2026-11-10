@@ -42,6 +42,13 @@ jobs:
           mkdir -p /tmp/apk/www
           cp apk-keystore.jks /tmp/apk/ks.jks
 
+      - name: Key fingerprint
+        id: fp
+        run: |
+          FP=$(keytool -list -v -keystore apk-keystore.jks -storepass qmpass123 | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
+          echo "sha1=$FP" >> $GITHUB_OUTPUT
+          echo "SHA-1: $FP" >> $GITHUB_STEP_SUMMARY
+
       - name: Copy site into app
         run: |
           rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='apk-keystore.jks' --exclude='*.apk' --exclude='*.java' --exclude='patch.py' ./ /tmp/apk/www/
@@ -50,7 +57,7 @@ jobs:
         working-directory: /tmp/apk
         run: |
           npm init -y > /dev/null
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/local-notifications@6
           cat > capacitor.config.json <<'CFG'
           {"appId":"com.quran.muthabbit","appName":"مُثبِّت القرآن","webDir":"www","server":{"androidScheme":"https"}}
           CFG
@@ -90,4 +97,5 @@ jobs:
         with:
           tag_name: apk-${{ github.run_number }}
           name: APK ${{ github.run_number }}
+          body: "SHA-1: ${{ steps.fp.outputs.sha1 }}"
           files: /tmp/quran-muthabbit.apk
