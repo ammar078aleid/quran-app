@@ -2079,11 +2079,11 @@ function libRefresh(){if(tab!='lb'||document.getElementById('libV'))return;clear
 /* ---------- تحميل وحذف ---------- */
 async function libLoad(){try{libM=await libDB.all()}catch(e){libM=[];dbg(e)}libLoaded=true;await libPurge(true)}
 async function libPurge(quiet){const lim=libCfg().days*864e5,dead=libM.filter(m=>m.trashAt&&Date.now()-m.trashAt>=lim);if(!dead.length)return;for(const m of dead){try{await libDestroy(m)}catch(e){dbg(e)}}if(!quiet&&tab=='lb')draw()}
-async function libDestroy(m){await libDB.del(m.id);libM=libM.filter(x=>x!==m);return true}
-async function libBlob(m){if(!libHas(m)){toast('هذا الملف لم يعد موجوداً على الجهاز — احذفه وأضفه من جديد');return null}const b=await libDB.getBlob(m.id).catch(()=>null);if(!b)toast('تعذّر قراءة الملف من الجهاز');return b}
+async function libDestroy(m){if(m.dev)libIgnAdd(m.dev);await libDB.del(m.id);libM=libM.filter(x=>x!==m);return true}
+async function libBlob(m){if(!libHas(m)){toast('هذا الملف لم يعد موجوداً على الجهاز — احذفه وأضفه من جديد');return null}const b=await libGetB(m);if(!b)toast('تعذّر قراءة الملف من الجهاز');return b}
 async function libDel(id){const m=libM_(id);if(!m)return;m.trashAt=Date.now();await libPut(m);toast('نُقل إلى السلة — يُحذف نهائياً بعد '+libDw(libCfg().days));draw()}
 async function libRestore(id){const m=libM_(id);if(!m)return;m.trashAt=0;await libPut(m);toast('تم الاسترجاع ✅');libTabF='all';draw()}
-function libKill(id){const m=libM_(id);if(!m)return;ask('حذف «'+m.name+'» نهائياً من جهازك؟ لا يمكن التراجع.',async()=>{try{if(await libDestroy(m))toast('تم الحذف نهائياً')}catch(e){toast('تعذّر الحذف');dbg(e)}draw()},'نعم، احذف الآن')}
+function libKill(id){const m=libM_(id);if(!m)return;ask(m.dev?'إزالة «'+m.name+'» من المكتبة نهائياً؟ الملف الأصلي يبقى على جهازك.':'حذف «'+m.name+'» نهائياً من جهازك؟ لا يمكن التراجع.',async()=>{try{if(await libDestroy(m))toast('تم الحذف نهائياً')}catch(e){toast('تعذّر الحذف');dbg(e)}draw()},'نعم، احذف الآن')}
 function libEmpty(){const t=libM.filter(m=>m.trashAt);if(!t.length)return;ask('إفراغ السلة؟ سيُحذف '+t.length+' ملف نهائياً ولا يمكن التراجع.',async()=>{for(const m of t){try{await libDestroy(m)}catch(e){dbg(e)}}toast('أُفرغت السلة');draw()},'نعم، أفرغ السلة')}
 function libDays(v){libCfgSet({days:Math.max(1,Math.min(365,+v||7))});libPurge();toast('مدة السلة: '+libDw(libCfg().days));draw()}
 async function libFav(id){const m=libM_(id);if(!m)return;m.fav=!m.fav;await libPut(m);libSX();draw()}
@@ -2102,7 +2102,7 @@ function libDocOpts(data){const b='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(li
 async function libOpenDoc(b){const lib=await libPdfJs(),task=lib.getDocument(libDocOpts(new Uint8Array(await b.arrayBuffer())));task.onPassword=(cb,why)=>{const p=prompt(why==2?'كلمة السر غير صحيحة، أعد المحاولة':'هذا الملف محمي بكلمة سر');if(p)cb(p);else task.destroy()};return task.promise}
 const libCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const x=c.getContext('2d',{alpha:false});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);return[c,x]};
 const libQThumb=m=>{m._tq=1;libTQ=libTQ.then(()=>libMakeThumb(m)).catch(dbg)};
-async function libMakeThumb(m){if(!libHas(m)||m.trashAt||m.th&&m.np)return;const b=await libDB.getBlob(m.id).catch(()=>null);if(!b)return;const t=b.type||m.type||'';
+async function libMakeThumb(m){if(!libHas(m)||m.trashAt||m.th&&m.np)return;const b=await libGetB(m);if(!b)return;const t=b.type||m.type||'';
  try{
   if(/^image\//.test(t)&&window.createImageBitmap){const bm=await createImageBitmap(b),w=320,h=Math.round(bm.height/bm.width*w),[c,x]=libCanvas(w,h);x.drawImage(bm,0,0,w,h);m.th=c.toDataURL('image/jpeg',.72)}
   else if(libIsPdf(m)){const pdf=await Promise.race([libOpenDoc(b),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),25000))]);m.np=pdf.numPages;const pg=await pdf.getPage(1),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:320/v1.width}),[c,x]=libCanvas(vp.width,vp.height);await pg.render({canvasContext:x,viewport:vp}).promise;m.th=c.toDataURL('image/jpeg',.74);try{pdf.destroy()}catch(e){}}
@@ -2166,8 +2166,8 @@ function libPage(){
  const imp=libImp?`<div class="lbIm"><div><b>جارٍ الاستيراد…</b><span>${libImp.i} / ${libImp.n}</span></div><div class="lbpb"><i style="width:${Math.round(libImp.i/libImp.n*100)}%"></i></div></div>`:'';
  const top=`<div class="lbTop"><div><h2>المكتبة</h2><p>${live.length?live.length+' ملف • '+libSz(used)+' على جهازك':'ملفاتك تُحفظ على جهازك فقط'}</p></div><div class="lbVw"><button type="button" class="${cfg.view=='g'?'on':''}" aria-label="شبكة" onclick="libCfgSet({view:'g'});draw()">${svg('lbGrid')}</button><button type="button" class="${cfg.view=='l'?'on':''}" aria-label="قائمة" onclick="libCfgSet({view:'l'});draw()">${svg('lbRows')}</button></div></div>
   <div class="lbSr">${svg('lbSearch')}<input id="libSr" type="search" placeholder="ابحث في مكتبتك…" value="${esc(libQ)}" autocomplete="off" oninput="libQ=this.value;$('#libGrid').innerHTML=libList()"></div>
-  <div class="lbAct"><button type="button" class="lbPri" onclick="$('#libFp').click()">${svg('lbUp')} رفع ملف PDF / Word</button><button type="button" class="lbSec" onclick="$('#libFd').click()">${svg('lbFold')} مجلد</button></div>
-  <input type="file" id="libFp" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden onchange="libPick(this.files);this.value=''"><input type="file" id="libFd" webkitdirectory multiple hidden onchange="libPickDir(this.files);this.value=''"><input type="file" id="libFa" multiple hidden onchange="libPick(this.files);this.value=''"><div class="lbDz" role="button" tabindex="0" onclick="$('#libFp').click()">${svg('lbUp')}<span>اسحب ملفات PDF أو Word وأفلتها هنا، أو اضغط للاختيار</span></div>${imp}`;
+  <div class="lbAct"><button type="button" class="lbPri" onclick="$('#libFp').click()">${svg('lbUp')} رفع ملف PDF / Word</button><button type="button" class="lbSec" onclick="$('#libFd').click()">${svg('lbFold')} مجلد</button>${libNat()?`<button type="button" class="lbSec" onclick="libScan(1)">${svg('refresh')} فحص</button>`:''}</div>
+  <input type="file" id="libFp" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden onchange="libPick(this.files);this.value=''"><input type="file" id="libFd" webkitdirectory multiple hidden onchange="libPickDir(this.files);this.value=''"><input type="file" id="libFa" multiple hidden onchange="libPick(this.files);this.value=''"><div class="lbDz" role="button" tabindex="0" onclick="$('#libFp').click()">${svg('lbUp')}<span>اسحب ملفات PDF أو Word وأفلتها هنا، أو اضغط للاختيار</span></div>${imp}${libScn?`<div class="lbIm"><div><b>جارٍ فحص الجهاز عن ملفات PDF…</b></div><div class="lbpb"><i style="width:100%;opacity:.45"></i></div></div>`:''}`;
  if(!libM.length)return `${top}<div class="lbEm"><div class="lbEi"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="22" y="20" width="26" height="82" rx="5" fill="none" stroke="var(--gold)" stroke-width="3.5"/><rect x="54" y="20" width="26" height="82" rx="5" fill="var(--pri)" opacity=".92"/><path d="m88 28 20-5 14 70-20 5z" transform="translate(-10 0)" fill="none" stroke="var(--pri)" stroke-width="3.5" stroke-linejoin="round"/></svg></div><b>مكتبتك فارغة</b><span>ارفع ملف PDF أو Word أو استورد مجلداً كاملاً، وسيظهر هنا بغلاف وتقدّم قراءة ويُفتح بسرعة. كل شيء يبقى على جهازك.</span><a href="#" onclick="$('#libFa').click();return false">ملف آخر (نص، صور…)</a></div>`;
  const seg=[['all','الكل',live.length],['fav','المفضلة',fav],['tr','السلة',tr.length]].map(([k,t,n])=>`<button type="button" class="${libTabF==k?'on':''}" onclick="libTabF='${k}';draw()">${t}<b>${n}</b></button>`).join('');
  const sort=libTabF=='tr'?'':`<button type="button" class="lbSo" aria-label="ترتيب" onclick="libSortMenu()">${svg('sliders')}</button>`;
@@ -2469,7 +2469,32 @@ async function libShareIn(){try{if(!('caches' in window))return;const c=await ca
 (function(){let dg=0,dt=0;const has=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
  addEventListener('dragover',e=>{if(!has(e))return;e.preventDefault();if(!dg){dg=1;document.body.classList.add('lbDrop')}clearTimeout(dt);dt=setTimeout(()=>{dg=0;document.body.classList.remove('lbDrop')},250)});
  addEventListener('drop',e=>{if(!has(e))return;e.preventDefault();clearTimeout(dt);dg=0;document.body.classList.remove('lbDrop');libPick(e.dataTransfer.files)});
- const b=()=>{try{if(/[?&]share=1/.test(location.search)){history.replaceState(null,'',location.pathname);libShareIn()}else libLoad().then(()=>{if(tab=='lb')draw();libResume()}).catch(dbg)}catch(e){dbg(e)}};if(document.readyState=='complete')setTimeout(b,800);else addEventListener('load',()=>setTimeout(b,800))})();
+ const b=()=>{try{if(/[?&]share=1/.test(location.search)){history.replaceState(null,'',location.pathname);libShareIn()}else libLoad().then(()=>{if(tab=='lb')draw();libResume();libNatBoot()}).catch(dbg)}catch(e){dbg(e)}};if(document.readyState=='complete')setTimeout(b,800);else addEventListener('load',()=>setTimeout(b,800))})();
+
+/* ---------- تطبيق أندرويد (Capacitor): فحص ملفات PDF على الجهاز + استقبال المشاركة و«فتح باستخدام» ---------- */
+let libNP=null,libScn=0,libLast=0,libNB=0;
+const libNat=()=>{try{if(libNP)return libNP;if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()&&Capacitor.registerPlugin)libNP=Capacitor.registerPlugin('PdfScan')}catch(e){dbg(e)}return libNP};
+const libFileUrl=p=>Capacitor.convertFileSrc('file://'+String(p).split('/').map(encodeURIComponent).join('/'));
+async function libDevBlob(m){const r=await fetch(libFileUrl(m.dev));if(!r.ok)throw new Error('dev '+r.status);const b=await r.blob();return b.type?b:new Blob([b],{type:'application/pdf'})}
+const libGetB=m=>m.dev?libDevBlob(m).catch(()=>null):libDB.getBlob(m.id).catch(()=>null);
+const libIgn=()=>{try{return new Set(JSON.parse(localStorage.getItem('libIgn')||'[]'))}catch(e){return new Set()}};
+const libIgnAdd=p=>{try{const a=[...libIgn()];if(!a.includes(p)){a.push(p);localStorage.setItem('libIgn',JSON.stringify(a.slice(-5000)))}}catch(e){}};
+function libAskAccess(){const N=libNat();if(!N)return;ask('لعرض ملفات PDF الموجودة على جهازك يحتاج التطبيق إذن «الوصول إلى كل الملفات». سيفتح إعدادات النظام: فعّل الخيار ثم ارجع إلى التطبيق.',()=>{N.requestAccess().catch(dbg)},'فتح الإعدادات','لاحقاً')}
+async function libScan(manual){const N=libNat();if(!N||libScn)return;if(!manual&&Date.now()-libLast<45000)return;
+ let a;try{a=await N.hasAccess()}catch(e){dbg(e);return}
+ if(!a.granted){let asked=0;try{asked=localStorage.getItem('libAsk')}catch(e){}if(manual||!asked){try{localStorage.setItem('libAsk','1')}catch(e){}libAskAccess()}return}
+ libScn=1;if(tab=='lb')draw();
+ try{const r=await N.scan(),n=await libMerge(r.files||[]);libLast=Date.now();if(manual||n)toast(n?'تمت إضافة '+n+' ملف من الجهاز ✅':'لا توجد ملفات جديدة')}catch(e){dbg(e);toast('تعذّر فحص الجهاز')}
+ libScn=0;libFill();draw()}
+async function libMerge(list){if(!libLoaded)await libLoad();const ign=libIgn(),by=new Map(libM.filter(m=>m.dev).map(m=>[m.dev,m])),seen=new Set();let add=0;
+ for(const f of list){if(!f||!f.path||ign.has(f.path))continue;seen.add(f.path);const ex=by.get(f.path);
+  if(ex){if(ex.size!=f.size||ex.lm!=f.lm){ex.size=f.size;ex.lm=f.lm;ex.th='';ex.np=0;ex._tq=0;ex._tf=0;ex.dl=true;await libPut(ex)}else if(ex.dl===false){ex.dl=true;await libPut(ex)}continue}
+  const m={id:libUid(),name:f.name||'ملف.pdf',size:f.size||0,type:'application/pdf',at:f.lm||Date.now(),lm:f.lm||Date.now(),lo:f.lm||Date.now(),trashAt:0,th:'',lp:1,np:0,fav:false,bk:[],dl:true,dev:f.path};
+  await libPut(m);libM.push(m);add++}
+ for(const m of [...libM]){if(!m.dev||seen.has(m.dev))continue;const keep=m.fav||(m.bk||[]).length||(m.an&&Object.keys(m.an).length)||m.lp>1;if(keep){if(m.dl!==false){m.dl=false;await libPut(m)}}else{await libDB.del(m.id).catch(dbg);libM=libM.filter(x=>x!==m)}}
+ return add}
+async function libNatShared(){const N=libNat();if(!N)return;try{const r=await N.getShared(),fs=[];for(const f of (r.files||[])){try{const res=await fetch(libFileUrl(f.path));if(!res.ok)continue;const b=await res.blob();fs.push(new File([b],f.name,{type:b.type||(/\.pdf$/i.test(f.name)?'application/pdf':'')}))}catch(e){dbg(e)}}if(fs.length)libPick(fs)}catch(e){dbg(e)}}
+function libNatBoot(){if(!libNat()||libNB)return;libNB=1;libNatShared().then(()=>libScan(0));document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0)}})}
 
 /* ---------- دفتر الملاحظات ---------- */
 const NB_ST=[['lined','📏 مسطّر'],['grid','▦ مربعات'],['dot','⠿ منقّط'],['plain','📄 سادة'],['school','🎓 مدرسي'],['en','ABC']];
@@ -2781,7 +2806,7 @@ async function nbLockSet(){const a=$('#nbp').value,b=$('#nbp2').value,q=qRead('n
 /* ---------- شريط التاريخ ---------- */
 function tickDate(){const d=new Date(),en=S.lang=='en';$('#dd').textContent=d.toLocaleDateString(en?'en-US':'ar-SY-u-nu-latn',{weekday:'short',day:'numeric',month:'short'});$('#dtm').textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const an=$('#dan');if(an){let nm='';try{if(fu)nm=accName(accList().find(x=>x.uid==fu.uid)||{uid:fu.uid,name:fu.displayName,email:fu.email})}catch(e){dbg(e)}if(an.textContent!==nm)an.textContent=nm}}
 tickDate();setInterval(()=>{if(!document.hidden)tickDate()},1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{tickDate()}catch(e){dbg(e)}});
-migrate();if((S.profile||{}).country=='IL')S.profile.country='PS';S.since=S.since||ymd(new Date());if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+migrate();if((S.profile||{}).country=='IL')S.profile.country='PS';S.since=S.since||ymd(new Date());if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()))window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
  const upd=w=>{if($('#updb'))return;updW=w||null;const b=document.createElement('div');b.className='c';b.id='updb';b.innerHTML='<div class="row sp"><b>تتوفر نسخة جديدة من التطبيق</b><button type="button" onclick="updGo()" style="padding:6px 14px">تحديث الآن</button></div>';const bn=$('#ban');if(bn)bn.appendChild(b)};
  if(reg.waiting&&navigator.serviceWorker.controller)upd(reg.waiting);
  reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>{if(w.state=='installed'&&navigator.serviceWorker.controller)upd(w)})});
