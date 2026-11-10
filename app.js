@@ -2046,6 +2046,7 @@ Object.assign(IC,{share:'<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12
  lbThumbs:'<rect x="5" y="3.5" width="6" height="7.5" rx="1"/><rect x="13" y="3.5" width="6" height="7.5" rx="1"/><rect x="5" y="13" width="6" height="7.5" rx="1"/><rect x="13" y="13" width="6" height="7.5" rx="1"/>',
  lbDots:'<circle cx="12" cy="5.5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="18.5" r="1.4"/>',
  lbL:'<path d="m15 5-7 7 7 7"/>',
+ lbHand:'<path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 10V8.5a1.5 1.5 0 0 1 3 0V11M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4 14.5a1.5 1.5 0 0 1 2.3-1.9L9 15"/>',lbHl:'<path d="m9 15 7.5-7.5 3 3L12 18H9zM5 21h14"/>',lbUl:'<path d="M6 4v7a6 6 0 0 0 12 0V4M5 20.5h14"/>',lbText:'<path d="M5 6.5V4.5h14v2M12 4.5v15M9 19.5h6"/>',lbEr:'<path d="m7 20-3-3a2 2 0 0 1 0-2.8L14 4.2a2 2 0 0 1 2.8 0l3 3a2 2 0 0 1 0 2.8L11 20zM8 11l6 6M12 20h9"/>',lbUndo:'<path d="M9 8 5 12l4 4M5 12h9a5 5 0 0 1 0 10h-2" transform="translate(0 -5)"/>',lbRedo:'<path d="m15 8 4 4-4 4M19 12h-9a5 5 0 0 0 0 10h2" transform="translate(0 -5)"/>',lbPen:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/>',
  lbOpen:'<path d="M5 4.5h8l5 5V19a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 5 19zM13 4.5v5h5"/>'});
 const LIB_FMAX=200*1048576;
 let libM=[],libLoaded=false,libTabF='all',libQ='',libImp=null,libTQ=Promise.resolve(),libPdfP=null,libPdfV='',libWarmed=0,libRT=0;
@@ -2170,10 +2171,11 @@ function libPage(){
 
 /* ---------- قارئ PDF ---------- */
 let LV=null;
-const lvPrefs=()=>{try{return Object.assign({dir:'v',bg:'orig',snap:false,keep:false},JSON.parse(localStorage.getItem('libVP')||'{}'))}catch(e){return{dir:'v',bg:'orig',snap:false,keep:false}}};
+const LV_COL=['#111111','#e53935','#1e88e5','#2e7d32','#fb8c00','#8e24aa','#ffd600'],LV_W={pen:[2.5,5,9],hl:[16,26,40],ul:[2.5,4.5,7],txt:[22,30,42],er:[10,18,30]};
+const lvPrefs=()=>{const d={dir:'v',bg:'orig',snap:false,keep:false,sz:1,cols:{pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'}};try{const o=Object.assign(d,JSON.parse(localStorage.getItem('libVP')||'{}'));o.cols=Object.assign({pen:'#e53935',hl:'#ffd600',ul:'#e53935',txt:'#111111'},o.cols);return o}catch(e){return d}};
 const lvPrefSet=o=>{try{localStorage.setItem('libVP',JSON.stringify(Object.assign(lvPrefs(),o)))}catch(e){}};
 async function libView(id,sp){const m=libM_(id);if(!m||LV)return;const P=lvPrefs();try{sessionStorage.setItem('qmLV',JSON.stringify({id,p:sp||m.lp||1}))}catch(e){}
- const L=LV={m,pdf:null,np:m.np||1,cur:Math.max(1,sp||m.lp||1),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,z:1,els:[],done:new Set(),run:new Set(),want:new Set(),stale:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0,sheet:'',nt:'th',busy:0,txt:{},fid:0,padT:60,padB:110,lt:0,pz:0,tp:{t:0,x:0,y:0,tm:0}};
+ const L=LV={m,pdf:null,np:m.np||1,cur:Math.max(1,sp||m.lp||1),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,z:1,ed:false,tool:null,cols:P.cols,sz:P.sz,undo:[],redo:[],live:null,ta:null,ign:0,els:[],done:new Set(),run:new Set(),want:new Set(),stale:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0,sheet:'',nt:'th',busy:0,txt:{},fid:0,padT:60,padB:110,lt:0,pz:0,tp:{t:0,x:0,y:0,tm:0}};
  lvBuild();
  const b=await libBlob(m);if(LV!==L)return;if(!b){lvClose(true);return}
  let pdf;try{pdf=await libOpenDoc(b)}catch(e){dbg(e);if(LV!==L)return;const pw=e&&e.name=='PasswordException';lvClose(true);toast(pw?'لم تُدخل كلمة سر صحيحة':'تعذّر قراءة الملف — سيُفتح بتطبيق آخر');if(!pw)libShow(b,m.name);return}
@@ -2184,15 +2186,15 @@ async function libView(id,sp){const m=libM_(id);if(!m||LV)return;const P=lvPrefs
  lvLayout();const ld=$('#lvLd');if(ld){ld.classList.add('out');setTimeout(()=>ld.remove(),300)}}
 function lvBuild(){const o=document.createElement('div');o.id='libV';o.className='lv bg-'+LV.bg+(LV.dir=='h'?' hz':'');
  o.innerHTML=`<div class="lvs v" id="lvS" tabindex="-1"><div class="lvw" id="lvW"></div></div>
- <div class="lvt"><button type="button" class="lvx" onclick="lvClose()" aria-label="إغلاق">${svg('x')}</button><div class="lvn"><b>${esc(libTitle(LV.m))}</b><span id="lvSub" onclick="lvGoAsk()"></span></div><button type="button" class="lvx" id="lvBm" onclick="lvMark()" aria-label="علامة">${svg('lbMark')}</button><button type="button" class="lvx" onclick="lvSheet('set')" aria-label="الإعدادات">${svg('sliders')}</button></div>
+ <div class="lvt"><button type="button" class="lvx" onclick="lvClose()" aria-label="إغلاق">${svg('x')}</button><div class="lvn"><b>${esc(libTitle(LV.m))}</b><span id="lvSub" onclick="lvGoAsk()"></span></div><button type="button" class="lvx nb" id="lvBm" onclick="lvMark()" aria-label="علامة">${svg('lbMark')}</button><button type="button" class="lvx nb" onclick="lvSheet('set')" aria-label="الإعدادات">${svg('sliders')}</button><button type="button" class="lvx ed2" id="lvUn" onclick="lvUndo()" aria-label="تراجع">${svg('lbUndo')}</button><button type="button" class="lvx ed2" id="lvRe" onclick="lvRedo()" aria-label="إعادة">${svg('lbRedo')}</button><button type="button" class="lvx ed2 lvdn2" onclick="lvEdToggle(false)">تم</button></div>
  <div class="lvb"><div class="lvsc"><span id="lvA">1</span><input type="range" id="lvR" min="1" max="${LV.np}" value="${LV.cur}" dir="rtl" aria-label="الصفحة" oninput="lvScrub(this.value)"><span id="lvB">${LV.np}</span></div>
-  <div class="lvdk"><button type="button" onclick="lvSheet('nav','th')">${svg('lbThumbs')}<span>الصفحات</span></button><button type="button" onclick="lvSheet('nav','toc')">${svg('lbList')}<span>الفهرس</span></button><button type="button" onclick="lvSheet('nav','fd')">${svg('lbSearch')}<span>بحث</span></button><button type="button" onclick="lvSheet('nav','mk')">${svg('lbMark')}<span>العلامات</span></button></div></div>
+  <div class="lvdk"><button type="button" onclick="lvSheet('nav','th')">${svg('lbThumbs')}<span>الصفحات</span></button><button type="button" onclick="lvSheet('nav','toc')">${svg('lbList')}<span>الفهرس</span></button><button type="button" onclick="lvSheet('nav','fd')">${svg('lbSearch')}<span>بحث</span></button><button type="button" onclick="lvSheet('nav','mk')">${svg('lbMark')}<span>العلامات</span></button><button type="button" class="lvedb" onclick="lvEdToggle(true)">${svg('lbPen')}<span>تعديل</span></button></div><div class="lve" id="lvE"></div></div>
  <div class="lvld" id="lvLd"><div class="lvsp"></div><b>${esc(libTitle(LV.m))}</b><span>جارٍ فتح الكتاب…</span></div>
  <div class="lvbk" id="lvBk" onclick="lvSheet('')"></div><div class="lvp" id="lvP"></div>`;
  document.body.appendChild(o);lvPads();lvUi();lvTouch();document.addEventListener('keydown',lvKey);if(LV.keep)lvWake(true);try{$('#lvS').focus({preventScroll:true})}catch(e){}}
 function lvPads(){const o=$('#libV');if(!o)return;LV.padT=Math.round($('.lvt').offsetHeight)+6;LV.padB=Math.round($('.lvb').offsetHeight)+6;o.style.setProperty('--pt',LV.padT+'px');o.style.setProperty('--pb',LV.padB+'px');$('#lvS').style.scrollPaddingTop=LV.padT+'px'}
 function lvLayout(){const S=$('#lvS'),W=$('#lvW'),h=LV.dir=='h';lvPads();S.className='lvs '+(h?'h':'v')+(LV.snap&&!h?' snap':'');W.style.width=h?'':(LV.z*100)+'%';W.innerHTML='';LV.els=[];LV.done=new Set();LV.run=new Set();LV.want=new Set();LV.stale=new Set();
- const fr=document.createDocumentFragment();for(let i=1;i<=LV.np;i++){const g=document.createElement('div');g.className='lvg';g.dataset.p=i;if(!h)g.style.aspectRatio='1/'+LV.ratio;LV.els.push(g);fr.appendChild(g)}
+ const fr=document.createDocumentFragment();for(let i=1;i<=LV.np;i++){const g=document.createElement('div');g.className='lvg';g.dataset.p=i;g.innerHTML='<div class="lvi"></div>';g._i=g.firstChild;if(!h)g.style.aspectRatio='1/'+LV.ratio;LV.els.push(g);fr.appendChild(g)}
  W.appendChild(fr);$('#libV').classList.toggle('hz',h);lvObserve();S.removeEventListener('scroll',lvScroll);S.addEventListener('scroll',lvScroll,{passive:true});
  requestAnimationFrame(()=>{lvGo(LV.cur,false);lvSizes()})}
 function lvObserve(){if(LV.obs)LV.obs.disconnect();const h=LV.dir=='h';LV.obs=new IntersectionObserver(es=>{if(!LV)return;es.forEach(e=>{const i=+e.target.dataset.p;if(e.isIntersecting)LV.want.add(i);else{LV.want.delete(i);lvFree(i)}});lvPump()},{root:$('#lvS'),rootMargin:h?'0px 100%':'100% 0px'});LV.els.forEach(g=>LV.obs.observe(g))}
@@ -2202,11 +2204,11 @@ async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g)return;L.run.add(i);L.bus
   const cssW=h?Math.max(50,Math.min(S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const px=v1.width*v1.height*sc*sc;if(px>6e6)sc*=Math.sqrt(6e6/px);
   const vp=pg.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);if(h){c.style.width=Math.round(cssW)+'px';c.style.height='auto'}
   const t=pg.render({canvasContext:x,viewport:vp});g._t=t;await t.promise;if(LV!==L||g._k!==k)return;
-  g.replaceChildren(c);g.classList.add('ok');L.done.add(i);L.stale.delete(i);try{pg.cleanup()}catch(e){}}
+  lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);try{pg.cleanup()}catch(e){}}
  catch(e){if(!(e&&e.name=='RenderingCancelledException'))dbg(e)}
  finally{L.run.delete(i);L.busy--;if(LV===L)lvPump()}}
-function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;try{g._t&&g._t.cancel()}catch(e){}g._t=null;const c=g.firstChild;if(c&&c.width){c.width=c.height=0}if(c)g.replaceChildren();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
-function lvRatio(g,i,v1){const r=v1.height/v1.width,c=g._r||LV.ratio;if(Math.abs(r-c)/c<.004)return;const S=$('#lvS'),b=g.offsetHeight;g._r=r;g.style.aspectRatio='1/'+r;if(i<LV.cur){const d=g.offsetHeight-b;if(d)S.scrollTop+=d}}
+function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;try{g._t&&g._t.cancel()}catch(e){}g._t=null;const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
+function lvRatio(g,i,v1){const r=v1.height/v1.width,c=g._r||LV.ratio;if(Math.abs(r-c)/c<.004)return;const S=$('#lvS'),b=g.offsetHeight;g._r=r;g.style.aspectRatio='1/'+r;if(LV.m.an&&LV.m.an[i])lvAnRender(i);if(i<LV.cur){const d=g.offsetHeight-b;if(d)S.scrollTop+=d}}
 async function lvSizes(){const L=LV;if(!L||L.dir=='h')return;for(let s=1;s<=L.np;s+=16){const ids=[];for(let i=s;i<s+16&&i<=L.np;i++)ids.push(i);await Promise.all(ids.map(async i=>{try{const pg=await L.pdf.getPage(i);if(LV===L&&L.dir=='v')lvRatio(L.els[i-1],i,pg.getViewport({scale:1}))}catch(e){}}));if(LV!==L)return;await new Promise(r=>setTimeout(r,40))}}
 function lvScroll(){if(!LV||LV.raf)return;LV.raf=requestAnimationFrame(()=>{if(!LV)return;LV.raf=0;const S=$('#lvS'),h=LV.dir=='h';let best=LV.cur;
   if(!h){const y=S.scrollTop+LV.padT+(S.clientHeight-LV.padT-LV.padB)*.3;let lo=0,hi=LV.np-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(LV.els[mid].offsetTop<=y)lo=mid;else hi=mid-1}best=lo+1}
@@ -2220,17 +2222,18 @@ const lvScrub=v=>{if(!LV)return;const n=Math.max(1,Math.min(LV.np,+v||1));if(n!=
 function lvZoomTo(z,cx,cy){if(!LV||LV.dir=='h')return;z=Math.max(1,Math.min(4,z));const z0=LV.z;if(Math.abs(z-z0)<.01)return;const S=$('#lvS'),W=$('#lvW'),r=z/z0,x=S.scrollLeft+cx,y=S.scrollTop+cy-LV.padT;LV.z=z;W.style.width=(z*100)+'%';S.scrollLeft=x*r-cx;S.scrollTop=y*r+LV.padT-cy;LV.done.forEach(i=>LV.stale.add(i));lvPump();lvPadSet()}
 function lvPadSet(){const t=$('#lvZt');if(t)t.textContent=Math.round(LV.z*100)+'%'}
 function lvZoomBy(d){const S=$('#lvS');lvZoomTo(LV.z*(d>0?1.25:.8),S.clientWidth/2,S.clientHeight/2)}
-function lvTapAt(x,y){const T=LV.tp,n=Date.now();if(n-T.t<300&&Math.hypot(x-T.x,y-T.y)<36){clearTimeout(T.tm);T.t=0;if(LV.dir=='v')lvZoomTo(LV.z<1.6?2.5:1,x,y);return}T.t=n;T.x=x;T.y=y;T.tm=setTimeout(()=>{if(!LV)return;T.t=0;lvTap(x,y)},260)}
+function lvTapAt(x,y){if(LV.tool)return;const T=LV.tp,n=Date.now();if(n-T.t<300&&Math.hypot(x-T.x,y-T.y)<36){clearTimeout(T.tm);T.t=0;if(LV.dir=='v')lvZoomTo(LV.z<1.6?2.5:1,x,y);return}T.t=n;T.x=x;T.y=y;T.tm=setTimeout(()=>{if(!LV)return;T.t=0;lvTap(x,y)},260)}
 function lvTap(x,y){if(LV.sheet)return;const S=$('#lvS');if(LV.dir=='h'){const w=S.clientWidth;if(x<w*.28){lvStep(1);return}if(x>w*.72){lvStep(-1);return}}$('#libV').classList.toggle('lvh')}
-function lvTouch(){const S=$('#lvS'),W=$('#lvW');let pn=0,p0=0,z0=1,cx=0,cy=0,k=1,sx=0,sy=0,st=0,mv=0;
+function lvTouch(){const S=$('#lvS'),W=$('#lvW');let pn=0,p0=0,z0=1,cx=0,cy=0,k=1,sx=0,sy=0,st=0,mv=0,pan=0,lx=0,ly=0;
  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
- S.addEventListener('touchstart',e=>{if(!LV)return;LV.lt=Date.now();if(e.touches.length==2&&LV.dir=='v'){pn=1;p0=dist(e.touches)||1;z0=LV.z;k=1;const r=S.getBoundingClientRect();cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;W.style.transformOrigin=(S.scrollLeft+cx)+'px '+(S.scrollTop+cy)+'px';clearTimeout(LV.tp.tm);LV.tp.t=0}else if(e.touches.length==1){sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();mv=0}},{passive:true});
- S.addEventListener('touchmove',e=>{if(!LV)return;if(pn&&e.touches.length==2){e.preventDefault();k=Math.max(1/z0,Math.min(4/z0,dist(e.touches)/p0));W.style.transform='scale('+k+')'}else if(e.touches.length==1&&Math.hypot(e.touches[0].clientX-sx,e.touches[0].clientY-sy)>10)mv=1},{passive:false});
- S.addEventListener('touchend',e=>{if(!LV)return;LV.lt=Date.now();if(pn){if(e.touches.length<2){pn=0;W.style.transform='';W.style.transformOrigin='';lvZoomTo(z0*k,cx,cy);LV.pz=Date.now()}return}
+ S.addEventListener('touchstart',e=>{if(!LV)return;LV.lt=Date.now();if(LV.tool&&e.touches.length>=2){LV.ign=1;lvCancelLive();pan=1;lx=(e.touches[0].clientX+e.touches[1].clientX)/2;ly=(e.touches[0].clientY+e.touches[1].clientY)/2}else if(e.touches.length==2&&LV.dir=='v'){pn=1;p0=dist(e.touches)||1;z0=LV.z;k=1;const r=S.getBoundingClientRect();cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;W.style.transformOrigin=(S.scrollLeft+cx)+'px '+(S.scrollTop+cy)+'px';clearTimeout(LV.tp.tm);LV.tp.t=0}else if(e.touches.length==1){sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();mv=0}},{passive:true});
+ S.addEventListener('touchmove',e=>{if(!LV)return;if(pan&&e.touches.length>=2){e.preventDefault();const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;S.scrollLeft-=mx-lx;S.scrollTop-=my-ly;lx=mx;ly=my;return}if(pn&&e.touches.length==2){e.preventDefault();k=Math.max(1/z0,Math.min(4/z0,dist(e.touches)/p0));W.style.transform='scale('+k+')'}else if(e.touches.length==1&&Math.hypot(e.touches[0].clientX-sx,e.touches[0].clientY-sy)>10)mv=1},{passive:false});
+ S.addEventListener('touchend',e=>{if(!LV)return;LV.lt=Date.now();if(e.touches.length==0){pan=0;LV.ign=0}if(pn){if(e.touches.length<2){pn=0;W.style.transform='';W.style.transformOrigin='';lvZoomTo(z0*k,cx,cy);LV.pz=Date.now()}return}
   if(e.touches.length==0&&e.changedTouches.length==1&&!mv&&Date.now()-st<300&&Date.now()-LV.pz>400){const r=S.getBoundingClientRect(),t=e.changedTouches[0];lvTapAt(t.clientX-r.left,t.clientY-r.top)}},{passive:true});
- S.addEventListener('click',e=>{if(!LV||Date.now()-LV.lt<700)return;const r=S.getBoundingClientRect();lvTapAt(e.clientX-r.left,e.clientY-r.top)});
+ S.addEventListener('click',e=>{if(!LV||LV.tool||Date.now()-LV.lt<700)return;const r=S.getBoundingClientRect();lvTapAt(e.clientX-r.left,e.clientY-r.top)});
+ S.addEventListener('pointerdown',lvPD);S.addEventListener('pointermove',lvPM);S.addEventListener('pointerup',lvPU);S.addEventListener('pointercancel',lvPU);
  S.addEventListener('wheel',e=>{if(!LV||!e.ctrlKey)return;e.preventDefault();const r=S.getBoundingClientRect();lvZoomTo(LV.z*(e.deltaY<0?1.12:1/1.12),e.clientX-r.left,e.clientY-r.top)},{passive:false})}
-function lvKey(e){if(!LV)return;const t=e.target&&e.target.tagName;if(t=='INPUT'&&e.key!='Escape')return;const k=e.key,h=LV.dir=='h';
+function lvKey(e){if(!LV)return;const t=e.target&&e.target.tagName;if((t=='INPUT'||t=='TEXTAREA')&&e.key!='Escape')return;const k=e.key,h=LV.dir=='h';
  if(k=='Escape'){lvBack();e.preventDefault()}else if(k=='PageDown'||k==' '&&!e.shiftKey||h&&k=='ArrowLeft'){lvStep(1);e.preventDefault()}else if(k=='PageUp'||k==' '&&e.shiftKey||h&&k=='ArrowRight'){lvStep(-1);e.preventDefault()}else if(k=='Home'){lvGo(1,false);e.preventDefault()}else if(k=='End'){lvGo(LV.np,false);e.preventDefault()}else if(k=='+'||k=='='){lvZoomBy(1)}else if(k=='-'){lvZoomBy(-1)}}
 function lvNote(msg){const o=$('#libV');if(!o)return;const d=document.createElement('div');d.className='lvnt';d.textContent=msg;o.appendChild(d);setTimeout(()=>d.classList.add('out'),1400);setTimeout(()=>d.remove(),1800)}
 function lvMark(){const m=LV.m,a=m.bk=m.bk||[],i=a.indexOf(LV.cur);if(i<0){a.push(LV.cur);lvNote('أُضيفت علامة في الصفحة '+LV.cur)}else{a.splice(i,1);lvNote('أُزيلت العلامة')}libPut(m);lvUi()}
@@ -2264,23 +2267,90 @@ function lvSetHtml(){return `<div class="lvph"></div><div class="lvl">اتجاه
  ${LV.dir=='v'?`<div class="lvtg"><span>التكبير</span><div class="lvzm"><button type="button" onclick="lvZoomBy(-1)" aria-label="تصغير">${svg('minus')}</button><b id="lvZt">${Math.round(LV.z*100)}%</b><button type="button" onclick="lvZoomBy(1)" aria-label="تكبير">${svg('plus')}</button></div></div>`:''}
  <label class="lvtg"><span>صفحة بصفحة</span><input type="checkbox" ${LV.snap?'checked':''} onchange="lvSnap(this.checked)"></label>
  <label class="lvtg"><span>إبقاء الشاشة قيد التشغيل</span><input type="checkbox" ${LV.keep?'checked':''} onchange="lvKeep(this.checked)"></label>
- <button type="button" class="lvsh" onclick="libShare('${esc(LV.m.id)}')">${svg('share')} مشاركة الملف</button>`}
+ <button type="button" class="lvsh" onclick="lvExport()">${svg('download')} حفظ نسخة PDF بالتعديلات</button>
+ <button type="button" class="lvsh" onclick="libShare('${esc(LV.m.id)}')">${svg('share')} مشاركة الملف الأصلي</button>`}
 function lvDir(k){if(!LV||LV.dir==k)return;LV.dir=k;lvPrefSet({dir:k});LV.z=1;LV.cur=LV.cur;lvSheet('');lvLayout()}
 function lvBg(k){LV.bg=k;lvPrefSet({bg:k});const o=$('#libV');o.className=o.className.replace(/bg-\w+/,'bg-'+k);$('#lvP').innerHTML=lvSetHtml()}
 function lvSnap(on){LV.snap=!!on;lvPrefSet({snap:LV.snap});$('#lvS').classList.toggle('snap',LV.snap&&LV.dir=='v')}
 async function lvWake(on){try{if(on){if(navigator.wakeLock&&LV&&!LV.wake){LV.wake=await navigator.wakeLock.request('screen');LV.wake.addEventListener('release',()=>{if(LV)LV.wake=null})}}else if(LV&&LV.wake){await LV.wake.release();LV.wake=null}}catch(e){dbg(e)}}
 function lvKeep(on){LV.keep=!!on;lvPrefSet({keep:LV.keep});lvWake(LV.keep)}
 let lvRz=0;window.addEventListener('resize',()=>{if(!LV||!LV.pdf)return;clearTimeout(lvRz);lvRz=setTimeout(()=>{if(!LV)return;lvPads();LV.done.forEach(i=>LV.stale.add(i));lvPump()},250)});
-document.addEventListener('visibilitychange',()=>{if(LV&&LV.keep&&document.visibilityState=='visible')lvWake(true)});
+document.addEventListener('visibilitychange',()=>{if(LV&&document.visibilityState=='hidden'){try{lvTaDone()}catch(e){}lvAnFlush()}if(LV&&LV.keep&&document.visibilityState=='visible')lvWake(true)});
 function lvSave(){if(!LV)return;try{sessionStorage.setItem('qmLV',JSON.stringify({id:LV.m.id,p:LV.cur}))}catch(e){}clearTimeout(LV.st);LV.st=setTimeout(()=>{if(!LV)return;const m=LV.m;if(m.lp!=LV.cur){m.lp=LV.cur;libPut(m)}},900)}
 function lvGoAsk(){if(!LV||$('#lvD')||!LV.pdf)return;const o=document.createElement('div');o.className='lvd';o.id='lvD';o.innerHTML=`<div class="lvdb"><b>اذهب إلى الصفحة</b><input id="lvGi" type="number" inputmode="numeric" min="1" max="${LV.np}" placeholder="رقم الصفحة (1-${LV.np})" onkeydown="if(event.key=='Enter')lvDOk()"><div class="row" style="gap:10px;margin-top:14px;flex-wrap:nowrap"><button type="button" class="g" style="flex:1" onclick="lvDX()">إلغاء</button><button type="button" style="flex:1" onclick="lvDOk()">انتقال</button></div></div>`;$('#libV').appendChild(o);setTimeout(()=>{const i=$('#lvGi');if(i)i.focus()},60)}
 const lvDX=()=>{const d=$('#lvD');if(d)d.remove()};
 function lvDOk(){const i=$('#lvGi'),n=parseInt(i&&i.value,10);lvDX();if(n>=1)lvGo(n,false)}
-function lvBack(){if(!LV)return false;if($('#lvD')){lvDX();return true}if(LV.sheet){lvSheet('');return true}lvClose(true);return true}
-function lvClose(){if(!LV)return;const v=LV;LV=null;try{sessionStorage.removeItem('qmLV')}catch(e){}clearTimeout(v.st);document.removeEventListener('keydown',lvKey);try{v.obs&&v.obs.disconnect();v.tobs&&v.tobs.disconnect()}catch(e){}v.els.forEach(g=>{try{g._t&&g._t.cancel()}catch(e){}});try{v.wake&&v.wake.release()}catch(e){}
+function lvBack(){if(!LV)return false;if($('#lvD')){lvDX();return true}if(LV.ed&&!LV.sheet){lvEdToggle(false);return true}if(LV.sheet){lvSheet('');return true}lvClose(true);return true}
+function lvClose(){if(!LV)return;try{lvTaDone()}catch(e){}const v=LV;LV=null;try{sessionStorage.removeItem('qmLV')}catch(e){}clearTimeout(v.st);document.removeEventListener('keydown',lvKey);try{v.obs&&v.obs.disconnect();v.tobs&&v.tobs.disconnect()}catch(e){}v.els.forEach(g=>{try{g._t&&g._t.cancel()}catch(e){}});try{v.wake&&v.wake.release()}catch(e){}
  const m=v.m;if(v.pdf){m.lp=v.cur;libPut(m)}try{v.pdf&&v.pdf.destroy()}catch(e){}const o=document.getElementById('libV');if(o)o.remove();if(tab=='lb')draw()}
 
 function libResume(){try{const o=JSON.parse(sessionStorage.getItem('qmLV')||'null');if(o&&o.id&&libM_(o.id)&&!LV)libView(o.id,o.p)}catch(e){dbg(e)}}
+
+/* ---------- تعديل وكتابة على الكتاب (قلم / تحديد / تسطير / نص / ممحاة / تراجع / تصدير) ---------- */
+const lvAr=s=>/[\u0600-\u06FF]/.test(s);
+function lvD(p){let d='M'+p[0]+' '+p[1];if(p.length<4)return d+'l0 0';for(let i=2;i<p.length-2;i+=2){d+='Q'+p[i]+' '+p[i+1]+' '+((p[i]+p[i+2])/2)+' '+((p[i+1]+p[i+3])/2)}return d+'L'+p[p.length-2]+' '+p[p.length-1]}
+function lvAnItem(it){if(it.t=='x')return `<foreignObject x="${it.x}" y="${it.y}" width="${it.w}" height="${Math.max(it.h||0,it.z*1.6)+12}"><div xmlns="http://www.w3.org/1999/xhtml" dir="auto" style="font-size:${it.z}px;line-height:1.4;color:${it.c};white-space:pre-wrap;word-break:break-word;font-weight:600;font-family:inherit">${esc(it.s)}</div></foreignObject>`;
+ return `<path d="${lvD(it.p)}" fill="none" stroke="${it.c}" stroke-width="${it.w}" stroke-linecap="${it.t=='h'?'butt':'round'}" stroke-linejoin="round"${it.t=='h'?' opacity=".4" style="mix-blend-mode:multiply"':''}/>`}
+function lvAnSvg(g,p){let sv=g._i.querySelector('.lva');if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.setAttribute('class','lva');sv.setAttribute('preserveAspectRatio','none');g._i.appendChild(sv)}const r=g._r||LV.ratio;sv.setAttribute('viewBox','0 0 1000 '+(1000*r));return sv}
+function lvAnRender(p,list){const g=LV&&LV.els[p-1];if(!g)return;const its=list||(LV.m.an&&LV.m.an[p])||[];if(!its.length&&!g._i.querySelector('.lva'))return;lvAnSvg(g,p).innerHTML=its.map(lvAnItem).join('')}
+function lvPut(g,c){const o=g._i.querySelector('canvas');if(o){o.width=o.height=0;o.replaceWith(c)}else g._i.insertBefore(c,g._i.firstChild)}
+function lvApply(tx,fwd){const m=LV.m;m.an=m.an||{};let a=m.an[tx.p]||[];if(fwd){const dead=new Set(tx.rm.map(r=>r.it));a=a.filter(x=>!dead.has(x));a.push(...tx.ad)}else{const add=new Set(tx.ad);a=a.filter(x=>!add.has(x));[...tx.rm].sort((x,y)=>x.i-y.i).forEach(r=>a.splice(Math.min(r.i,a.length),0,r.it))}
+ if(a.length)m.an[tx.p]=a;else delete m.an[tx.p];lvAnRender(tx.p);lvAnSave();lvEdUi()}
+function lvDo(tx){LV.undo.push(tx);LV.redo=[];lvApply(tx,true)}
+function lvUndo(){lvTaDone();const t=LV.undo.pop();if(!t)return;LV.redo.push(t);lvApply(t,false)}
+function lvRedo(){lvTaDone();const t=LV.redo.pop();if(!t)return;LV.undo.push(t);lvApply(t,true)}
+function lvAnSave(){if(!LV)return;clearTimeout(LV.at);LV.at=setTimeout(lvAnFlush,700)}
+function lvAnFlush(){if(!LV)return;clearTimeout(LV.at);libPut(LV.m)}
+function lvPt(g,e){const r=g._i.getBoundingClientRect(),H=1000*r.height/r.width;return{x:Math.round(Math.max(0,Math.min(1000,(e.clientX-r.left)/r.width*1000))*10)/10,y:Math.round(Math.max(0,Math.min(H,(e.clientY-r.top)/r.width*1000))*10)/10,H}}
+function lvHit(it,pt,r){if(it.t=='x')return pt.x>=it.x-r&&pt.x<=it.x+it.w+r&&pt.y>=it.y-r&&pt.y<=it.y+Math.max(it.h||0,it.z*1.4)+r;const P=it.p,rr=r+it.w/2;for(let i=0;i<P.length;i+=2){const x1=P[i],y1=P[i+1],x2=i+2<P.length?P[i+2]:x1,y2=i+2<P.length?P[i+3]:y1,dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy;let t=l?((pt.x-x1)*dx+(pt.y-y1)*dy)/l:0;t=Math.max(0,Math.min(1,t));const cx=x1+t*dx-pt.x,cy=y1+t*dy-pt.y;if(cx*cx+cy*cy<=rr*rr)return true}return false}
+function lvCancelLive(){const L=LV&&LV.live;if(!L)return;LV.live=null;if(L.el)L.el.remove();lvAnRender(L.p)}
+function lvPD(e){if(!LV||!LV.tool||LV.ign||e.button>0)return;if(e.target.closest&&e.target.closest('.lvta'))return;const g=e.target.closest&&e.target.closest('.lvg');if(LV.ta)lvTaDone();if(!g||!g._i)return;const S=$('#lvS'),p=+g.dataset.p,pt=lvPt(g,e),t=LV.tool,a=(LV.m.an&&LV.m.an[p])||[];
+ if(t=='txt'){e.preventDefault();const hit=[...a].reverse().find(it=>it.t=='x'&&lvHit(it,pt,2));try{S.setPointerCapture(e.pointerId)}catch(_){}
+  if(hit){LV.live={k:'d',p,g,it:hit,cl:Object.assign({},hit),sx:pt.x,sy:pt.y,moved:0};return}
+  const w=Math.max(380,Math.min(620,1000-pt.x));lvTa(p,g,{t:'x',x:Math.min(pt.x,1000-w),y:pt.y,w,z:LV_W.txt[LV.sz],c:LV.cols.txt,s:'',h:0},null);return}
+ e.preventDefault();try{S.setPointerCapture(e.pointerId)}catch(_){}
+ if(t=='er'){LV.live={k:'e',p,g,rm:[]};lvErAt(pt);return}
+ const it={t:t=='hl'?'h':'p',c:LV.cols[t],w:LV_W[t][LV.sz],p:[pt.x,pt.y]};if(t=='ul'){it.p=[pt.x,pt.y,pt.x,pt.y];it.ul=1}
+ const sv=lvAnSvg(g,p),el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('fill','none');el.setAttribute('stroke',it.c);el.setAttribute('stroke-width',it.w);el.setAttribute('stroke-linecap',it.t=='h'?'butt':'round');el.setAttribute('stroke-linejoin','round');if(it.t=='h'){el.setAttribute('opacity','.4');el.style.mixBlendMode='multiply'}el.setAttribute('d',lvD(it.p));sv.appendChild(el);LV.live={k:'s',p,g,it,el}}
+function lvErAt(pt){const L=LV.live,a=(LV.m.an&&LV.m.an[L.p])||[],rad=LV_W.er[LV.sz];let ch=0;a.forEach((it,i)=>{if(!L.rm.some(r=>r.it===it)&&lvHit(it,pt,rad)){L.rm.push({i,it});ch=1}});if(ch)lvAnRender(L.p,a.filter(it=>!L.rm.some(r=>r.it===it)))}
+function lvPM(e){const L=LV&&LV.live;if(!L||LV.ign)return;const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e];(ev.length?ev:[e]).forEach(q=>{const pt=lvPt(L.g,q);
+ if(L.k=='s'){const P=L.it.p;if(L.it.ul){const dx=pt.x-P[0],dy=pt.y-P[1];P[2]=pt.x;P[3]=Math.abs(dy)<Math.abs(dx)*.14?P[1]:pt.y}else{const lx=P[P.length-2],ly=P[P.length-1];if(Math.hypot(pt.x-lx,pt.y-ly)>.8)P.push(pt.x,pt.y)}L.el.setAttribute('d',lvD(P))}
+ else if(L.k=='e')lvErAt(pt);
+ else if(L.k=='d'){const dx=pt.x-L.sx,dy=pt.y-L.sy;if(!L.moved&&Math.hypot(dx,dy)<7)return;L.moved=1;L.cl.x=Math.max(0,Math.min(1000-L.cl.w,L.it.x+dx));L.cl.y=Math.max(0,L.it.y+dy);const a=LV.m.an[L.p];lvAnRender(L.p,a.map(x=>x===L.it?L.cl:x))}})}
+function lvPU(e){const L=LV&&LV.live;if(!L)return;LV.live=null;if(L.el)L.el.remove();
+ if(L.k=='s'){const it=L.it;if(it.ul&&Math.hypot(it.p[2]-it.p[0],it.p[3]-it.p[1])<6){lvAnRender(L.p);return}lvDo({p:L.p,rm:[],ad:[it]})}
+ else if(L.k=='e'){if(L.rm.length)lvDo({p:L.p,rm:L.rm,ad:[]});else lvAnRender(L.p)}
+ else if(L.k=='d'){const a=LV.m.an[L.p],i=a.indexOf(L.it);if(L.moved&&i>=0)lvDo({p:L.p,rm:[{i,it:L.it}],ad:[L.cl]});else{lvAnRender(L.p);lvTa(L.p,L.g,L.it,L.it)}}}
+function lvTa(p,g,it,old){lvTaDone();const r=g._i.getBoundingClientRect(),k=r.width/1000,H=1000*r.height/r.width,ta=document.createElement('textarea');ta.className='lvta';ta.dir='auto';ta.value=it.s;ta.placeholder='اكتب هنا…';ta.style.cssText=`left:${it.x/10}%;top:${it.y/H*100}%;width:${it.w/10}%;font-size:${it.z*k}px;color:${it.c}`;g._i.appendChild(ta);LV.ta={ta,p,g,it,old};
+ if(old)lvAnRender(p,(LV.m.an[p]||[]).filter(x=>x!==old));
+ const fit=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'};ta.addEventListener('input',fit);ta.addEventListener('pointerdown',ev=>ev.stopPropagation());ta.addEventListener('blur',()=>setTimeout(lvTaDone,150));fit();setTimeout(()=>ta.focus(),30)}
+function lvTaDone(){const T=LV&&LV.ta;if(!T)return;LV.ta=null;const s=T.ta.value.replace(/\s+$/,''),r=T.g._i.getBoundingClientRect(),h=Math.round(T.ta.scrollHeight/r.width*1000);T.ta.remove();
+ if(T.old){const a=LV.m.an&&LV.m.an[T.p]||[],i=a.indexOf(T.old);if(i<0){lvAnRender(T.p);return}if(s==T.old.s){lvAnRender(T.p);return}lvDo(s?{p:T.p,rm:[{i,it:T.old}],ad:[Object.assign({},T.it,{s,h})]}:{p:T.p,rm:[{i,it:T.old}],ad:[]})}
+ else if(s)lvDo({p:T.p,rm:[],ad:[Object.assign({},T.it,{s,h})]});else lvAnRender(T.p)}
+function lvEdToggle(on){if(!LV||!LV.pdf)return;lvTaDone();lvCancelLive();LV.ed=!!on;const o=$('#libV');o.classList.toggle('lved',LV.ed);if(LV.ed){o.classList.remove('lvh');LV.tool=LV.tool||'pen';lvSheet('')}else{LV.tool=null;lvAnFlush()}$('#lvS').classList.toggle('ed',!!LV.tool);lvEdUi();lvPads()}
+function lvTool(t){if(!LV)return;lvTaDone();lvCancelLive();LV.tool=t;$('#lvS').classList.toggle('ed',!!t);lvEdUi()}
+function lvCol(c){LV.cols[LV.tool]=c;lvPrefSet({cols:LV.cols});lvEdUi()}
+function lvSz(i){LV.sz=i;lvPrefSet({sz:i});lvEdUi()}
+function lvEdUi(){const e=$('#lvE');if(!e||!LV)return;const t=LV.tool,T=[[null,'lbHand','تصفّح'],['pen','lbPen','قلم'],['hl','lbHl','تحديد'],['ul','lbUl','تسطير'],['txt','lbText','نص'],['er','lbEr','ممحاة']];
+ const cols=t&&t!='er'?`<div class="lvcs">${LV_COL.map(c=>`<button type="button" class="${LV.cols[t]==c?'on':''}" style="--c:${c}" onclick="lvCol('${c}')" aria-label="لون"></button>`).join('')}</div>`:'';
+ const szs=t?`<div class="lvzs">${[0,1,2].map(i=>`<button type="button" class="${LV.sz==i?'on':''}" onclick="lvSz(${i})" aria-label="حجم"><i style="--s:${6+i*4}px"></i></button>`).join('')}</div>`:'<span class="lvhn">وضع التصفّح: تحريك وتكبير</span>';
+ e.innerHTML=`<div class="lvet">${T.map(([k,i,n])=>`<button type="button" class="${t===k?'on':''}" onclick="lvTool(${k?`'${k}'`:'null'})">${svg(i)}<span>${n}</span></button>`).join('')}</div><div class="lver">${cols}${szs}</div>`;const u=$('#lvUn'),r=$('#lvRe');if(u)u.disabled=!LV.undo.length;if(r)r.disabled=!LV.redo.length}
+function lvBusy(m){let b=$('#lvBz');if(!m){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='lvBz';b.className='lvd';b.innerHTML='<div class="lvdb" style="text-align:center"><div class="lvsp" style="margin:0 auto 14px"></div><b id="lvBzt"></b></div>';$('#libV').appendChild(b)}$('#lvBzt').textContent=m}
+function lvAnPaint(x,items,f){x.save();x.scale(f,f);items.forEach(it=>{if(it.t=='x'){x.fillStyle=it.c;x.font='600 '+it.z+'px sans-serif';x.textBaseline='top';const rtl=lvAr(it.s);x.direction=rtl?'rtl':'ltr';x.textAlign=rtl?'right':'left';const ax=rtl?it.x+it.w:it.x;let y=it.y+it.z*.2;it.s.split('\n').forEach(par=>{let line='';par.split(' ').forEach(w=>{const tr=line?line+' '+w:w;if(line&&x.measureText(tr).width>it.w){x.fillText(line,ax,y);y+=it.z*1.4;line=w}else line=tr});x.fillText(line,ax,y);y+=it.z*1.4})}else{x.save();x.globalAlpha=it.t=='h'?.4:1;x.globalCompositeOperation=it.t=='h'?'multiply':'source-over';x.strokeStyle=it.c;x.lineWidth=it.w;x.lineCap=it.t=='h'?'butt':'round';x.lineJoin='round';x.stroke(new Path2D(lvD(it.p)));x.restore()}});x.restore()}
+async function lvExport(){const L=LV;if(!L||!L.pdf)return;lvTaDone();lvSheet('');lvBusy('جارٍ تجهيز النسخة… 0%');
+ try{const enc=new TextEncoder(),parts=[],xr=[];let pos=0;const W=b=>{parts.push(b);pos+=b.byteLength}; const S_=t=>W(enc.encode(t));
+  S_('%PDF-1.4\n');xr[1]=pos;S_('1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n');const kids=[];for(let i=0;i<L.np;i++)kids.push((5+3*i)+' 0 R');xr[2]=pos;S_('2 0 obj<</Type/Pages/Count '+L.np+'/Kids['+kids.join(' ')+']>>endobj\n');
+  for(let i=1;i<=L.np;i++){if(LV!==L)return;lvBusy('جارٍ تجهيز النسخة… '+Math.round((i-1)/L.np*100)+'%');const pg=await L.pdf.getPage(i),v1=pg.getViewport({scale:1}),sc=Math.min(2,1800/v1.width),vp=pg.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);await pg.render({canvasContext:x,viewport:vp}).promise;lvAnPaint(x,(L.m.an&&L.m.an[i])||[],c.width/1000);
+   const jb=await new Promise(r=>c.toBlob(r,'image/jpeg',.86)),jd=new Uint8Array(await jb.arrayBuffer()),n0=3+3*(i-1),pw=v1.width.toFixed(2),ph=v1.height.toFixed(2);
+   xr[n0]=pos;S_(n0+' 0 obj<</Type/XObject/Subtype/Image/Width '+c.width+'/Height '+c.height+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+jd.length+'>>stream\n');W(jd);S_('\nendstream endobj\n');
+   const cs='q '+pw+' 0 0 '+ph+' 0 0 cm /Im0 Do Q';xr[n0+1]=pos;S_((n0+1)+' 0 obj<</Length '+cs.length+'>>stream\n'+cs+'\nendstream endobj\n');
+   xr[n0+2]=pos;S_((n0+2)+' 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+pw+' '+ph+']/Resources<</XObject<</Im0 '+n0+' 0 R>>>>/Contents '+(n0+1)+' 0 R>>endobj\n');c.width=c.height=0;try{pg.cleanup()}catch(e){}await new Promise(r=>setTimeout(r,0))}
+  const n=3*L.np+3,xs=pos;let t='xref\n0 '+n+'\n0000000000 65535 f \n';for(let k=1;k<n;k++)t+=String(xr[k]).padStart(10,'0')+' 00000 n \n';S_(t+'trailer<</Size '+n+'/Root 1 0 R>>\nstartxref\n'+xs+'\n%%EOF');
+  const f=new File([new Blob(parts,{type:'application/pdf'})],libTitle(L.m)+' (معدّل).pdf',{type:'application/pdf'});lvBusy('');
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name=='AbortError')return}
+  const u=URL.createObjectURL(f);libDlUrl(u,f.name);setTimeout(()=>URL.revokeObjectURL(u),60000);lvNote('حُفظت نسخة بالتعديلات')}
+ catch(e){dbg(e);lvBusy('');lvNote('تعذّر تصدير الملف')}}
+
 /* ---------- ملفات تُشارَك إلى التطبيق + سحب وإفلات + الإقلاع ---------- */
 async function libShareIn(){try{if(!('caches' in window))return;const c=await caches.open('share-inbox'),ks=await c.keys();if(!ks.length)return;const files=[];for(const r of ks){const res=await c.match(r);if(!res)continue;const b=await res.blob();let nm='ملف';try{nm=decodeURIComponent(res.headers.get('X-Name')||'')||nm}catch(e){}files.push(new File([b],nm,{type:b.type}));await c.delete(r)}if(files.length)libPick(files)}catch(e){dbg(e)}}
 (function(){let dg=0,dt=0;const has=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
