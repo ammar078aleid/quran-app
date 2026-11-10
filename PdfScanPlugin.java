@@ -6,11 +6,22 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.CancellationSignal;
 import android.os.Environment;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.credentials.Credential;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
+import androidx.credentials.exceptions.GetCredentialException;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -191,5 +202,60 @@ public class PdfScanPlugin extends Plugin {
       r.put("files", arr);
       call.resolve(r);
     }).start();
+  }
+
+  @PluginMethod
+  public void googleSignIn(PluginCall call) {
+    String cid = call.getString("clientId");
+    if (cid == null || cid.isEmpty()) {
+      call.reject("no clientId");
+      return;
+    }
+    try {
+      GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(cid).build();
+      GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
+      CredentialManager cm = CredentialManager.create(getContext());
+      cm.getCredentialAsync(getActivity(), req, new CancellationSignal(), ContextCompat.getMainExecutor(getContext()),
+          new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+            @Override
+            public void onResult(GetCredentialResponse res) {
+              Credential c = res.getCredential();
+              if (c instanceof CustomCredential
+                  && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(c.getType())) {
+                try {
+                  GoogleIdTokenCredential g = GoogleIdTokenCredential.createFrom(((CustomCredential) c).getData());
+                  JSObject o = new JSObject();
+                  o.put("idToken", g.getIdToken());
+                  o.put("email", g.getId());
+                  o.put("name", g.getDisplayName());
+                  call.resolve(o);
+                } catch (Exception e) {
+                  call.reject("parse: " + e.getMessage());
+                }
+              } else {
+                call.reject("unexpected credential type");
+              }
+            }
+
+            @Override
+            public void onError(GetCredentialException e) {
+              if (e instanceof GetCredentialCancellationException) call.reject("cancelled", "cancelled");
+              else call.reject(e.getType() + ": " + e.getMessage(), "error");
+            }
+          });
+    } catch (Throwable t) {
+      call.reject("native: " + t.getMessage());
+    }
+  }
+
+  @PluginMethod
+  public void openNotifSettings(PluginCall call) {
+    try {
+      Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+      i.putExtra(Settings.EXTRA_APP_PACKAGE, getContext().getPackageName());
+      getActivity().startActivity(i);
+    } catch (Exception e) {
+    }
+    call.resolve();
   }
 }

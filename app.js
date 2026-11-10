@@ -15,7 +15,7 @@ const idb=(()=>{let p=null;const open=()=>p||(p=new Promise((ok,no)=>{try{const 
 let idbT=null,lsFail=0;
 const save=()=>{S._u=Date.now();lsFail=0;const sj=JSON.stringify(S);try{localStorage.setItem('qmrm',sj)}catch(e){lsFail=1}
  clearTimeout(idbT);idbT=setTimeout(()=>{idb.set('S',sj).catch(()=>{if(lsFail)try{synBar('تعذّر الحفظ على هذا الجهاز (المساحة ممتلئة). قلّل عدد الصور أو تأكد أن المزامنة السحابية تعمل.',1)}catch(x){dbg(x)}})},400);
- push()};
+ push();try{natQ()}catch(e){}};
 const $=s=>document.querySelector(s),ymd=d=>d.toLocaleDateString('en-CA'),hm=d=>d.toTimeString().slice(0,5);
 const hij=d=>d.toLocaleDateString(S.lang=='en'?'en-u-ca-islamic-umalqura':'ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'});
 const esc=s=>String(s).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
@@ -426,13 +426,13 @@ function nextQ(){qz=null;rev=false;draw()}
 
 /* ---------- المنبّهات ---------- */
 function alarms(){
- const perm=('Notification'in window)?Notification.permission:'unsupported';
+ const nat=typeof natOn=='function'&&natOn(),perm=nat?(natPerm||'unsupported'):(('Notification'in window)?Notification.permission:'unsupported');
  return `<div class="c"><b>منبّه جديد</b><input id="at" type="time" value="05:00"><select id="ak"><option>حفظ</option><option>مراجعة</option></select>
  <div>${D.map((d,i)=>`<span class="chip ${addDays.includes(i)?'on':''}" onclick="addDays=addDays.includes(${i})?addDays.filter(x=>x!=${i}):[...addDays,${i}];draw()">${d}</span>`).join('')}</div>
  <button type="button" onclick="addAl()" style="margin-top:8px">إضافة المنبّه</button></div>
- ${perm!='granted'&&perm!='unsupported'?'<div class="c"><button type="button" onclick="Notification.requestPermission().then(draw)">🔔 السماح بالإشعارات</button></div>':''}
+ ${perm!='granted'&&perm!='unsupported'?'<div class="c"><button type="button" onclick="'+(nat?'natAsk()':'Notification.requestPermission().then(draw)')+'">🔔 السماح بالإشعارات</button></div>':''}
  <div class="c"><button type="button" onclick="ringStart();setTimeout(ringStop,3500)" style="width:100%">🔊 تجربة صوت المنبّه</button></div>
- <div class="c m">⚠️ المنبّهات تعمل ما دامت هذه الصفحة مفتوحة على الشاشة. للتنبيه وهي مغلقة استعمل منبّه الهاتف بجانبها.</div>`+
+ <div class="c m">${nat?'🔔 المنبّهات تعمل حتى والتطبيق مغلق، بشرط السماح بالإشعارات.':'⚠️ المنبّهات تعمل ما دامت هذه الصفحة مفتوحة على الشاشة. للتنبيه وهي مغلقة استعمل منبّه الهاتف بجانبها.'}</div>`+
  S.alarms.map(a=>`<div class="c"><div class="row sp"><b style="font-size:22px">${a.time} • ${a.k}</b><button type="button" class="g" onclick="S.alarms=S.alarms.filter(x=>x.id!=${a.id});save();draw()">🗑</button></div>
  <div class="m">${a.days.map(i=>D[i]).join('، ')}</div><label><input type="checkbox" style="width:auto" ${a.on?'checked':''} onchange="S.alarms.find(x=>x.id==${a.id}).on=this.checked;save()"> مفعّل</label></div>`).join('')}
 function addAl(){if(!addDays.length)return;S.alarms.push({id:S.id++,time:$('#at').value||'05:00',k:$('#ak').value,days:[...addDays].sort(),on:true});save();draw();
@@ -799,7 +799,7 @@ function initLang(){const en=S.lang=='en',r=document.documentElement;r.lang=en?'
 function remBody(){const R=(S.rem=S.rem||[]).slice().sort((a,b)=>a.at.localeCompare(b.at)),now=Date.now(),d=new Date(now+3600e3);
  const rel=ms=>{const m=Math.round(ms/6e4);return m<60?m+' دقيقة':m<1440?Math.round(m/60)+' ساعة':Math.round(m/1440)+' يوم'};
  return `<div class="c"><b>تذكير جديد</b><input id="rt" placeholder="اكتب المهمة التي تريد التنبيه عليها" autocomplete="off"><div class="row" style="flex-wrap:nowrap"><input id="rd" type="date" value="${ymd(d)}" style="flex:1;min-width:0"><input id="rh" type="time" value="${hm(d)}" style="flex:1;min-width:0"></div><button type="button" onclick="remAdd()" style="width:100%">إضافة التذكير</button>
- ${('Notification' in window&&Notification.permission=='default')?'<button type="button" class="g" onclick="Notification.requestPermission().then(draw)" style="width:100%;margin-top:6px">🔔 السماح بالإشعارات</button>':''}<div class="m" style="margin-top:6px">يمكنك إضافة أي عدد من التذكيرات. يعمل التنبيه والصفحة مفتوحة، وإن فتحتها بعد الموعد يظهر لك التنبيه فوراً.</div></div>
+ ${((typeof natOn=='function'&&natOn())?(natPerm&&natPerm!='granted'):('Notification' in window&&Notification.permission=='default'))?'<button type="button" class="g" onclick="'+((typeof natOn=='function'&&natOn())?'natAsk()':'Notification.requestPermission().then(draw)')+'" style="width:100%;margin-top:6px">🔔 السماح بالإشعارات</button>':''}<div class="m" style="margin-top:6px">يمكنك إضافة أي عدد من التذكيرات. يعمل التنبيه والصفحة مفتوحة، وإن فتحتها بعد الموعد يظهر لك التنبيه فوراً.</div></div>
  <div class="row" style="padding:0 16px"><span class="m">✓ ${R.filter(r=>r.s==1).length} • ✗ ${R.filter(r=>r.s==2).length} • ${R.filter(r=>!r.s).length} بلا تقييم</span></div>
  ${R.map(r=>{const t=new Date(r.at),ms=t-now;return `<div class="c"><div class="row" style="flex-wrap:nowrap;gap:10px;align-items:flex-start">${mk2(r.s||0,`remMk(${r.id},1)`,`remMk(${r.id},2)`)}<div style="flex:1;min-width:0"><b style="${r.s==1?'text-decoration:line-through;color:var(--mut)':r.s==2?'color:var(--bad)':''}">${esc(r.t)}</b><div class="m">${D[t.getDay()]} • ${ymd(t)} • ${hm(t)}</div><div class="m" style="color:${r.done?'var(--mut)':'var(--pri)'}">${r.done?'✅ تم التنبيه':'⏰ بعد '+rel(ms)}</div></div><button type="button" class="g" style="padding:4px 10px" onclick="remDel(${r.id})">🗑</button></div></div>`}).join('')||'<div class="c m">لا تذكيرات بعد</div>'}`}
 function remAdd(){const t=$('#rt').value.trim(),d=$('#rd').value,h=$('#rh').value;if(!t||!d||!h)return;S.rem=S.rem||[];S.rem.push({id:S.id++,t,at:new Date(d+'T'+h).toISOString(),done:false});save();draw();try{if('Notification' in window&&Notification.permission=='default')Notification.requestPermission()}catch(e){dbg(e)}}
@@ -2014,6 +2014,7 @@ async function fedcmTry(){
  catch(e){return{cancel:Date.now()-t0>1500}}}
 async function aGoogle(){if(busy)return;busy=1;got=0;sync('⏳ جارٍ فتح حسابات Google...');
  const fin=()=>{busy=0};
+ if(typeof libNat=='function'&&libNat()){try{const r=await libNat().googleSignIn({clientId:GCID});await fa.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(r.idToken));sync('✅ تم تسجيل الدخول')}catch(e){sync('');if(!(e&&(e.code==='cancelled'||/cancel/i.test(String(e.message||e))))){try{er(e)}catch(x){}toast('تعذّر الدخول: '+String((e&&e.message)||e).slice(0,140))}}return fin()}
  try{
   if(!GCID){await gPopup();sync('✅ تم تسجيل الدخول');return fin()}
   /* الوضع المباشر (FedCM active) كان يفتح نافذة جوجل بخطأ response_type، لذلك نبدأ بنافذة اختيار الحساب العادية ثم نرجع للنافذة المنبثقة المجرّبة */
@@ -2494,7 +2495,33 @@ async function libMerge(list){if(!libLoaded)await libLoad();const ign=libIgn(),b
  for(const m of [...libM]){if(!m.dev||seen.has(m.dev))continue;const keep=m.fav||(m.bk||[]).length||(m.an&&Object.keys(m.an).length)||m.lp>1;if(keep){if(m.dl!==false){m.dl=false;await libPut(m)}}else{await libDB.del(m.id).catch(dbg);libM=libM.filter(x=>x!==m)}}
  return add}
 async function libNatShared(){const N=libNat();if(!N)return;try{const r=await N.getShared(),fs=[];for(const f of (r.files||[])){try{const res=await fetch(libFileUrl(f.path));if(!res.ok)continue;const b=await res.blob();fs.push(new File([b],f.name,{type:b.type||(/\.pdf$/i.test(f.name)?'application/pdf':'')}))}catch(e){dbg(e)}}if(fs.length)libPick(fs)}catch(e){dbg(e)}}
-function libNatBoot(){if(!libNat()||libNB)return;libNB=1;libNatShared().then(()=>libScan(0));document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0)}})}
+function libNatBoot(){if(!libNat()||libNB)return;libNB=1;natInit();libNatShared().then(()=>libScan(0));document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0)}})}
+
+/* ---------- إشعارات أندرويد الأصلية: منبّهات وتذكيرات ومؤقتات تعمل والتطبيق مغلق ---------- */
+var natLN=null,natPerm='',natSig='',natT=0;
+const natOn=()=>!!libNat();
+const natLNp=()=>{try{if(natLN)return natLN;if(libNat())natLN=Capacitor.registerPlugin('LocalNotifications')}catch(e){dbg(e)}return natLN};
+async function natInit(){const LN=natLNp();if(!LN)return;
+ try{await LN.createChannel({id:'qm',name:'المنبّهات والتذكيرات',description:'منبّهات الحفظ والمراجعة والتذكيرات والمؤقتات',importance:5,visibility:1,vibration:true})}catch(e){dbg(e)}
+ try{let r=await LN.checkPermissions();natPerm=r.display;if(natPerm=='prompt'||natPerm=='prompt-with-rationale'){r=await LN.requestPermissions();natPerm=r.display}}catch(e){dbg(e)}
+ natSync(true);try{draw()}catch(e){}}
+async function natAsk(){const LN=natLNp();if(!LN)return;
+ try{if(natPerm=='denied'){const N=libNat();if(N&&N.openNotifSettings)await N.openNotifSettings();toast('فعّل «السماح بالإشعارات» ثم ارجع للتطبيق');return}
+  const r=await LN.requestPermissions();natPerm=r.display;if(natPerm=='granted'){toast('تم تفعيل الإشعارات ✅');natSync(true)}else if(natPerm=='denied'){const N=libNat();if(N&&N.openNotifSettings)await N.openNotifSettings()}draw()}catch(e){dbg(e)}}
+function natQ(){if(!natLN&&!natOn())return;clearTimeout(natT);natT=setTimeout(()=>natSync(),1500)}
+function natBuild(){const out=[],now=Date.now(),at=ms=>new Date(Math.round(ms/1000)*1000).toISOString();let id=1;
+ const msg=()=>(typeof MSG!='undefined'&&MSG.length)?MSG[Math.floor(Math.random()*MSG.length)]:'حان الوقت';
+ (S.alarms||[]).filter(a=>a.on).forEach(a=>{const [h,m]=String(a.time).split(':').map(Number);if(isNaN(h)||isNaN(m))return;const title=a.k=='حفظ'?'وقت الحفظ 📖':'وقت المراجعة 🔁';
+  if(a.once){const d=new Date();d.setHours(h,m,0,0);if(d.getTime()<=now)d.setDate(d.getDate()+1);out.push({id:id++,title,body:msg(),schedule:{at:at(d.getTime()),allowWhileIdle:true}})}
+  else(a.days||[]).forEach(i=>out.push({id:id++,title,body:msg(),schedule:{on:{weekday:i+1,hour:h,minute:m},allowWhileIdle:true}}))});
+ (S.rem||[]).filter(r=>!r.done&&Date.parse(r.at)>now).forEach(r=>out.push({id:id++,title:'تذكير: '+r.t,body:'حان موعد التذكير',schedule:{at:at(Date.parse(r.at)),allowWhileIdle:true}}));
+ [...(S.tasks||[]).filter(t=>t.tm).map(t=>[t.tm,t.s]),...(S.cont||[]).filter(c=>c.tm).map(c=>[c.tm,c.name])].forEach(([m,nm])=>{if(m.run&&!m.ex){const l=mLeft(m);if(l>0)out.push({id:id++,title:'انتهى الوقت',body:String(nm||''),schedule:{at:at(now+l*1000),allowWhileIdle:true}})}});
+ if(S.timer&&S.timer.run){const l=tL();if(l>0)out.push({id:id++,title:'انتهى المؤقت ⏱',body:'انتهى الوقت المحدد',schedule:{at:at(now+l*1000),allowWhileIdle:true}})}
+ return out}
+async function natSync(force){const LN=natLNp();if(!LN||natPerm!='granted')return;
+ const out=natBuild(),sig=JSON.stringify(out.map(n=>[n.title,n.schedule]));if(!force&&sig==natSig)return;natSig=sig;
+ try{const p=await LN.getPending();if(p.notifications&&p.notifications.length)await LN.cancel({notifications:p.notifications.map(n=>({id:n.id}))});
+  if(out.length)await LN.schedule({notifications:out.map(n=>Object.assign({channelId:'qm'},n))})}catch(e){natSig='';dbg(e)}}
 
 /* ---------- دفتر الملاحظات ---------- */
 const NB_ST=[['lined','📏 مسطّر'],['grid','▦ مربعات'],['dot','⠿ منقّط'],['plain','📄 سادة'],['school','🎓 مدرسي'],['en','ABC']];
