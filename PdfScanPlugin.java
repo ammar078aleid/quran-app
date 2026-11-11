@@ -58,6 +58,9 @@ public class PdfScanPlugin extends Plugin {
     synchronized (pending) {
       if (Intent.ACTION_SEND.equals(a)) {
         Uri u = i.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (u == null && i.getClipData() != null && i.getClipData().getItemCount() > 0) {
+          u = i.getClipData().getItemAt(0).getUri();
+        }
         if (u != null) pending.add(u);
       } else if (Intent.ACTION_SEND_MULTIPLE.equals(a)) {
         ArrayList<Uri> l = i.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
@@ -254,6 +257,15 @@ public class PdfScanPlugin extends Plugin {
       Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
       i.putExtra(Settings.EXTRA_APP_PACKAGE, getContext().getPackageName());
       getActivity().startActivity(i);
+    } catch (Exception e) {
+    }
+    call.resolve();
+  }
+
+  @PluginMethod
+  public void minimize(PluginCall call) {
+    try {
+      getActivity().moveTaskToBack(true);
     } catch (Exception e) {
     }
     call.resolve();
