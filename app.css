@@ -674,3 +674,60 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvg.lvfl .lvi{animation:lvflip var(--fd,640ms) cubic-bezier(.22,.7,.2,1)}
 @keyframes lvflip{from{opacity:.55;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.lvg.lvfl .lvi{animation:none}}
+
+/* ===== القارئ: ملاءمة الصفحة (صفحة بصفحة الرأسي) — الصفحة كاملة تملأ الشاشة ===== */
+.lvs.v.fit{display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto;scroll-snap-type:y mandatory;padding-top:var(--pt);padding-bottom:var(--pb)}
+.lvs.v.fit .lvw{display:contents}
+.lvs.v.fit .lvg{flex:0 0 100%;height:100%;width:100%;margin:0;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always;background:transparent;box-shadow:none;overflow:visible}
+.lvs.v.fit .lvi{position:relative;inset:auto;display:flex;max-width:100%;max-height:100%}
+.lvs.v.fit .lvg canvas{width:auto;height:auto;max-width:100%;max-height:100%;background:#fff;box-shadow:0 3px 16px #0007}
+.lvs.v.fit .lvg .textLayer{inset:0}
+.lvs.v.fit .lvg::before{color:#ffffff22}
+/* ===== خلفية أبيض وأسود (كتاب مطبوع) ===== */
+.lv.bg-bw .lvs{background:#fff}.lv.bg-bw .lvg{background:#fff!important}
+.lv.bg-bw .lvg canvas{filter:grayscale(1) contrast(1.5) brightness(1.06)}
+.lv.bg-bw .lvs.h .lvg canvas,.lv.bg-bw .lvs.fit .lvg canvas{box-shadow:0 0 0 1px #0002,0 2px 10px #0003}
+.lv.bg-bw .lvg::before{color:#00000018}
+.lvbg.bw span{background:#fff!important;color:#000;filter:grayscale(1)}
+/* ===== رقم الصفحة: يبقى داكناً أثناء الكتابة ===== */
+.lvpi,.lvpi:focus{color:#fff!important;-webkit-text-fill-color:#fff;caret-color:var(--gold)}
+.lvpi:focus{background:#2b2d36!important;border-color:var(--gold)!important;outline:0;box-shadow:none}
+/* ===== طيف الألوان ===== */
+.lvrb{background:conic-gradient(#ff3b30,#ffcc00,#34c759,#00c7be,#007aff,#af52de,#ff3b30)!important}
+.lvcp{position:fixed;inset-inline:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:22;background:rgba(20,22,29,.97);border:1px solid #ffffff26;border-radius:24px;padding:14px 16px;box-shadow:0 20px 50px -14px #000;animation:lvpop .16s ease}
+.lvcpt{display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:10px}
+.lvcpv{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #ffffff55}
+.lvcp input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;margin:6px 0;padding:0;border:0;border-radius:14px}
+.lvcph{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)!important}
+.lvcpl{background:linear-gradient(90deg,#000,var(--lc,#f00),#fff)!important}
+.lvcp input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #14151a;box-shadow:0 0 0 2px #fff9}
+.lvcpb{display:flex;gap:10px;margin-top:10px}
+.lvcpb button{flex:1;margin:0;min-height:0;padding:11px;border-radius:14px;background:#ffffff18;color:#fff;font-weight:600;box-shadow:none}
+.lvcpb .ok{background:var(--gold);color:#1a1a1a}
+/* ===== تأثيرات التقليب ===== */
+.lv.fx-fade .lvg.lvfl .lvi{animation:lvfade var(--fd,640ms) ease both}
+@keyframes lvfade{from{opacity:0}to{opacity:1}}
+.lv.fx-book .lvg.lvfl .lvi{animation:lvbook var(--fd,640ms) cubic-bezier(.22,.7,.2,1) both;transform-origin:100% 50%}
+.lv.fx-book .lvs.v .lvg.lvfl .lvi{animation-name:lvbookv;transform-origin:50% 0}
+@keyframes lvbook{0%{opacity:.25;transform:perspective(1500px) rotateY(-75deg)}55%{opacity:1}100%{opacity:1;transform:perspective(1500px) rotateY(0)}}
+@keyframes lvbookv{0%{opacity:.25;transform:perspective(1500px) rotateX(60deg)}55%{opacity:1}100%{opacity:1;transform:perspective(1500px) rotateX(0)}}
+@media (prefers-reduced-motion:reduce){.lv .lvg.lvfl .lvi{animation:none!important}}
+/* ===== وضع أفقي: أشرطة مضغوطة تترك الصفحة واضحة ===== */
+@media (orientation:landscape) and (max-height:520px){
+ .lvt{top:max(4px,env(safe-area-inset-top,0px));padding:2px 6px;border-radius:18px}
+ .lvx{width:34px;height:34px}.lvx .ic{width:18px;height:18px}
+ .lvb{bottom:max(4px,env(safe-area-inset-bottom,0px));padding:4px 10px 2px;border-radius:18px}
+ .lvdk button{flex-direction:row;gap:6px;padding:3px 8px;font-size:11px}.lvdk .ic{width:18px;height:18px}
+ .lvsc input[type=range]{height:22px}.lvpi{height:26px}
+}
+/* ===== المكتبة: أزرار مضغوطة وأنيقة ===== */
+.lbTop{margin:8px 18px 0}.lbTop h2{font-size:26px}.lbTop p{font-size:12px}
+.lbSr{margin:10px 14px 0}.lbSr input{height:44px;min-height:0}
+.lbAct{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin:10px 14px 0}
+.lbAct button{height:42px;min-height:0;padding:0 8px;border-radius:14px;font-size:13.5px;font-weight:600;gap:6px;white-space:nowrap;box-shadow:none;margin:0}
+.lbAct .ic{width:17px;height:17px}.lbAct .lbSec{flex:none;padding-inline:8px}
+.lbAct .lbPri{box-shadow:0 8px 16px -10px color-mix(in srgb,var(--pri) 80%,transparent)}
+/* ===== الرئيسية: ستة أزرار سريعة (3×2) ===== */
+.qa{grid-template-columns:repeat(3,1fr)}
+.qa button{flex-direction:row;justify-content:center;gap:8px;padding:12px 6px;font-size:13px;font-weight:600}
+.qa .ic{width:22px;height:22px}

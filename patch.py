@@ -19,10 +19,25 @@ filters = '''
             </intent-filter>
         '''
 assert '</activity>' in s
+receivers = '''
+        <receiver android:name="com.quran.muthabbit.PdfScanPlugin$AlarmReceiver" android:exported="false" />
+        <receiver android:name="com.quran.muthabbit.PdfScanPlugin$SnoozeReceiver" android:exported="false" />
+        <receiver android:name="com.quran.muthabbit.PdfScanPlugin$BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    '''
+assert '</application>' in s
+s = s.replace('</application>', receivers + '</application>', 1)
 s = s.replace('</activity>', filters + '</activity>', 1)
 perms = '''    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -52,4 +67,17 @@ deps = '''dependencies {
 assert 'dependencies {' in t
 t = t.replace('dependencies {', deps, 1)
 open(g, 'w', encoding='utf8').write(t)
+import os
+os.makedirs('android/app/src/main/res/drawable', exist_ok=True)
+open('android/app/src/main/res/drawable/ic_stat_qm.xml', 'w', encoding='utf8').write('''<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,22c1.1,0 2,-0.9 2,-2h-4c0,1.1 0.89,2 2,2zM18,16v-5c0,-3.07 -1.64,-5.64 -4.5,-6.32V4c0,-0.83 -0.67,-1.5 -1.5,-1.5s-1.5,0.67 -1.5,1.5v0.68C7.63,5.36 6,7.92 6,11v5l-2,2v1h16v-1l-2,-2z" />
+</vector>
+''')
 print('patched OK')
