@@ -57,7 +57,7 @@ jobs:
         working-directory: /tmp/apk
         run: |
           npm init -y > /dev/null
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/local-notifications@6
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           cat > capacitor.config.json <<'CFG'
           {"appId":"com.quran.muthabbit","appName":"مُثبِّت القرآن","webDir":"www","server":{"androidScheme":"https"}}
           CFG
