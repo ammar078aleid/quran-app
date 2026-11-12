@@ -66,32 +66,6 @@ public class PdfScanPlugin extends Plugin {
   @Override
   public void load() {
     collect(getActivity().getIntent());
-    try {
-      final WebView wv = getBridge().getWebView();
-      wv.post(() -> wv.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-          menu.clear();
-          return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-          menu.clear();
-          return true;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-          return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-        }
-      }));
-    } catch (Throwable t) {
-    }
   }
 
   @Override
