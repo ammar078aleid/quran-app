@@ -704,13 +704,32 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvcpb{display:flex;gap:10px;margin-top:10px}
 .lvcpb button{flex:1;margin:0;min-height:0;padding:11px;border-radius:14px;background:#ffffff18;color:#fff;font-weight:600;box-shadow:none}
 .lvcpb .ok{background:var(--gold);color:#1a1a1a}
-/* ===== تأثيرات التقليب ===== */
-.lv.fx-fade .lvg.lvfl .lvi{animation:lvfade var(--fd,640ms) ease both}
-@keyframes lvfade{from{opacity:0}to{opacity:1}}
-.lv.fx-book .lvg.lvfl .lvi{animation:lvbook var(--fd,640ms) cubic-bezier(.22,.7,.2,1) both;transform-origin:100% 50%}
-.lv.fx-book .lvs.v .lvg.lvfl .lvi{animation-name:lvbookv;transform-origin:50% 0}
-@keyframes lvbook{0%{opacity:.25;transform:perspective(1500px) rotateY(-75deg)}55%{opacity:1}100%{opacity:1;transform:perspective(1500px) rotateY(0)}}
-@keyframes lvbookv{0%{opacity:.25;transform:perspective(1500px) rotateX(60deg)}55%{opacity:1}100%{opacity:1;transform:perspective(1500px) rotateX(0)}}
+/* ===== تأثيرا التقليب «تلاشي» و«كتاب» ===== */
+.lvflip{position:fixed;z-index:6;pointer-events:none;perspective:1700px}
+.lvfp{position:absolute;inset:0;transform-origin:100% 50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:-10px 0 28px rgba(0,0,0,.38);will-change:transform;background:#fff}
+.lvfp canvas{display:block;width:100%;height:100%}
+.lvfp .lvfsh{position:absolute;inset:0;background:linear-gradient(270deg,rgba(0,0,0,0),rgba(0,0,0,.55));opacity:0;pointer-events:none}
+.lvfp.f{animation:lvpf var(--fd,640ms) cubic-bezier(.45,.05,.4,1) both}
+.lvfp.f .lvfsh{animation:lvpsh var(--fd,640ms) ease-in both}
+.lvfp.b{animation:lvpb var(--fd,640ms) cubic-bezier(.3,.1,.3,1) both}
+.lvfp.b .lvfsh{animation:lvpsb var(--fd,640ms) ease-out both}
+@keyframes lvpf{0%{transform:rotateY(0)}100%{transform:rotateY(89deg)}}
+@keyframes lvpb{0%{transform:rotateY(89deg)}100%{transform:rotateY(0)}}
+@keyframes lvpsh{0%{opacity:0}100%{opacity:1}}
+@keyframes lvpsb{0%{opacity:1}100%{opacity:0}}
+.lv.bg-night .lvfp{background:#000}.lv.bg-night .lvfp canvas{filter:invert(1) hue-rotate(180deg)}
+.lv.bg-bw .lvfp canvas{filter:grayscale(1) contrast(1.5) brightness(1.06)}
+.lv.bg-paper .lvfp{background:#f1e6c8}.lv.bg-paper .lvfp canvas{mix-blend-mode:multiply}
+.lv.bg-eye .lvfp{background:#d4ebcf}.lv.bg-eye .lvfp canvas{mix-blend-mode:multiply}
+/* ===== عرض صفحتين مثل الكتاب المفتوح ===== */
+.lvs.h.two .lvg{flex:0 0 50%;position:relative}
+.lvs.h.two .lvg:nth-child(odd){scroll-snap-align:start}
+.lvs.h.two .lvg:nth-child(even){scroll-snap-align:none}
+.lvs.h.two .lvg:nth-child(odd) .lvi{margin-left:0;margin-right:auto}
+.lvs.h.two .lvg:nth-child(even) .lvi{margin-right:0;margin-left:auto}
+.lvs.h.two .lvg:nth-child(odd)::after,.lvs.h.two .lvg:nth-child(even)::after{content:'';position:absolute;top:var(--gt,0);bottom:0;width:22px;pointer-events:none;z-index:2}
+.lvs.h.two .lvg:nth-child(odd)::after{left:0;background:linear-gradient(90deg,rgba(0,0,0,.30),transparent)}
+.lvs.h.two .lvg:nth-child(even)::after{right:0;background:linear-gradient(270deg,rgba(0,0,0,.30),transparent)}
 @media (prefers-reduced-motion:reduce){.lv .lvg.lvfl .lvi{animation:none!important}}
 /* ===== وضع أفقي: أشرطة مضغوطة تترك الصفحة واضحة ===== */
 @media (orientation:landscape) and (max-height:520px){

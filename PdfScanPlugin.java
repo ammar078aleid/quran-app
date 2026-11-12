@@ -542,8 +542,10 @@ public class PdfScanPlugin extends Plugin {
           .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
       PendingIntent content = PendingIntent.getActivity(c, id, open,
           PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+      int icon = c.getResources().getIdentifier("ic_stat_qm", "drawable", c.getPackageName());
+      if (icon == 0) icon = android.R.drawable.ic_dialog_info;
       NotificationCompat.Builder b = new NotificationCompat.Builder(c, alarm ? CH_ALARM : CH_REMIND)
-          .setSmallIcon(R.drawable.ic_stat_qm)
+          .setSmallIcon(icon)
           .setColor(0xFF1B5E20)
           .setContentTitle(title)
           .setContentText(body)
