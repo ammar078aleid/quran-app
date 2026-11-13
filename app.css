@@ -792,3 +792,30 @@ iframe,embed,object{max-width:100%}
 .lvcn{margin-top:8px;padding:9px 28px;border-radius:22px;border:1px solid #ffffff44;background:#ffffff14;color:#fff;font:inherit;font-size:14px}
 .lbMore{grid-column:1/-1;display:block;width:100%;height:1px;opacity:0;pointer-events:none}
 .lbc img{background:#fff}
+
+/* ===== بطاقات المكتبة المضغوطة + التحديد المتعدد ===== */
+.lbk{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.lbL .lbk{padding:6px 12px;gap:12px}
+.lbL .lbc-w{width:52px}
+.lbL .lbi{gap:2px}
+.lbL .lbi b{font-size:15.5px}
+.lbL .lbi>span{font-size:12.5px}
+.lbL .lbm{width:34px;height:34px}
+.lbL .lbt .lbq button{padding:6px 11px;font-size:12.5px}
+.lbSB{position:fixed;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;background:var(--card);border-bottom:1px solid var(--bd)}
+.lbSB b{flex:1;font-size:17px}
+.lbSx{width:42px;height:42px;padding:0;margin:0;background:transparent;color:var(--pri);box-shadow:none;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.lbSx .ic{width:24px;height:24px}
+.lbSB .lbSx:first-child .ic{transform:scaleX(-1)}
+.lbSA{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:space-around;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--bd)}
+.lbSA button{flex:1;margin:0;background:transparent;color:var(--pri);box-shadow:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;padding:6px 4px}
+.lbSA button.bad{color:#c62828}
+.lbSA .ic{width:24px;height:24px}
+.lbS1{padding-bottom:96px}
+.lbCk{width:26px;height:26px;border-radius:8px;border:2px solid var(--mut);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex:none;box-sizing:border-box;background:var(--card)}
+.lbL .lbCk{margin-inline-end:6px}
+.lbG:not(.lbL) .lbCk{position:absolute;top:8px;inset-inline-start:8px;z-index:3}
+.lbOn .lbCk{background:var(--pri);border-color:var(--pri)}
+.lbL .lbk.lbOn{background:color-mix(in srgb,var(--pri) 10%,transparent)}
+.lbG:not(.lbL) .lbk.lbOn .lbc{outline:3px solid var(--pri)}
+.lbS0 .lbm{display:none}

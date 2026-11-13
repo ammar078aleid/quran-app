@@ -25,6 +25,7 @@ function go(t){if(t!='tc'&&typeof tcChClose=='function')tcChClose();if(typeof ex
 let drawnTab=null;
 function draw(){
  if(tab!='lb'&&typeof libThFree=='function')libThFree();
+ if(tab!='lb')libSel=null;
  $('#nav').innerHTML=tabs.map(([k,i,n])=>`<button type="button" class="${k==tab||(k=='td'&&tab=='gl')?'on':''}" onclick="go('${k}')">${i}<br>${n}</button>`).join('');
  const vm=$('#v'),chg=tab!==drawnTab,y0=window.scrollY;drawnTab=tab;try{sessionStorage.setItem('qmTab',tab)}catch(e){}vm.classList.toggle('na',!chg);
  vm.innerHTML={home:home,jz:jz,al:alarms,st:stats,ar:archive,nb:notebook,se:settings,ap:appearance,re:reminders,ct:conts,bk:backup,pr:prayer,td:todos,pv:privPage,gl:goalsPage,ex:examPage,rv:revPage,wr:wrdPage,jm:jmPage,hp:hpPage,kh:khPage,tc:tcPage,lb:libPage}[tab]();
@@ -432,7 +433,7 @@ function alarms(){
  <div>${D.map((d,i)=>`<span class="chip ${addDays.includes(i)?'on':''}" onclick="addDays=addDays.includes(${i})?addDays.filter(x=>x!=${i}):[...addDays,${i}];draw()">${d}</span>`).join('')}</div>
  <button type="button" onclick="addAl()" style="margin-top:8px">إضافة المنبّه</button></div>
  ${perm!='granted'&&perm!='unsupported'?'<div class="c"><button type="button" onclick="'+(nat?'natAsk()':'Notification.requestPermission().then(draw)')+'">🔔 السماح بالإشعارات</button></div>':''}
- ${nat&&natBat===false?'<div class="c"><button type="button" onclick="natBatAsk()">🔋 السماح بالعمل في الخلفية (لضمان وصول المنبّه بعد إغلاق التطبيق)</button></div>':''}
+ ${nat&&natD?natDiagHtml():(nat&&natBat===false?'<div class="c"><button type="button" onclick="natBatAsk()">🔋 السماح بالعمل في الخلفية (لضمان وصول المنبّه بعد إغلاق التطبيق)</button></div>':'')}
  <div class="c"><button type="button" onclick="ringStart();setTimeout(ringStop,3500)" style="width:100%">🔊 تجربة صوت المنبّه</button></div>
  <div class="c m">${nat?'🔔 المنبّهات تعمل حتى والتطبيق مغلق، بشرط السماح بالإشعارات.':'⚠️ المنبّهات تعمل ما دامت هذه الصفحة مفتوحة على الشاشة. للتنبيه وهي مغلقة استعمل منبّه الهاتف بجانبها.'}</div>`+
  S.alarms.map(a=>`<div class="c"><div class="row sp"><b style="font-size:22px">${a.time} • ${a.k}</b><button type="button" class="g" onclick="S.alarms=S.alarms.filter(x=>x.id!=${a.id});save();draw()">🗑</button></div>
@@ -2139,7 +2140,7 @@ async function libOpenDoc(s,onTask,onProg,dead){
  try{return await t2.promise}catch(e){if(pwc)throw pwErr();throw e}}
 const libCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const x=c.getContext('2d',{alpha:false});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);return[c,x]};
 var libTQc=0,libTK=null,libTAb=0,libThU={},libThQ=new Set();
-const LIB_PX='data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+const LIB_PX='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 /* المصغّرات: Blob مستقل (160px، جودة 0.6) في مخزن thumb، يُعرض عبر ObjectURL ويُحرَّر عند مغادرة تبويب المكتبة */
 const libD2B=u=>{const i=u.indexOf(','),bin=atob(u.slice(i+1)),a=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)a[k]=bin.charCodeAt(k);return new Blob([a],{type:(/^data:([^;,]+)/.exec(u)||[])[1]||'image/jpeg'})};
 const libThDone=m=>!!m.th&&(!!m.np||!libIsPdf(m));
@@ -2204,6 +2205,7 @@ async function libRenOk(id){const m=libM_(id),i=$('#libRn'),n=((i&&i.value)||'')
 function libMenu(id){const m=libM_(id);if(!m)return;const d=`'${esc(m.id)}'`,pdf=libIsPdf(m);
  $('#sh').innerHTML=`<div class="sh" onclick="if(event.target===this)libSX()"><div class="lbS"><div class="lbSh">${libCover(m)}<div><b>${esc(libTitle(m))}</b><span>${libMeta(m)}</span></div></div>
  <button type="button" class="lbSb" onclick="libSX();libOpen(${d})">${svg(pdf?'book':'eye')} فتح</button>
+ <button type="button" class="lbSb" onclick="libSX();libSelStart(${d})">${svg('check')} تحديد</button>
  <button type="button" class="lbSb" onclick="libFav(${d})">${svg('star')} ${m.fav?'إزالة من المفضلة':'إضافة إلى المفضلة'}</button>
  <button type="button" class="lbSb" onclick="libShare(${d})">${svg('share')} مشاركة</button>
  <button type="button" class="lbSb" onclick="libSave(${d})">${svg('download')} تنزيل نسخة</button>
@@ -2215,16 +2217,39 @@ const libPct=m=>m.np&&m.lp>1?Math.min(100,Math.round((m.lp-1)/Math.max(1,m.np-1)
 const libBd=s=>'<bdi>'+s+'</bdi>';
 const libMetaL=m=>{const p=libPct(m);return libBd(libDate(m.lm||m.at))+' • '+libBd(libSz(m.size||0))+(p&&p<98?' • '+libBd(p+'%'):'')};
 const libMeta=m=>[m.np&&!libIsDoc(m)?libBd(m.np+' صفحة'):'',libBd(libSz(m.size||0))].filter(Boolean).join(' • ');
-const libCover=m=>{const e=libExt(m.name),p=libPct(m);return `<div class="lbc" style="--c:${libCol_(e)}">${m.th?`<img src="${libThU[m.id]||LIB_PX}" data-th="${esc(m.id)}"${libThU[m.id]?' data-ok="1"':''} alt="" decoding="async" onload="libThHook(this)">`:`<div class="lbe"><span>${esc(e.slice(0,4))}</span><i>${esc(libTitle(m).slice(0,46))}</i></div>`}<u class="lbsp"></u>${p?`<i class="lbp"><b style="width:${p}%"></b></i>`:''}${m.fav?`<span class="lbf">${svg('star')}</span>`:''}${m.trashAt?'':p>=98?'<em class="lbn ok">مكتمل</em>':!m.lo?'<em class="lbn">جديد</em>':''}</div>`};
+const libCover=m=>{const e=libExt(m.name),p=libPct(m);return `<div class="lbc" style="--c:${libCol_(e)}">${m.th?`<img src="${libThU[m.id]||LIB_PX}" data-th="${esc(m.id)}"${libThU[m.id]?' data-ok="1"':''} alt="" decoding="async" onload="libThHook(this)" onerror="libThHook(this)">`:`<div class="lbe"><span>${esc(e.slice(0,4))}</span><i>${esc(libTitle(m).slice(0,46))}</i></div>`}<u class="lbsp"></u>${p?`<i class="lbp"><b style="width:${p}%"></b></i>`:''}${m.fav?`<span class="lbf">${svg('star')}</span>`:''}${m.trashAt?'':p>=98?'<em class="lbn ok">مكتمل</em>':!m.lo?'<em class="lbn">جديد</em>':''}</div>`};
 function libFiltered(){const cfg=libCfg(),q=libNorm(libQ.trim());let a=libM.filter(m=>libTabF=='tr'?!!m.trashAt:!m.trashAt);if(libTabF=='fav')a=a.filter(m=>m.fav);if(q)a=a.filter(m=>libNorm(m.name).includes(q));const s=cfg.sort;
  a.sort(libTabF=='tr'?(x,y)=>y.trashAt-x.trashAt:s=='name'?(x,y)=>x.name.localeCompare(y.name,'ar'):s=='size'?(x,y)=>(y.size||0)-(x.size||0):s=='add'?(x,y)=>y.at-x.at:(x,y)=>(y.lo||y.at)-(x.lo||x.at));return a}
-function libCard(m){const d=esc(m.id),p=libPct(m);
- if(m.trashAt)return `<div class="lbk lbt"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span>${libSz(m.size||0)} • ${libLeft(m)}</span><div class="lbq"><button type="button" onclick="libRestore('${d}')">${svg('refresh')} استرجاع</button><button type="button" class="g bad" onclick="libKill('${d}')">${svg('trash')} حذف الآن</button></div></div></div>`;
- return `<div class="lbk" role="button" tabindex="0" onclick="libOpen('${d}')"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span class="lbmg">${libMeta(m)}${p&&p<98?' • '+p+'%':''}</span><span class="lbml">${libMetaL(m)}</span></div><button type="button" class="lbm" aria-label="خيارات" onclick="event.stopPropagation();libMenu('${d}')">${svg('lbDots')}</button></div>`}
+function libCard(m){const d=esc(m.id),p=libPct(m),on=libSel&&libSel.has(m.id),ck=libSel?`<span class="lbCk">${on?'✓':''}</span>`:'';
+ const cl=(libSel?' lbS0':'')+(on?' lbOn':'');
+ if(m.trashAt)return `<div class="lbk lbt${cl}" data-id="${d}" onclick="libTap('${d}')"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span>${libSz(m.size||0)} • ${libLeft(m)}</span>${libSel?'':`<div class="lbq"><button type="button" onclick="libRestore('${d}')">${svg('refresh')} استرجاع</button><button type="button" class="g bad" onclick="libKill('${d}')">${svg('trash')} حذف الآن</button></div>`}</div>${ck}</div>`;
+ return `<div class="lbk${cl}" role="button" tabindex="0" data-id="${d}" onclick="libTap('${d}')"><div class="lbc-w">${libCover(m)}</div><div class="lbi"><b>${esc(libTitle(m))}</b><span class="lbmg">${libMeta(m)}${p&&p<98?' • '+p+'%':''}</span><span class="lbml">${libMetaL(m)}</span></div>${libSel?ck:`<button type="button" class="lbm" aria-label="خيارات" onclick="event.stopPropagation();libMenu('${d}')">${svg('lbDots')}</button>`}</div>`}
+/* ---------- التحديد المتعدد: ضغطة مطوّلة على أي ملف، ثم مفضلة/حذف/استرجاع لعدة ملفات ---------- */
+var libSel=null,libLPf=0;
+function libTap(id){if(libLPf){libLPf=0;return}if(libSel)libSelTog(id);else{const m=libM_(id);if(m&&!m.trashAt)libOpen(id)}}
+function libSelStart(id){libSel=new Set([id]);draw()}
+function libSelTog(id){if(!libSel)return;libSel.has(id)?libSel.delete(id):libSel.add(id);draw()}
+function libSelExit(){libSel=null;draw()}
+function libSelAll(){if(!libSel)return;const ids=(libFiltered()).map(m=>m.id);if(ids.length&&ids.every(i=>libSel.has(i)))libSel.clear();else ids.forEach(i=>libSel.add(i));draw()}
+const libSelMs=()=>libSel?[...libSel].map(libM_).filter(Boolean):[];
+async function libSelFav(){const ms=libSelMs();if(!ms.length)return toast('حدّد ملفاً أولاً');const on=!ms.every(m=>m.fav);for(const m of ms){m.fav=on;await libPut(m)}toast(on?'أُضيف '+ms.length+' إلى المفضلة ⭐':'أُزيل '+ms.length+' من المفضلة');libSel=null;draw()}
+function libSelDel(){const ms=libSelMs();if(!ms.length)return toast('حدّد ملفاً أولاً');ask('نقل '+ms.length+' ملف إلى السلة؟',async()=>{for(const m of ms){m.trashAt=Date.now();await libPut(m)}toast('نُقل '+ms.length+' إلى السلة');libSel=null;draw()},'نعم، انقل')}
+async function libSelRestore(){const ms=libSelMs();if(!ms.length)return toast('حدّد ملفاً أولاً');for(const m of ms){m.trashAt=0;await libPut(m)}toast('تم استرجاع '+ms.length+' ✅');libSel=null;libTabF='all';draw()}
+function libSelKill(){const ms=libSelMs();if(!ms.length)return toast('حدّد ملفاً أولاً');ask('حذف '+ms.length+' ملف نهائياً؟ لا يمكن التراجع (الملفات الأصلية على الجهاز تبقى).',async()=>{for(const m of ms){try{await libDestroy(m)}catch(e){dbg(e)}}toast('تم الحذف نهائياً');libSel=null;draw()},'نعم، احذف')}
+function libSelBars(){if(!libSel)return '';const n=libSel.size,tr=libTabF=='tr',ms=libSelMs(),allFav=ms.length&&ms.every(m=>m.fav);
+ const b=(ic,t,f,c)=>`<button type="button" class="${c||''}" onclick="${f}">${svg(ic)}<span>${t}</span></button>`;
+ return `<div class="lbSB"><button type="button" class="lbSx" aria-label="إلغاء التحديد" onclick="libSelExit()">${svg('lbL')}</button><b>تم تحديد <bdi>${n}</bdi></b><button type="button" class="lbSx" aria-label="تحديد الكل" onclick="libSelAll()">${svg('check')}</button></div>
+ <div class="lbSA">${tr?b('refresh','استرجاع','libSelRestore()')+b('trash','حذف نهائي','libSelKill()','bad'):b('star',allFav?'إزالة المفضلة':'مفضلة','libSelFav()')+b('trash','حذف','libSelDel()','bad')}</div>`}
+(function(){let t=0,x=0,y=0;const stop=()=>{clearTimeout(t);t=0};
+ document.addEventListener('touchstart',e=>{const k=e.target.closest&&e.target.closest('.lbk[data-id]');if(!k||!e.touches||e.touches.length!=1)return;if(e.target.closest('.lbm,.lbq'))return;x=e.touches[0].clientX;y=e.touches[0].clientY;clearTimeout(t);
+  t=setTimeout(()=>{t=0;libLPf=1;setTimeout(()=>{libLPf=0},900);try{navigator.vibrate&&navigator.vibrate(18)}catch(_){}const id=k.dataset.id;if(libSel)libSelTog(id);else libSelStart(id)},430)},{passive:true});
+ document.addEventListener('touchmove',e=>{if(!t)return;const q=e.touches[0];if(!q||Math.abs(q.clientX-x)>10||Math.abs(q.clientY-y)>10)stop()},{passive:true});
+ ['touchend','touchcancel'].forEach(n=>document.addEventListener(n,stop,{passive:true}));
+ document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('.lbk[data-id]'))e.preventDefault()})})();
 const LIB_CH=24;let libFA=[],libShown=0;
 /* عرض تدريجي: دفعة أولى ثم تُضاف الدفعات عند الاقتراب من نهاية القائمة */
 function libMoreHook(el){if(el._o)return;const io=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;if(!el.isConnected){io.disconnect();return}const a=libShown,b=Math.min(libFA.length,a+LIB_CH);libShown=b;el.insertAdjacentHTML('beforebegin',libFA.slice(a,b).map(libCard).join(''));if(b>=libFA.length){io.disconnect();el.remove()}else{io.unobserve(el);io.observe(el)}},{rootMargin:'900px 0px'});el._o=io;io.observe(el)}
-function libList(){const a=libFiltered();libFA=a;libShown=0;if(!a.length)return `<div class="lbNo">${libQ.trim()?'لا توجد نتائج مطابقة':libTabF=='fav'?'لم تضف ملفات إلى المفضلة بعد':libTabF=='tr'?'السلة فارغة':'لا توجد ملفات'}</div>`;libShown=Math.min(LIB_CH,a.length);return a.slice(0,libShown).map(libCard).join('')+(libShown<a.length?`<img class="lbMore" alt="" src="${LIB_PX}" onload="libMoreHook(this)">`:'')}
+function libList(){const a=libFiltered();libFA=a;libShown=0;if(!a.length)return `<div class="lbNo">${libQ.trim()?'لا توجد نتائج مطابقة':libTabF=='fav'?'لم تضف ملفات إلى المفضلة بعد':libTabF=='tr'?'السلة فارغة':'لا توجد ملفات'}</div>`;libShown=Math.min(LIB_CH,a.length);return a.slice(0,libShown).map(libCard).join('')+(libShown<a.length?`<img class="lbMore" alt="" src="${LIB_PX}" onload="libMoreHook(this)" onerror="libMoreHook(this)">`:'')}
 function libSortMenu(){const c=libCfg().sort;$('#sh').innerHTML=`<div class="sh" onclick="if(event.target===this)libSX()"><div class="lbS"><div class="lbSh"><b>ترتيب الملفات</b></div>${[['rec','الأحدث فتحاً'],['add','الأحدث إضافة'],['name','الاسم (أ - ي)'],['size','الحجم (الأكبر أولاً)']].map(([k,t])=>`<button type="button" class="lbSb ${c==k?'cur':''}" onclick="libCfgSet({sort:'${k}'});libSX();draw()">${svg('check')} ${t}</button>`).join('')}</div></div>`}
 function libPage(){
  if(!libLoaded){libLoad().then(()=>{if(tab=='lb')draw()}).catch(dbg);return `<div class="lbTop"><div><h2>المكتبة</h2><p>جارٍ التحميل…</p></div></div>`}
@@ -2238,12 +2263,12 @@ function libPage(){
   <div class="lbAct"><button type="button" class="lbPri" onclick="$('#libFp').click()">${svg('lbUp')} رفع ملف</button><button type="button" class="lbSec" onclick="$('#libFd').click()">${svg('lbFold')} مجلد</button>${libNat()?`<button type="button" class="lbSec" onclick="libScan(1)">${svg('refresh')} فحص</button>`:''}</div>
   <input type="file" id="libFp" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden onchange="libPick(this.files);this.value=''"><input type="file" id="libFd" webkitdirectory multiple hidden onchange="libPickDir(this.files);this.value=''"><input type="file" id="libFa" multiple hidden onchange="libPick(this.files);this.value=''"><div class="lbDz" role="button" tabindex="0" onclick="$('#libFp').click()">${svg('lbUp')}<span>اسحب ملفات PDF أو Word وأفلتها هنا، أو اضغط للاختيار</span></div><div class="m" style="text-align:center;font-size:11px;opacity:.55;margin-top:6px">${libDiag()}</div>${imp}${(libNat()&&libAcc===false)?`<div class="lbIm"><div><b>لعرض ملفات PDF الموجودة على جهازك</b><span>يلزم السماح بالوصول إلى الملفات</span></div><button type="button" class="lbPri" onclick="libAskAccess()" style="margin-top:8px">السماح بالوصول</button></div>`:''}${libScn?`<div class="lbIm"><div><b>جارٍ فحص الجهاز عن ملفات PDF…</b></div><div class="lbpb"><i style="width:100%;opacity:.45"></i></div></div>`:''}`;
  if(!libM.length)return `${top}<div class="lbEm"><div class="lbEi"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="22" y="20" width="26" height="82" rx="5" fill="none" stroke="var(--gold)" stroke-width="3.5"/><rect x="54" y="20" width="26" height="82" rx="5" fill="var(--pri)" opacity=".92"/><path d="m88 28 20-5 14 70-20 5z" transform="translate(-10 0)" fill="none" stroke="var(--pri)" stroke-width="3.5" stroke-linejoin="round"/></svg></div><b>مكتبتك فارغة</b><span>ارفع ملف PDF أو Word أو استورد مجلداً كاملاً، وسيظهر هنا بغلاف وتقدّم قراءة ويُفتح بسرعة. كل شيء يبقى على جهازك.</span><a href="#" onclick="$('#libFa').click();return false">ملف آخر (نص، صور…)</a></div>`;
- const seg=[['all','الكل',live.length],['fav','المفضلة',fav],['tr','السلة',tr.length]].map(([k,t,n])=>`<button type="button" class="${libTabF==k?'on':''}" onclick="libTabF='${k}';draw()">${t}<b>${n}</b></button>`).join('');
+ const seg=[['all','الكل',live.length],['fav','المفضلة',fav],['tr','السلة',tr.length]].map(([k,t,n])=>`<button type="button" class="${libTabF==k?'on':''}" onclick="libTabF='${k}';libSel=null;draw()">${t}<b>${n}</b></button>`).join('');
  const sort=libTabF=='tr'?'':`<button type="button" class="lbSo" aria-label="ترتيب" onclick="libSortMenu()">${svg('sliders')}</button>`;
  const trT=libTabF=='tr'?`<div class="lbT"><div class="m" style="line-height:1.7">الملفات المحذوفة تبقى هنا للاسترجاع ثم تُحذف نهائياً بعد المدة التي تحدّدها.</div><div class="row" style="flex-wrap:nowrap;margin-top:8px"><span style="flex:1">مدة الاحتفاظ</span><select onchange="libDays(this.value)" style="width:auto;margin:0">${[...new Set([1,3,7,14,30,60,90,cfg.days])].sort((a,b)=>a-b).map(d=>`<option value="${d}" ${d==cfg.days?'selected':''}>${libDw(d)}</option>`).join('')}</select></div>${tr.length?`<button type="button" class="g bad" style="width:100%;margin-top:10px" onclick="libEmpty()">${svg('trash')} إفراغ السلة الآن</button>`:''}</div>`:'';
  const pc=hero?libPct(hero):0;
  const hr=hero?`<div class="lbR" role="button" tabindex="0" onclick="libOpen('${esc(hero.id)}')"><div class="lbc-w">${libCover(hero)}</div><div class="lbRi"><span class="lbRk">تابع القراءة</span><b>${esc(libTitle(hero))}</b><span class="m">${libIsDoc(hero)?'وثيقة Word':'صفحة '+hero.lp+' من '+hero.np}</span><div class="lbRp"><i class="lbRb"><b style="width:${pc}%"></b></i><em>${pc}%</em></div><span class="lbRg">متابعة ${svg('lbL')}</span></div></div>`:'';
- return `${top}${hr}<div class="lbFt"><div class="lbSeg">${seg}</div>${sort}</div>${trT}<div id="libGrid" class="${cfg.view=='l'||libTabF=='tr'?'lbG lbL':'lbG'}">${libList()}</div><div class="lbFn"><a href="#" onclick="$('#libFa').click();return false">فتح ملف آخر (نص، صور…)</a></div>`}
+ return `${libSelBars()}${top}${hr}<div class="lbFt"><div class="lbSeg">${seg}</div>${sort}</div>${trT}<div id="libGrid" class="${cfg.view=='l'||libTabF=='tr'?'lbG lbL':'lbG'}${libSel?' lbS1':''}">${libList()}</div><div class="lbFn"><a href="#" onclick="$('#libFa').click();return false">فتح ملف آخر (نص، صور…)</a></div>`}
 
 /* ---------- قارئ PDF ---------- */
 let LV=null;
@@ -2694,12 +2719,13 @@ async function libNatShared(){const N=libNat();if(!N)return;try{const r=await N.
 function libNatBoot(){if(!libNat()||libNB)return;libNB=1;natInit();libNatShared().then(()=>libScan(0));setTimeout(()=>{natRefresh().then(()=>natBatOnce())},6000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0);natRefresh().then(ch=>{if(ch){natSync(true);try{draw()}catch(e){}}setTimeout(natBatOnce,1200)})}})}
 
 /* ---------- إشعارات أندرويد الأصلية: منبّهات النظام (AlarmManager) تعمل والتطبيق مغلق ---------- */
-var natPerm='',natBat=null,natSig='',natT=0;
+var natPerm='',natBat=null,natSig='',natT=0,natD=null;
 const natOn=()=>!!libNat();
 async function natRefresh(){const N=libNat();if(!N)return false;const a=natPerm,b=natBat;
  try{const s=await N.notifState();natPerm=s.state}catch(e){dbg(e)}
  try{const x=await N.batteryState();natBat=!!x.ignoring}catch(e){}
- return a!==natPerm||b!==natBat}
+ const d0=JSON.stringify(natD);try{if(N.diag)natD=await N.diag()}catch(e){dbg(e)}
+ return a!==natPerm||b!==natBat||d0!==JSON.stringify(natD)}
 async function natInit(){const N=libNat();if(!N)return;await natRefresh();
  if(natPerm=='prompt'){try{await N.requestNotif()}catch(e){dbg(e)}setTimeout(async()=>{await natRefresh();natSync(true);try{draw()}catch(e){}},1500)}
  natSync(true);try{draw()}catch(e){}}
@@ -2712,6 +2738,18 @@ function natBatOnce(){if(!natOn()||natBat!==false)return;let d=0;try{d=localStor
  const sh=$('#sh');if(sh&&sh.innerHTML.trim())return;if(typeof libAcc!='undefined'&&libAcc===false){let a=0;try{a=localStorage.getItem('libAsk')}catch(e){}if(!a)return}
  try{localStorage.setItem('batAsk','1')}catch(e){}
  ask('لضمان وصول المنبّهات والتذكيرات والمؤقتات حتى بعد إغلاق التطبيق، اسمح للتطبيق بالعمل في الخلفية (تجاهل توفير البطارية).',()=>{natBatAsk()},'السماح','لاحقاً')}
+async function natOpenNotif(){const N=libNat();if(!N)return;try{await N.openNotifSettings();toast('فعّل «السماح بالإشعارات» وكل القنوات ثم ارجع للتطبيق')}catch(e){dbg(e)}}
+async function natExactAsk(){const N=libNat();if(!N)return;try{await N.requestExact();toast('فعّل «المنبّهات والتذكيرات» ثم ارجع للتطبيق')}catch(e){dbg(e)}}
+async function natTest(sec){const N=libNat();if(!N||!N.testNotify)return;try{await natRefresh();await N.testNotify({delay:sec});toast(sec?'سيصلك إشعار بعد '+sec+' ثانية — أغلق التطبيق من قائمة التطبيقات وانتظر':'أُرسل إشعار تجريبي')}catch(e){dbg(e);toast('تعذّر إرسال الإشعار التجريبي')}}
+/* بطاقة حالة الإشعارات: تُظهر ما يمنع وصولها والتطبيق مغلق، وزر إصلاح لكل بند */
+function natDiagHtml(){const d=natD;if(!natOn()||!d)return '';
+ const row=(ok,t,fix)=>`<div class="row" style="flex-wrap:nowrap;gap:8px;margin:7px 0;align-items:center"><span style="flex:1;line-height:1.5">${ok?'✅':'⚠️'} ${t}</span>${ok||!fix?'':`<button type="button" class="g" style="margin:0;width:auto;padding:7px 12px" onclick="${fix}">إصلاح</button>`}</div>`;
+ const sam=/samsung/i.test(d.brand||''),nx=d.next?new Date(d.next).toLocaleString('ar',{weekday:'short',hour:'2-digit',minute:'2-digit'}):'';
+ return `<div class="c"><b>حالة الإشعارات والمنبّهات</b>
+ ${row(d.notif,'إذن الإشعارات','natAsk()')}${row(d.channels,'قنوات الإشعار غير مكتومة','natOpenNotif()')}${row(d.exact,'السماح بالمنبّهات الدقيقة','natExactAsk()')}${row(d.battery,'العمل في الخلفية (تجاهل توفير البطارية)','natBatAsk()')}
+ <div class="m" style="margin:6px 0">${d.count?'مجدوَل: '+d.count+' تنبيه'+(nx?' • التالي: '+nx:''):'لا توجد تنبيهات مجدولة'}</div>
+ ${sam?'<div class="m" style="margin:6px 0;line-height:1.7">سامسونغ: الإعدادات ← البطارية ← حدود الاستخدام في الخلفية ← <b>التطبيقات النائمة</b> و<b>التطبيقات التي لا تُسكَّن أبداً</b>: أضف «مثبت القرآن» إلى الثانية وأخرجه من الأولى.</div>':''}
+ <div class="row" style="flex-wrap:nowrap;gap:8px"><button type="button" class="g" style="flex:1;margin:0" onclick="natTest(0)">🔔 تجربة الآن</button><button type="button" style="flex:1;margin:0" onclick="natTest(60)">⏱ بعد دقيقة</button></div></div>`}
 async function natBatAsk(){const N=libNat();if(!N)return;try{await N.batteryOpen();toast('اختر «السماح» ليعمل المنبّه حتى بعد إغلاق التطبيق')}catch(e){dbg(e)}}
 function natQ(){if(!natOn())return;clearTimeout(natT);natT=setTimeout(()=>natSync(),1500)}
 function natBuild(){const out=[],now=Date.now();let id=1;
@@ -3064,6 +3102,7 @@ function bbStep(){
  if(document.getElementById('exOv')){exClose();return true}
  const sh=document.getElementById('sh');
  if(sh&&sh.innerHTML.trim()){if(document.getElementById('crh')&&typeof colCancel=='function')colCancel();else{pf=null;sh.innerHTML=''}return true}
+ if(tab=='lb'&&typeof libSel!='undefined'&&libSel){libSel=null;draw();return true}
  if(document.getElementById('lkbar')){nbLkHide();nbLk=null;return true}
  const aw=document.getElementById('aw');
  if(aw&&aw.style.display==='block'&&aw.innerHTML.trim()){if(awMode==='up'){awSet('in');return true}if(!aw.querySelector('.awspin')&&confirm('هل تريد الخروج من التطبيق؟'))bbQuit();return true}

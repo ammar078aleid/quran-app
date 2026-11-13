@@ -407,6 +407,93 @@ public class PdfScanPlugin extends Plugin {
     call.resolve();
   }
 
+  /* تشخيص كل ما يلزم لوصول الإشعارات والتطبيق مغلق */
+  @PluginMethod
+  public void diag(PluginCall call) {
+    try {
+      Context c = getContext();
+      JSObject o = new JSObject();
+      o.put("notif", NotificationManagerCompat.from(c).areNotificationsEnabled());
+      boolean chOk = true;
+      if (Build.VERSION.SDK_INT >= 26) {
+        channels(c);
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        String[] ids = {CH_ALARM, CH_REMIND};
+        for (String id : ids) {
+          NotificationChannel ch = nm.getNotificationChannel(id);
+          if (ch == null || ch.getImportance() == NotificationManager.IMPORTANCE_NONE) chOk = false;
+        }
+      }
+      o.put("channels", chOk);
+      boolean exact = true;
+      if (Build.VERSION.SDK_INT >= 31) {
+        AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+        exact = am.canScheduleExactAlarms();
+      }
+      o.put("exact", exact);
+      boolean ign = true;
+      if (Build.VERSION.SDK_INT >= 23) {
+        PowerManager pm = (PowerManager) c.getSystemService(Context.POWER_SERVICE);
+        ign = pm.isIgnoringBatteryOptimizations(c.getPackageName());
+      }
+      o.put("battery", ign);
+      o.put("brand", Build.MANUFACTURER == null ? "" : Build.MANUFACTURER);
+      JSONArray a = loadItems(c);
+      long now = System.currentTimeMillis(), next = 0;
+      for (int i = 0; i < a.length(); i++) {
+        JSONObject it = a.optJSONObject(i);
+        if (it == null) continue;
+        long t = nextTime(it, now);
+        if (t > 0 && (next == 0 || t < next)) next = t;
+      }
+      o.put("count", a.length());
+      o.put("next", next);
+      call.resolve(o);
+    } catch (Exception e) {
+      call.reject("diag: " + e.getMessage());
+    }
+  }
+
+  @PluginMethod
+  public void requestExact(PluginCall call) {
+    try {
+      if (Build.VERSION.SDK_INT >= 31) {
+        getActivity().startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+            Uri.parse("package:" + getContext().getPackageName())));
+      }
+    } catch (Exception e) {
+    }
+    call.resolve();
+  }
+
+  /* إشعار تجريبي: delay بالثواني (0 = فوراً). يمرّ عبر المنبّه الحقيقي نفسه عند delay > 0 */
+  @PluginMethod
+  public void testNotify(PluginCall call) {
+    try {
+      Context c = getContext();
+      int delay = call.getInt("delay", 0);
+      JSONObject it = new JSONObject();
+      it.put("id", 990000 + (int) ((System.currentTimeMillis() / 1000L) % 9000L));
+      it.put("kind", "remind");
+      it.put("title", "تجربة الإشعار ✅");
+      it.put("body", delay > 0 ? "وصل هذا الإشعار والتطبيق مغلق" : "الإشعارات تعمل");
+      it.put("once", true);
+      it.put("snz", 1);
+      it.put("at", System.currentTimeMillis() + delay * 1000L);
+      if (delay <= 0) {
+        show(c, it);
+      } else {
+        JSONArray a = loadItems(c);
+        a.put(it);
+        store(c, a);
+        arm(c, it);
+      }
+      call.resolve();
+    } catch (Exception e) {
+      call.reject("test: " + e.getMessage());
+    }
+  }
+
   @PluginMethod
   public void batteryState(PluginCall call) {
     boolean ign = true;
@@ -516,7 +603,13 @@ public class PdfScanPlugin extends Plugin {
       long t = nextTime(it, System.currentTimeMillis());
       if (t <= 0) return;
       AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
-      am.setAlarmClock(new AlarmManager.AlarmClockInfo(t, showPi(c)), opPi(c, it.getInt("id")));
+      try {
+        am.setAlarmClock(new AlarmManager.AlarmClockInfo(t, showPi(c)), opPi(c, it.getInt("id")));
+      } catch (SecurityException se) {
+        /* بلا إذن المنبّهات الدقيقة: نرجع لمنبّه يعمل حتى في وضع السكون (قد يتأخر دقائق) بدل ألّا يُجدوَل شيء */
+        if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, opPi(c, it.getInt("id")));
+        else am.set(AlarmManager.RTC_WAKEUP, t, opPi(c, it.getInt("id")));
+      }
     } catch (Exception e) {
     }
   }
