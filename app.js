@@ -2603,7 +2603,7 @@ const libIgnAdd=p=>{try{const a=[...libIgn()];if(!a.includes(p)){a.push(p);local
 function libAskAccess(){const N=libNat();if(!N)return;ask('لعرض ملفات PDF الموجودة على جهازك يحتاج التطبيق إذن «الوصول إلى كل الملفات». سيفتح إعدادات النظام: فعّل الخيار ثم ارجع إلى التطبيق.',()=>{N.requestAccess().catch(dbg)},'فتح الإعدادات','لاحقاً')}
 async function libScan(manual){const N=libNat();if(!N||libScn)return;if(!manual&&Date.now()-libLast<45000)return;
  let a;try{a=await N.hasAccess()}catch(e){dbg(e);return}
- libAcc=!!a.granted;if(!a.granted){if(tab=='lb')draw();let asked=0;try{asked=localStorage.getItem('libAsk')}catch(e){}if(manual||!asked){try{localStorage.setItem('libAsk','1')}catch(e){}libAskAccess()}return}
+ libAcc=!!a.granted;if(!a.granted&&a.unsupported){if(manual)toast('الفحص التلقائي غير متاح في هذه النسخة — أضف كتبك بزر «مجلد» أو «رفع ملف»');return}if(!a.granted){if(tab=='lb')draw();let asked=0;try{asked=localStorage.getItem('libAsk')}catch(e){}if(manual||!asked){try{localStorage.setItem('libAsk','1')}catch(e){}libAskAccess()}return}
  libScn=1;if(tab=='lb')draw();
  try{const r=await N.scan(),n=await libMerge(r.files||[]);libLast=Date.now();if(manual||n)toast(n?'تمت إضافة '+n+' ملف من الجهاز ✅':'لا توجد ملفات جديدة')}catch(e){dbg(e);toast('تعذّر فحص الجهاز')}
  libScn=0;libFill();draw()}

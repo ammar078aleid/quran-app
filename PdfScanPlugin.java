@@ -100,10 +100,23 @@ public class PdfScanPlugin extends Plugin {
         == PackageManager.PERMISSION_GRANTED;
   }
 
+  private boolean allFilesDeclared() {
+    if (Build.VERSION.SDK_INT < 30) return true;
+    try {
+      String[] r = getContext().getPackageManager()
+          .getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS).requestedPermissions;
+      if (r != null) for (String p : r) if ("android.permission.MANAGE_EXTERNAL_STORAGE".equals(p)) return true;
+    } catch (Exception e) {
+    }
+    return false;
+  }
+
   @PluginMethod
   public void hasAccess(PluginCall call) {
     JSObject o = new JSObject();
     o.put("granted", granted());
+    /* نسخة بلا صلاحية «كل الملفات»: الفحص التلقائي غير متاح (لا نطلب الإذن) */
+    o.put("unsupported", !allFilesDeclared());
     call.resolve(o);
   }
 
