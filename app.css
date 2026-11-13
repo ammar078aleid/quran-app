@@ -727,9 +727,10 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvs.h.two .lvg:nth-child(even){scroll-snap-align:none}
 .lvs.h.two .lvg:nth-child(odd) .lvi{margin-left:0;margin-right:auto}
 .lvs.h.two .lvg:nth-child(even) .lvi{margin-right:0;margin-left:auto}
-.lvs.h.two .lvg:nth-child(odd)::after,.lvs.h.two .lvg:nth-child(even)::after{content:'';position:absolute;top:var(--gt,0);bottom:0;width:22px;pointer-events:none;z-index:2}
-.lvs.h.two .lvg:nth-child(odd)::after{left:0;background:linear-gradient(90deg,rgba(0,0,0,.30),transparent)}
-.lvs.h.two .lvg:nth-child(even)::after{right:0;background:linear-gradient(270deg,rgba(0,0,0,.30),transparent)}
+/* ظل منتصف الكتاب: داخل الصفحة نفسها فلا يمتد خطاً داكناً فوق الصفحتين وتحتهما */
+.lvs.h.two .lvg:nth-child(odd) .lvi::after,.lvs.h.two .lvg:nth-child(even) .lvi::after{content:'';position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:2}
+.lvs.h.two .lvg:nth-child(odd) .lvi::after{left:0;background:linear-gradient(90deg,rgba(0,0,0,.30),transparent)}
+.lvs.h.two .lvg:nth-child(even) .lvi::after{right:0;background:linear-gradient(270deg,rgba(0,0,0,.30),transparent)}
 @media (prefers-reduced-motion:reduce){.lv .lvg.lvfl .lvi{animation:none!important}}
 /* ===== وضع أفقي: أشرطة مضغوطة تترك الصفحة واضحة ===== */
 @media (orientation:landscape) and (max-height:520px){
@@ -775,3 +776,11 @@ iframe,embed,object{max-width:100%}
 .lvrg::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);border:3px solid #0e0f14}
 .lvew{flex:none;margin:0;min-height:0;padding:7px 11px;border-radius:12px;background:#ffffff18;color:#fff;font-size:12px;font-weight:600;box-shadow:none;white-space:nowrap}
 .lvew.on{background:var(--gold);color:#1a1a1a}
+
+/* قطعة الدقة العالية فوق الصفحة المكبّرة */
+.lvs .lvg canvas.lvtile{position:absolute;display:block;max-width:none;max-height:none;min-width:0;box-shadow:none;background:transparent;pointer-events:none}
+/* مؤشر السحب للتحديث */
+#ptrInd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:50%;z-index:9999;width:38px;height:38px;border-radius:50%;background:var(--card,#fff);box-shadow:0 3px 14px #0003;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:translate(-50%,-52px)}
+#ptrInd i{width:18px;height:18px;border-radius:50%;border:3px solid var(--gold,#c9a24b);border-top-color:transparent}
+#ptrInd.on i{animation:ptrsp .7s linear infinite}
+@keyframes ptrsp{to{transform:rotate(360deg)}}

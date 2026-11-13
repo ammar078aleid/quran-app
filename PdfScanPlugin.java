@@ -286,6 +286,19 @@ public class PdfScanPlugin extends Plugin {
   }
 
   @PluginMethod
+  public void exitApp(PluginCall call) {
+    try {
+      getActivity().finishAndRemoveTask();
+    } catch (Exception e) {
+      try {
+        getActivity().finish();
+      } catch (Exception e2) {
+      }
+    }
+    call.resolve();
+  }
+
+  @PluginMethod
   public void minimize(PluginCall call) {
     try {
       getActivity().moveTaskToBack(true);
