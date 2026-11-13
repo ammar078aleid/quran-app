@@ -2691,7 +2691,7 @@ async function libMerge(list){if(!libLoaded)await libLoad();const ign=libIgn(),b
  for(const m of [...libM]){if(!m.dev||seen.has(m.dev))continue;const keep=m.fav||(m.bk||[]).length||(m.an&&Object.keys(m.an).length)||m.lp>1;if(keep){if(m.dl!==false){m.dl=false;await libPut(m)}}else{await libDB.del(m.id).catch(dbg);libM=libM.filter(x=>x!==m)}}
  return add}
 async function libNatShared(){const N=libNat();if(!N)return;try{const r=await N.getShared(),fs=[];for(const f of (r.files||[])){try{const res=await fetch(libFileUrl(f.path));if(!res.ok)continue;const b=await res.blob();fs.push(new File([b],f.name,{type:b.type||(/\.pdf$/i.test(f.name)?'application/pdf':'')}))}catch(e){dbg(e)}}if(fs.length)libPick(fs)}catch(e){dbg(e)}}
-function libNatBoot(){if(!libNat()||libNB)return;libNB=1;natInit();libNatShared().then(()=>libScan(0));document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0);natRefresh().then(ch=>{if(ch){natSync(true);try{draw()}catch(e){}}})}})}
+function libNatBoot(){if(!libNat()||libNB)return;libNB=1;natInit();libNatShared().then(()=>libScan(0));setTimeout(()=>{natRefresh().then(()=>natBatOnce())},6000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible'){libNatShared();libScan(0);natRefresh().then(ch=>{if(ch){natSync(true);try{draw()}catch(e){}}setTimeout(natBatOnce,1200)})}})}
 
 /* ---------- إشعارات أندرويد الأصلية: منبّهات النظام (AlarmManager) تعمل والتطبيق مغلق ---------- */
 var natPerm='',natBat=null,natSig='',natT=0;
@@ -2707,6 +2707,11 @@ async function natAsk(){const N=libNat();if(!N)return;
  try{await natRefresh();if(natPerm=='granted'){toast('الإشعارات مفعّلة ✅');return}
   if(natPerm=='prompt'){await N.requestNotif();setTimeout(async()=>{await natRefresh();try{draw()}catch(e){}},1500)}
   else{await N.openNotifSettings();toast('فعّل «السماح بالإشعارات» ثم ارجع للتطبيق')}}catch(e){dbg(e)}}
+/* طلب «العمل في الخلفية» (تجاهل تحسين البطارية) مرة واحدة بشرح واضح، بعد إذن الملفات وبلا تداخل نوافذ */
+function natBatOnce(){if(!natOn()||natBat!==false)return;let d=0;try{d=localStorage.getItem('batAsk')}catch(e){}if(d)return;
+ const sh=$('#sh');if(sh&&sh.innerHTML.trim())return;if(typeof libAcc!='undefined'&&libAcc===false){let a=0;try{a=localStorage.getItem('libAsk')}catch(e){}if(!a)return}
+ try{localStorage.setItem('batAsk','1')}catch(e){}
+ ask('لضمان وصول المنبّهات والتذكيرات والمؤقتات حتى بعد إغلاق التطبيق، اسمح للتطبيق بالعمل في الخلفية (تجاهل توفير البطارية).',()=>{natBatAsk()},'السماح','لاحقاً')}
 async function natBatAsk(){const N=libNat();if(!N)return;try{await N.batteryOpen();toast('اختر «السماح» ليعمل المنبّه حتى بعد إغلاق التطبيق')}catch(e){dbg(e)}}
 function natQ(){if(!natOn())return;clearTimeout(natT);natT=setTimeout(()=>natSync(),1500)}
 function natBuild(){const out=[],now=Date.now();let id=1;

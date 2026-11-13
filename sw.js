@@ -1,6 +1,6 @@
-/* Service Worker — مُثبِّت القرآن. النسخة: 5a46a865 */
-const CACHE='qm-5a46a865',FONTS='qm-fonts';
-const SHELL=['./','index.html','app.css?v=5a46a865','app.js?v=5a46a865','i18n-en.js?v=5a46a865','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
+/* Service Worker — مُثبِّت القرآن. النسخة: 73a12d33 */
+const CACHE='qm-73a12d33',FONTS='qm-fonts';
+const SHELL=['./','index.html','app.css?v=73a12d33','app.js?v=73a12d33','i18n-en.js?v=73a12d33','manifest.webmanifest','icon-192.png','privacy.html','terms.html'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>c.add(new Request(u,{cache:'reload'}))))))});
 self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('qm-')&&k!==CACHE&&k!==FONTS).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

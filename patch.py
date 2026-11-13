@@ -1,3 +1,7 @@
+# True = صلاحيات «كل الملفات» و«تجاهل تحسين البطارية» (فحص تلقائي لملفات PDF + منبّهات موثوقة).
+# إن ظهر تحذير Play Protect وأردت تجربة نسخة بدونهما غيّرها إلى False (يبقى «رفع ملف/مجلد» يعمل).
+FULL_ACCESS = True
+
 p = 'android/app/src/main/AndroidManifest.xml'
 s = open(p, encoding='utf8').read()
 s = s.replace('<application', '<application android:requestLegacyExternalStorage="true"', 1)
@@ -34,13 +38,17 @@ receivers = '''
 assert '</application>' in s
 s = s.replace('</application>', receivers + '</application>', 1)
 s = s.replace('</activity>', filters + '</activity>', 1)
-perms = '''    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+perms = '''    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+'''
+if FULL_ACCESS:
+    perms += '''    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 '''
 s = s.replace('</manifest>', perms + '</manifest>')
 open(p, 'w', encoding='utf8').write(s)
