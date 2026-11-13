@@ -59,7 +59,7 @@ jobs:
           npm init -y > /dev/null
           npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           cat > capacitor.config.json <<'CFG'
-          {"appId":"com.quran.muthabbit","appName":"مُثبِّت القرآن","webDir":"www","server":{"androidScheme":"https"}}
+          {"appId":"com.quran.muthabbit","appName":"مثبت القرآن","webDir":"www","server":{"androidScheme":"https"}}
           CFG
           npx cap add android
           D=android/app/src/main/java/com/quran/muthabbit
