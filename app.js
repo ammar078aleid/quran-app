@@ -1529,7 +1529,7 @@ function settings(){const P=prof(),E=pe.on,u=fu;
  ${row('globe','بلد الإقامة',E?`<button type="button" class="g" onclick="ctrySheet()" style="padding:6px 10px">${cName(P.country)} ▾</button>`:cName(P.country))}
  ${row('calendar','عضو منذ',esc(S.since||'—'))}</div>
  ${accCard()}<div class="ph">إعدادات الحساب</div><div class="pcard">
- ${u?act('users','المعلّم والطلاب',"go('tc')")+act('lock',((u&&u.providerData||[]).some(x=>x.providerId==='password'))?'تغيير كلمة المرور':'إنشاء كلمة مرور','chPass()')+act('cloud','المزامنة واسترجاع البيانات','syncSheet()')+act('logout','تسجيل الخروج',"ask('تسجيل الخروج يمسح البيانات من هذا الهاتف وتبقى محفوظة في حسابك. متابعة؟',out,'نعم، اخرج')"):''}
+ ${u?act('lock',((u&&u.providerData||[]).some(x=>x.providerId==='password'))?'تغيير كلمة المرور':'إنشاء كلمة مرور','chPass()')+act('cloud','المزامنة واسترجاع البيانات','syncSheet()')+act('logout','تسجيل الخروج',"ask('تسجيل الخروج يمسح البيانات من هذا الهاتف وتبقى محفوظة في حسابك. متابعة؟',out,'نعم، اخرج')"):''}
  ${u?act('userx','حذف الحساب نهائياً',"typedAsk('حذف الحساب نهائياً','سيُحذف حسابك واسم المستخدم وكل بياناتك السحابية نهائياً ولا يمكن التراجع.','delAcc')",1):act('trash','حذف بياناتي من الجهاز',"typedAsk('حذف بيانات الجهاز','ستُحذف كل بياناتك المحفوظة في هذا الجهاز ولا يمكن التراجع.','wipe')",1)}</div>
  <div id="sm" aria-live="polite" style="padding:10px 24px;min-height:24px;font-size:14px">${esc(sm)}</div></div>`}
 

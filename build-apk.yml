@@ -1,0 +1,101 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Check files
+        run: |
+          test -f index.html || { echo "index.html غير موجود في جذر المستودع"; exit 1; }
+          test -f PdfScanPlugin.java || { echo "PdfScanPlugin.java غير موجود"; exit 1; }
+          test -f MainActivity.java || { echo "MainActivity.java غير موجود"; exit 1; }
+          test -f patch.py || { echo "patch.py غير موجود"; exit 1; }
+
+      - name: Signing key
+        run: |
+          if [ ! -f apk-keystore.jks ]; then
+            keytool -genkeypair -keystore apk-keystore.jks -alias qm -keyalg RSA -keysize 2048 -validity 36500 \
+              -storepass qmpass123 -keypass qmpass123 -dname "CN=Quran Muthabbit"
+            git config user.name "apk-bot"
+            git config user.email "apk-bot@users.noreply.github.com"
+            git add apk-keystore.jks
+            git commit -m "add apk signing key"
+            git push || true
+          fi
+          mkdir -p /tmp/apk/www
+          cp apk-keystore.jks /tmp/apk/ks.jks
+
+      - name: Key fingerprint
+        id: fp
+        run: |
+          FP=$(keytool -list -v -keystore apk-keystore.jks -storepass qmpass123 | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
+          echo "sha1=$FP" >> $GITHUB_OUTPUT
+          echo "SHA-1: $FP" >> $GITHUB_STEP_SUMMARY
+
+      - name: Copy site into app
+        run: |
+          rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='apk-keystore.jks' --exclude='*.apk' --exclude='*.java' --exclude='patch.py' ./ /tmp/apk/www/
+
+      - name: Create Android project
+        working-directory: /tmp/apk
+        run: |
+          npm init -y > /dev/null
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          cat > capacitor.config.json <<'CFG'
+          {"appId":"com.quran.muthabbit","appName":"مثبت القرآن","webDir":"www","server":{"androidScheme":"https"}}
+          CFG
+          npx cap add android
+          D=android/app/src/main/java/com/quran/muthabbit
+          mkdir -p $D
+          cp "$GITHUB_WORKSPACE/PdfScanPlugin.java" "$GITHUB_WORKSPACE/MainActivity.java" $D/
+          cp "$GITHUB_WORKSPACE/patch.py" .
+          python3 patch.py
+
+      - name: App icon
+        working-directory: /tmp/apk
+        run: |
+          if [ -f www/icon-512.png ]; then
+            command -v convert > /dev/null || sudo apt-get install -y imagemagick > /dev/null
+            RES=android/app/src/main/res
+            rm -rf $RES/mipmap-anydpi-v26
+            for pair in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+              d=${pair%%:*}; s=${pair##*:}
+              for n in ic_launcher ic_launcher_round ic_launcher_foreground; do
+                convert www/icon-512.png -resize ${s}x${s} $RES/mipmap-$d/$n.png
+              done
+            done
+          fi
+
+      - name: Build APK
+        working-directory: /tmp/apk
+        run: |
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk /tmp/quran-muthabbit.apk
+
+      - name: Publish APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: APK ${{ github.run_number }}
+          body: "SHA-1: ${{ steps.fp.outputs.sha1 }}"
+          files: /tmp/quran-muthabbit.apk
