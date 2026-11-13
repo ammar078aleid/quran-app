@@ -784,3 +784,11 @@ iframe,embed,object{max-width:100%}
 #ptrInd i{width:18px;height:18px;border-radius:50%;border:3px solid var(--gold,#c9a24b);border-top-color:transparent}
 #ptrInd.on i{animation:ptrsp .7s linear infinite}
 @keyframes ptrsp{to{transform:rotate(360deg)}}
+/* المكتبة والقارئ: تحميل غير حاصر + تقدّم + إلغاء، وعرض تدريجي للقائمة */
+.lvld{background:#0b0c10d9;z-index:2;pointer-events:none}
+.lvld .lvcn,.lvld .lvlb{pointer-events:auto}
+.lvlb{width:min(260px,70vw);height:5px;border-radius:5px;background:#ffffff22;overflow:hidden}
+.lvlb i{display:block;height:100%;width:4%;border-radius:5px;background:var(--gold,#c9a24b);transition:width .25s}
+.lvcn{margin-top:8px;padding:9px 28px;border-radius:22px;border:1px solid #ffffff44;background:#ffffff14;color:#fff;font:inherit;font-size:14px}
+.lbMore{grid-column:1/-1;display:block;width:100%;height:1px;opacity:0;pointer-events:none}
+.lbc img{background:#fff}

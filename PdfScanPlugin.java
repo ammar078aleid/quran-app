@@ -140,14 +140,29 @@ public class PdfScanPlugin extends Plugin {
     call.resolve();
   }
 
+  private final java.util.concurrent.atomic.AtomicBoolean scanning = new java.util.concurrent.atomic.AtomicBoolean(false);
+
   @PluginMethod
   public void scan(PluginCall call) {
+    if (!scanning.compareAndSet(false, true)) {
+      call.reject("busy");
+      return;
+    }
     new Thread(() -> {
       JSArray arr = new JSArray();
+      boolean ok = true;
       try {
         File root = Environment.getExternalStorageDirectory();
         walk(root, 0, arr, root);
       } catch (Throwable t) {
+        ok = false;
+      } finally {
+        scanning.set(false);
+      }
+      /* فحص ناقص (استثناء/نفاد ذاكرة) لا يُرسَل كقائمة كاملة حتى لا تُحذف كتب موجودة من المكتبة */
+      if (!ok) {
+        call.reject("scan failed");
+        return;
       }
       JSObject o = new JSObject();
       o.put("files", arr);
@@ -216,16 +231,19 @@ public class PdfScanPlugin extends Plugin {
       File[] old = dir.listFiles();
       if (old != null) {
         for (File f : old) {
-          if (System.currentTimeMillis() - f.lastModified() > 3600000L) f.delete();
+          if (System.currentTimeMillis() - f.lastModified() > 900000L) f.delete();
         }
       }
       for (Uri u : l) {
+        File f = null;
+        boolean done = false;
         try {
           String name = nameOf(u);
-          File f = new File(dir, System.currentTimeMillis() + "_" + name.replaceAll("[\\\\/:*?\"<>|]", "_"));
+          f = new File(dir, System.currentTimeMillis() + "_" + name.replaceAll("[\\\\/:*?\"<>|]", "_"));
           try (InputStream in = getContext().getContentResolver().openInputStream(u);
                OutputStream out = new FileOutputStream(f)) {
-            byte[] b = new byte[65536];
+            if (in == null) throw new java.io.IOException("no stream");
+            byte[] b = new byte[131072];
             int r;
             while ((r = in.read(b)) != -1) out.write(b, 0, r);
           }
@@ -234,7 +252,11 @@ public class PdfScanPlugin extends Plugin {
           o.put("name", name);
           o.put("size", f.length());
           arr.put(o);
-        } catch (Exception e) {
+          done = true;
+        } catch (Throwable e) {
+        } finally {
+          /* لا نترك ملفاً مؤقتاً ناقصاً في الكاش إن فشل النسخ */
+          if (!done && f != null) f.delete();
         }
       }
       JSObject r = new JSObject();
