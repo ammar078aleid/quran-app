@@ -750,3 +750,28 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .qa{grid-template-columns:repeat(3,1fr)}
 .qa button{flex-direction:row;justify-content:center;gap:8px;padding:12px 6px;font-size:13px;font-weight:600}
 .qa .ic{width:22px;height:22px}
+
+/* ===== إصلاحات التجاوب والاتجاه (أفقي/رأسي) =====
+   مأخوذة من الملف المطلوب بعد تضييقها لتناسب هذا التطبيق وعدم كسر تنسيقه الحالي. */
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+html{overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{width:100%}
+iframe,embed,object{max-width:100%}
+@media (orientation:landscape){body{padding-left:var(--sal);padding-right:var(--sar)}}
+
+/* ===== القارئ: صفحة واحدة في الوضع الرأسي + تكبير في كل الأوضاع ===== */
+/* لا تظهر حافة الصفحة المجاورة في هامش الشريطين */
+.lvs.v.fit:not(.lvz){clip-path:inset(var(--pt) 0 var(--pb) 0)}
+/* أثناء التكبير: تتوقف حركة التمرير والتقليب، ولا يظهر غير الصفحة المكبّرة */
+.lvs.lvz{overflow:hidden!important;scroll-snap-type:none!important;touch-action:none!important;clip-path:none!important}
+.lvs.lvz .lvg{visibility:hidden}
+.lvs.lvz .lvg.lvza{visibility:visible;overflow:visible!important}
+.lvs.lvz .lvi.lvzp{z-index:3;will-change:transform}
+/* ممحاة PDF: شريط الحجم وخيار مسح الخط كاملاً */
+.lver input.lvrg{-webkit-appearance:none;appearance:none;flex:1;min-width:0;width:auto;height:30px;margin:0 6px;padding:0;border:0;background:transparent;box-shadow:none}
+.lvrg::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:#ffffff30}
+.lvrg::-moz-range-track{height:4px;border-radius:4px;background:#ffffff30}
+.lvrg::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);margin-top:-8px;border:3px solid #0e0f14;box-shadow:0 0 0 1px var(--gold)}
+.lvrg::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);border:3px solid #0e0f14}
+.lvew{flex:none;margin:0;min-height:0;padding:7px 11px;border-radius:12px;background:#ffffff18;color:#fff;font-size:12px;font-weight:600;box-shadow:none;white-space:nowrap}
+.lvew.on{background:var(--gold);color:#1a1a1a}
