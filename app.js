@@ -2095,11 +2095,14 @@ async function libFav(id){const m=libM_(id);if(!m)return;m.fav=!m.fav;await libP
 const LIB_CDN=[new URL('pdfjs-v3/pdf.min.js',document.baseURI).href,'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],LIB_CDW=[new URL('pdfjs-v3/pdf.worker.min.js',document.baseURI).href,'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'];
 function libPdfJs(){if(libPdfP)return libPdfP;
  libPdfP=(async()=>{
-  if(libEngGet()!='v3')try{const mod=await import(new URL('pdf.min.mjs',document.baseURI).href);mod.GlobalWorkerOptions.workerSrc=new URL('pdf.worker.min.mjs',document.baseURI).href;libPdfV='6.2.108';return mod}catch(e){dbg(e,'pdf-local')}
+  const v6=async()=>{const mod=await import(new URL('pdf.min.mjs',document.baseURI).href);mod.GlobalWorkerOptions.workerSrc=new URL('pdf.worker.min.mjs',document.baseURI).href;libPdfV='6.2.108';return mod};
   const loadS=u=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.crossOrigin='anonymous';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('script'))};document.head.appendChild(s)});
-  if(!window.pdfjsLib||libEngGet()=='v3'&&!window.pdfjsLib.__v3){let err;for(const u of LIB_CDN){try{await loadS(u);if(window.pdfjsLib)break}catch(e){err=e}}if(!window.pdfjsLib)throw err||new Error('pdfjs')}
-  let wk=null;for(const u of LIB_CDW){try{const r=await fetch(u);if(r.ok){wk=URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}));break}}catch(e){}}
-  if(!wk)throw new Error('worker');window.pdfjsLib.GlobalWorkerOptions.workerSrc=wk;window.pdfjsLib.__v3=1;libPdfV='3.11.174';return window.pdfjsLib})().catch(e=>{libPdfP=null;throw e});return libPdfP}
+  const v3=async()=>{if(!window.pdfjsLib||!window.pdfjsLib.__v3){let err;window.pdfjsLib=undefined;for(const u of LIB_CDN){try{await loadS(u);if(window.pdfjsLib)break}catch(e){err=e}}if(!window.pdfjsLib)throw err||new Error('pdfjs')}
+   let wk=null;for(const u of LIB_CDW){try{const r=await fetch(u);if(r.ok){wk=URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}));break}}catch(e){}}
+   if(!wk)throw new Error('worker');window.pdfjsLib.GlobalWorkerOptions.workerSrc=wk;window.pdfjsLib.__v3=1;libPdfV='3.11.174';return window.pdfjsLib};
+  const first=libEngEff()=='v3'?v3:v6,second=first===v3?v6:v3;
+  try{return await first()}catch(e){dbg(e,'pdf-first');if(libEngGet()!='auto')throw e}
+  return await second()})().catch(e=>{libPdfP=null;throw e});return libPdfP}
 const libWarm=()=>{if(libWarmed)return;libWarmed=1;(window.requestIdleCallback||setTimeout)(()=>libPdfJs().then(libResProbe).catch(dbg))};
 /* عامل pdf.js واحد مشترك: لا يُنشأ عامل جديد (وتحليل ملف 1.3MB) عند كل فتح */
 let libWk=null;
@@ -2108,12 +2111,12 @@ function libWorker(lib){try{if(libWk&&libWk.destroyed)libWk=null;if(!libWk&&lib&
 let libRes=null,libResP=null;
 function libResProbe(){if(libResP)return libResP;
  libResP=(async()=>{const ok=async b=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),2500);try{const r=await fetch(b+'standard_fonts/FoxitSerif.pfb',{method:'HEAD',signal:c.signal});return r.ok&&!/html/i.test(r.headers.get('content-type')||'')}catch(e){return false}finally{clearTimeout(t)}};
-  let b=null;const loc=new URL(libEngGet()=='v3'?'pdfjs-v3/':'pdfjs/',document.baseURI).href,cdn='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(libEngGet()=='v3'?'3.11.174':(libPdfV||'6.2.108'))+'/';
+  let b=null;const loc=new URL(libIsV3()?'pdfjs-v3/':'pdfjs/',document.baseURI).href,cdn='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(libIsV3()?'3.11.174':(libPdfV||'6.2.108'))+'/';
   if(await ok(loc))b=loc;else if(navigator.onLine!==false&&await ok(cdn))b=cdn;
   libRes=b?{cMapUrl:b+'cmaps/',cMapPacked:true,standardFontDataUrl:b+'standard_fonts/',wasmUrl:b+'wasm/',iccUrl:b+'iccs/'}:{};return libRes})().catch(()=>(libRes={}));return libResP}
 const libLowMem=()=>{try{return natIs()||!!(navigator.deviceMemory&&navigator.deviceMemory<=6)}catch(e){return false}};
 /* قراءة على الطلب (نطاقات 64KB) بدل تحميل الملف كله؛ سقف لحجم الصور؛ لا جلب تلقائي لباقي الصفحات */
-function libDocOpts(lib,ck){const o=Object.assign({isEvalSupported:false,enableXfa:false,stopAtErrors:false,disableAutoFetch:true,disableStream:false,rangeChunkSize:ck||65536,maxImageSize:libLowMem()?6.4e7:1.2e8},libRes||{}),w=libWorker(lib);if(w)o.worker=w;return o}
+function libDocOpts(lib,ck){const o=Object.assign({isEvalSupported:false,enableXfa:false,stopAtErrors:false,disableAutoFetch:true,disableStream:false,rangeChunkSize:ck||65536,maxImageSize:libLowMem()?6.4e7:1.2e8},libRes||{}),w=libWorker(lib);if(w)o.worker=w;if(libIsV3())o.CanvasFactory=libCF();return o}
 /* مصدر الملف: size + read(begin,end) يقرأ جزءاً فقط (Blob.slice أو طلب Range لملف الجهاز) + full() احتياطي */
 function libBlobSrc(b){return{size:b.size,read:async(a,e)=>new Uint8Array(await b.slice(a,e).arrayBuffer()),full:async()=>b}}
 const libB2U=t=>{if(!t)return new Uint8Array(0);const b=atob(t),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
@@ -2139,7 +2142,7 @@ async function libOpenDoc(s,onTask,onProg,dead){
  if(gone())throw new Error('abort');
  const b=await s.full(),t2=start({data:new Uint8Array(await b.arrayBuffer())});
  try{return await t2.promise}catch(e){if(pwc)throw pwErr();throw e}}
-const libCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const x=c.getContext('2d',{alpha:false});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);return[c,x]};
+const libCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const x=c.getContext('2d',{alpha:false,willReadFrequently:libCvWR()});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);return[c,x]};
 var libTQc=0,libTK=null,libTAb=0,libThU={},libThQ=new Set();
 const LIB_PX='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 /* المصغّرات: Blob مستقل (160px، جودة 0.6) في مخزن thumb، يُعرض عبر ObjectURL ويُحرَّر عند مغادرة تبويب المكتبة */
@@ -2290,7 +2293,7 @@ async function libView1(id,sp){const m=libM_(id);if(!m||LV)return;libThumbAbort(
   p1=await Promise.race([pdf.getPage(1),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout-p1')),t2))]);qlog('open:p1',{ms:Math.round(performance.now()-t0)})};
  const cleanup=()=>{late=true;try{tk&&tk.destroy()}catch(e2){}try{pdf&&pdf.destroy()}catch(e2){}pdf=null;tk=null};
  let err=null;try{await attempt(20000,12000)}catch(e){err=e;dbg(e,'open1');cleanup();if(LV!==L)return;
-  const prev=libEngGet();if(!(e&&/^(PasswordException|InvalidPDFException|MissingPDFException)$/.test(e.name))&&prev!='v3'){qlog('engine:switch','v3');toast('جارٍ التبديل إلى وضع التوافق…');libEngSwitch('v3');lvLoadNote('وضع التوافق: جارٍ فتح المستند…',30);
+  const prev=libEngGet(),to=libIsV3()?'v6':'v3';if(!(e&&/^(PasswordException|InvalidPDFException|MissingPDFException)$/.test(e.name))){qlog('engine:switch',to);toast('جارٍ تجربة محرك عرض آخر…');libEngSwitch(to);lvLoadNote('وضع التوافق: جارٍ فتح المستند…',30);
    try{await attempt(45000,30000);err=null;qlog('engine:v3-ok')}catch(e2){err=e2;dbg(e2,'open2');cleanup();libEngSwitch(prev)}}}
  if(err){if(LV!==L)return;const pw=err&&err.name=='PasswordException';qlog('open:fail',String(err&&err.message));lvClose(true);toast(pw?'لم تُدخل كلمة سر صحيحة':'تعذّر قراءة الملف — سيُفتح بتطبيق آخر');if(!pw){const bb=await libBlob(m);if(bb)libShow(bb,m.name)}return}
  if(LV!==L){try{pdf.destroy()}catch(e){}return}
@@ -2312,7 +2315,7 @@ function lvLayout(){const S=$('#lvS'),W=$('#lvW'),h=LV.dir=='h',fit=lvFit();LV.l
  W.appendChild(fr);$('#libV').classList.toggle('hz',h);lvObserve();S.removeEventListener('scroll',lvScroll);S.addEventListener('scroll',lvScroll,{passive:true});
  requestAnimationFrame(()=>{lvGo(LV.cur,false);lvSizes()})}
 function lvObserve(){if(LV.obs)LV.obs.disconnect();const h=LV.dir=='h';LV.obs=new IntersectionObserver(es=>{if(!LV)return;es.forEach(e=>{const i=+e.target.dataset.p;if(e.isIntersecting)LV.want.add(i);else{LV.want.delete(i);lvFree(i)}});lvPump()},{root:$('#lvS'),rootMargin:h?(LV.two?'0px 55%':'0px 100%'):'100% 0px'});LV.els.forEach(g=>LV.obs.observe(g))}
-function lvPump(){if(!LV||!LV.pdf)return;while(LV.busy<2){let best=0,bd=1e9;LV.want.forEach(i=>{if(LV.run.has(i)||LV.done.has(i)&&!LV.stale.has(i))return;const gg=LV.els[i-1];if(gg&&gg._nx>Date.now())return;const d=Math.abs(i-LV.cur);if(d<bd){bd=d;best=i}});if(!best)break;lvDraw(best)}}
+function lvPump(){if(!LV||!LV.pdf)return;while(LV.busy<((typeof libLowMem=='function'&&libLowMem())?1:2)){let best=0,bd=1e9;LV.want.forEach(i=>{if(LV.run.has(i)||LV.done.has(i)&&!LV.stale.has(i))return;const gg=LV.els[i-1];if(gg&&gg._nx>Date.now())return;const d=Math.abs(i-LV.cur);if(d<bd){bd=d;best=i}});if(!best)break;lvDraw(best)}}
 async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g||g._nx>Date.now())return;L.run.add(i);L.busy++;const k=g._k=(g._k||0)+1;
  try{const pg=await Promise.race([L.pdf.getPage(i),new Promise((_,no)=>setTimeout(()=>no(new Error('page timeout')),30000))]);if(LV!==L||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS'),h=lvFit();if(!h)lvRatio(g,i,v1);
   const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=(libLowMem()?2.2e6:3.2e6)*libCapK;if(px>cap)sc*=Math.sqrt(cap/px);
@@ -2321,8 +2324,8 @@ async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g||g._nx>Date.now())return;
   libSlow('draw',i,performance.now()-t0,c.width+'x'+c.height);g._fail=0;g._nx=0;const rb=g._i.querySelector('.lvrt');if(rb)rb.remove();lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
  catch(e){if(!(e&&e.name=='RenderingCancelledException')&&g._k===k){dbg(e);g._fail=(g._fail||0)+1;if(g._fail<3){g._nx=Date.now()+g._fail*700;setTimeout(()=>{if(LV===L)lvPump()},g._fail*700+40)}else{g._nx=9e15;lvFailUi(g,i)}}}
  finally{L.run.delete(i);L.busy--;if(LV===L){lvPump();lvIdle()}}}
-function lvFailUi(g,i){if(!g._i||g._i.querySelector('.lvrt'))return;qlog('draw:fail',{i});const b=document.createElement('button');b.type='button';b.className='lvrt';b.textContent='تعذّر عرض الصفحة — اضغط لإعادة المحاولة';b.onclick=ev=>{ev.stopPropagation();lvRetry(i)};g._i.appendChild(b);const c2=document.createElement('button');c2.type='button';c2.className='lvrt lvrt2';c2.textContent='فتح بوضع التوافق';c2.onclick=ev=>{ev.stopPropagation();lvCompat()};g._i.appendChild(c2)}
-function lvCompat(){const L=LV;if(!L)return;const id=L.m.id,p=L.cur;qlog('compat-click');libEngSwitch(libEngGet()=='v3'?'auto':'v3');lvClose(true);setTimeout(()=>libView(id,p),250)}
+function lvFailUi(g,i){if(!g._i||g._i.querySelector('.lvrt'))return;qlog('draw:fail',{i});const b=document.createElement('button');b.type='button';b.className='lvrt';b.textContent='تعذّر عرض الصفحة — اضغط لإعادة المحاولة';b.onclick=ev=>{ev.stopPropagation();lvRetry(i)};g._i.appendChild(b);const c2=document.createElement('button');c2.type='button';c2.className='lvrt lvrt2';c2.textContent='تجربة محرك عرض آخر';c2.onclick=ev=>{ev.stopPropagation();lvCompat()};g._i.appendChild(c2)}
+function lvCompat(){const L=LV;if(!L)return;const id=L.m.id,p=L.cur;qlog('compat-click');libEngSwitch(libIsV3()?'v6':'v3');lvClose(true);setTimeout(()=>libView(id,p),250)}
 function lvRetry(i){const g=LV&&LV.els[i-1];if(!g)return;g._fail=0;g._nx=0;const b=g._i.querySelector('.lvrt');if(b)b.remove();LV.done.delete(i);LV.want.add(i);lvPump()}
 function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;g._fail=0;g._nx=0;const rb=g._i&&g._i.querySelector('.lvrt');if(rb)rb.remove();try{g._t&&g._t.cancel()}catch(e){}g._t=null;lvTileDel(g);const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}const tl=g._i&&g._i.querySelector('.textLayer');if(tl)tl.remove();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
 /* نافذة الذاكرة: لا يبقى مرسوماً إلا ما هو ظاهر + الصفحة السابقة والتالية (cur-1 .. cur+1)، وما سواه يُحرَّر فوراً */
@@ -3155,6 +3158,14 @@ function qlog(k,d){try{QLOG.push({t:Date.now(),k:k,d:d==null?'':(typeof d=='stri
 /* المحرك: auto = pdf.js 6 (النسخة المرفقة) ثم تبديل تلقائي لـ v3 «وضع التوافق» عند تعذّر الفتح؛ v3 = يفضَّل مباشرة */
 function libEngGet(){try{return localStorage.getItem('qmEng')||'auto'}catch(e){return 'auto'}}
 function libEngSet(v){try{if(v=='auto')localStorage.removeItem('qmEng');else localStorage.setItem('qmEng',v)}catch(e){}}
+/* الفعّال: على الأندرويد v3 افتراضياً (ثبت أن v6 يتعثّر على أجهزة ضعيفة)، وعلى الويب v6 */
+function libEngEff(){const g=libEngGet();return g=='auto'?(natIs()?'v3':'v6'):g}
+function libIsV3(){return libPdfV?String(libPdfV)[0]=='3':libEngEff()=='v3'}
+/* وضع الكانفس: cpu = willReadFrequently (رسم برمجي، يتفادى توقّف قراءة بيانات الصورة من GPU وهو ما يجمّد الواجهة على أجهزة ضعيفة) */
+function libCvMode(){try{return localStorage.getItem('qmCv')||(natIs()?'cpu':'gpu')}catch(e){return 'gpu'}}
+function libCvWR(){return libCvMode()=='cpu'}
+function libCvSet(v){try{localStorage.setItem('qmCv',v)}catch(e){}}
+function libCF(){if(!libCF.k)libCF.k=class{constructor(o){this._d=(o&&o.ownerDocument)||document}create(w,h){const c=this._d.createElement('canvas');c.width=w;c.height=h;return{canvas:c,context:c.getContext('2d',{willReadFrequently:libCvWR()})}}reset(cc,w,h){cc.canvas.width=w;cc.canvas.height=h}destroy(cc){cc.canvas.width=0;cc.canvas.height=0;cc.canvas=null;cc.context=null}};return libCF.k}
 function libEngSwitch(v){libEngSet(v);libPdfP=null;libResP=null;libRes=null;try{libWk&&libWk.destroy()}catch(e){}libWk=null;qlog('engine',v)}
 /* بطء الرسم: يُسجَّل، وإن تجاوز 3.5 ثانية تُخفَّض دقة الرسم تلقائياً لباقي الجلسة */
 function libSlow(kind,i,ms,sz){ms=Math.round(ms);if(ms>1200)qlog('slow-'+kind,{i:i,ms:ms,px:sz});if(ms>3500&&libCapK>.45){libCapK=Math.max(.45,libCapK*.75);qlog('quality-down',libCapK.toFixed(2))}}
@@ -3173,17 +3184,23 @@ async function libDiagTest(out){
  let pdf=null;pdf=await T('فتح المستند (محرك '+(libPdfV||'؟')+')',()=>libOpenDoc(s),25000);if(!pdf)return;
  out('    عدد الصفحات: '+pdf.numPages);
  const p=await T('جلب الصفحة 1',()=>pdf.getPage(1),15000);
- if(p){const v=p.getViewport({scale:1}),sc=Math.min(2,900/v.width),vp=p.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);
-  await T('رسم الصفحة 1 ('+c.width+'×'+c.height+')',()=>p.render({canvasContext:x,viewport:vp}).promise,25000);
-  try{const d=x.getImageData(0,0,c.width,c.height).data;let w=0,k=0,st=Math.max(4,Math.floor(d.length/4/4000))*4;for(let i=0;i<d.length;i+=st){k++;if(d[i]>250&&d[i+1]>250&&d[i+2]>250)w++}out('    نسبة البياض: '+Math.round(w/k*100)+'%'+(w/k>.995?' ⚠ الصفحة تبدو بيضاء':''))}catch(e){}
-  c.width=c.height=0;if(pdf.numPages>2){const p2=await T('جلب+رسم صفحة في المنتصف',async()=>{const q=await pdf.getPage(Math.ceil(pdf.numPages/2)),v2=q.getViewport({scale:1}),[c2,x2]=libCanvas(v2.width,v2.height);await q.render({canvasContext:x2,viewport:v2}).promise;c2.width=c2.height=0},25000)}}
+ if(p){const v=p.getViewport({scale:1}),sc=Math.min(2,900/v.width),vp=p.getViewport({scale:sc});
+  const R=async(l)=>{const[c,x]=libCanvas(vp.width,vp.height),t0=performance.now();const r=await T(l+' ('+c.width+'×'+c.height+')',()=>p.render({canvasContext:x,viewport:vp}).promise,40000);const ms=performance.now()-t0;
+   if(r!==null){try{const d=x.getImageData(0,0,c.width,c.height).data;let w=0,k=0,st=Math.max(4,Math.floor(d.length/4/4000))*4;for(let i=0;i<d.length;i+=st){k++;if(d[i]>250&&d[i+1]>250&&d[i+2]>250)w++}out('    نسبة البياض: '+Math.round(w/k*100)+'%'+(w/k>.995?' ⚠ الصفحة تبدو بيضاء':''))}catch(e){}}
+   c.width=c.height=0;try{p.cleanup()}catch(e){}return ms};
+  try{const lib=await libPdfJs(),O=lib.OPS||{},ol=await p.getOperatorList(),f=ol.fnArray,cnt=n=>{let c=0;for(const o of f)if(o===O[n])c++;return c};let mx=0,mp=0;for(let i=0;i<f.length;i++){const o=f[i];let a=ol.argsArray[i];if(o===O.paintImageXObject||o===O.paintJpegXObject){const w=+a[1]||0,h=+a[2]||0;if(w*h>mp){mp=w*h;mx=w+'×'+h}}else if(o===O.paintInlineImageXObject&&a[0]){const w=+a[0].width||0,h=+a[0].height||0;if(w*h>mp){mp=w*h;mx=w+'×'+h}}}
+   out('    تحليل الصفحة 1: عمليات='+f.length+' صور='+(cnt('paintImageXObject')+cnt('paintInlineImageXObject')+cnt('paintJpegXObject'))+' أقنعة='+cnt('paintImageMaskXObject')+' مجموعات شفافية='+cnt('beginGroup')+' gstate='+cnt('setGState')+' أكبر صورة='+(mx||'-'))}catch(e){out('    تعذّر تحليل العمليات: '+(e&&e.message))}
+  const A=libCvMode(),B=A=='cpu'?'gpu':'cpu';out('  وضع الكانفس الحالي: '+A);
+  const a1=await R('رسم ص1 [وضع '+A+']');libCvSet(B);const b1=await R('رسم ص1 [وضع '+B+']');libCvSet(A);const a2=await R('رسم ص1 [وضع '+A+' ثانية]');
+  const best=(b1<Math.min(a1,a2)*.85)?B:A;libCvSet(best);out('  ⇒ الأسرع: '+best+(best!=A?' (تم تغيير الوضع تلقائياً)':' (بلا تغيير)'));
+  if(pdf.numPages>2){await T('جلب+رسم صفحة في المنتصف',async()=>{const q=await pdf.getPage(Math.ceil(pdf.numPages/2)),v2=q.getViewport({scale:1}),[c2,x2]=libCanvas(v2.width,v2.height);await q.render({canvasContext:x2,viewport:v2}).promise;c2.width=c2.height=0},40000)}}
  try{pdf.destroy()}catch(e){}}
 async function libDiagReport(runTest){const o=[],P=(k,v)=>o.push(k+': '+v);
  let ver='';try{ver=(document.querySelector('script[src*="app.js"]')||{}).src||''}catch(e){}
  P('الوقت',new Date().toLocaleString('en-GB'));P('app.js',ver.split('/').pop());P('Chrome/WebView',navigator.userAgent.replace(/^.*?(Chrome\/[\d.]+).*$/,'$1'));P('UA',navigator.userAgent.slice(0,140));
  P('الذاكرة GB',navigator.deviceMemory||'؟');P('الأنوية',navigator.hardwareConcurrency||'؟');P('الشاشة',innerWidth+'×'+innerHeight+' @'+(window.devicePixelRatio||1));
  try{if(performance.memory)P('heap MB',Math.round(performance.memory.usedJSHeapSize/1048576)+' / '+Math.round(performance.memory.jsHeapSizeLimit/1048576))}catch(e){}
- P('المحرك المفضّل',libEngGet());P('المحرك المحمَّل',libPdfV||'لم يُحمَّل بعد');P('جودة الرسم',Math.round(libCapK*100)+'%');
+ P('المحرك المفضّل',libEngGet()+' → '+libEngEff());P('المحرك المحمَّل',libPdfV||'لم يُحمَّل بعد');P('جودة الرسم',Math.round(libCapK*100)+'%');P('وضع الكانفس',libCvMode());
  P('الجسر الأصلي',libNat()?'نعم':'لا');const N=libNat();
  if(N){try{const d=await N.diag();P('الإشعارات/المنبّهات',JSON.stringify(d))}catch(e){P('diag','غير متاح')}try{const a=await N.hasAccess();P('إذن الملفات',JSON.stringify(a))}catch(e){}}
  try{await Promise.race([libPdfJs().then(libResProbe),new Promise(r=>setTimeout(r,6000))]);P('موارد pdf.js',libRes&&libRes.cMapUrl?libRes.cMapUrl.replace('cmaps/',''):'غير متاحة (بلا خطوط/cmaps/wasm)')}catch(e){P('موارد pdf.js','فشل: '+(e&&e.message))}
@@ -3193,8 +3210,8 @@ async function libDiagReport(runTest){const o=[],P=(k,v)=>o.push(k+': '+v);
  return o.join('\n')}
 async function libDiagOpen(){let el=document.getElementById('libDg');if(el)el.remove();
  el=document.createElement('div');el.id='libDg';el.className='lbdg';
- el.innerHTML='<div class="lbdgc"><b>🩺 تشخيص القارئ</b><textarea id="libDgT" readonly dir="ltr" spellcheck="false">جارٍ جمع المعلومات…</textarea><div class="lbdgb"><button type="button" onclick="libDiagGo(1)">▶ تشغيل الاختبار</button><button type="button" class="g" onclick="libDiagCopy()">نسخ التقرير</button></div><div class="lbdgb"><button type="button" class="g" onclick="libDiagEng(\'auto\')">المحرك: الافتراضي</button><button type="button" class="g" onclick="libDiagEng(\'v3\')">المحرك: وضع التوافق</button></div><button type="button" class="g lbdgx" onclick="document.getElementById(\'libDg\').remove()">إغلاق</button></div>';
+ el.innerHTML='<div class="lbdgc"><b>🩺 تشخيص القارئ</b><textarea id="libDgT" readonly dir="ltr" spellcheck="false">جارٍ جمع المعلومات…</textarea><div class="lbdgb"><button type="button" onclick="libDiagGo(1)">▶ تشغيل الاختبار</button><button type="button" class="g" onclick="libDiagCopy()">نسخ التقرير</button></div><div class="lbdgb"><button type="button" class="g" onclick="libDiagEng(\'auto\')">الافتراضي</button><button type="button" class="g" onclick="libDiagEng(\'v3\')">pdf.js 3</button><button type="button" class="g" onclick="libDiagEng(\'v6\')">pdf.js 6</button></div><button type="button" class="g lbdgx" onclick="document.getElementById(\'libDg\').remove()">إغلاق</button></div>';
  document.body.appendChild(el);libDiagGo(0)}
 async function libDiagGo(t){const a=document.getElementById('libDgT');if(!a)return;a.value='جارٍ '+(t?'تشغيل الاختبار (قد يستغرق حتى دقيقة)…':'جمع المعلومات…');let r='';try{r=await libDiagReport(!!t)}catch(e){r='فشل التقرير: '+(e&&e.message)}const b=document.getElementById('libDgT');if(b){b.value=r;b.scrollTop=0}}
 async function libDiagCopy(){const a=document.getElementById('libDgT');if(!a)return;const t=a.value;try{await navigator.clipboard.writeText(t);toast('تم نسخ التقرير ✅')}catch(e){try{a.removeAttribute('readonly');a.select();document.execCommand('copy');a.setAttribute('readonly','');toast('تم نسخ التقرير ✅')}catch(e2){toast('حدّد النص وانسخه يدوياً')}}}
-function libDiagEng(v){libEngSwitch(v);toast(v=='v3'?'تم اختيار وضع التوافق للفتح القادم':'عاد المحرك الافتراضي');libDiagGo(0)}
+function libDiagEng(v){libEngSwitch(v);toast('تم اختيار المحرك: '+(v=='auto'?'الافتراضي':v=='v3'?'pdf.js 3':'pdf.js 6')+' (للفتح القادم)');libDiagGo(0)}
