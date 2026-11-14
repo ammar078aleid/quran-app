@@ -3176,9 +3176,9 @@ function libEngSet(v){try{if(v=='auto')localStorage.removeItem('qmEng');else loc
 function libEngEff(){const g=libEngGet();return g=='auto'?(natIs()?'v3':'v6'):g}
 function libIsV3(){return libPdfV?String(libPdfV)[0]=='3':libEngEff()=='v3'}
 /* وضع الكانفس: cpu = willReadFrequently (رسم برمجي، يتفادى توقّف قراءة بيانات الصورة من GPU وهو ما يجمّد الواجهة على أجهزة ضعيفة) */
-function libCvMode(){try{return localStorage.getItem('qmCv2')||'gpu'}catch(e){return 'gpu'}}
+function libCvMode(){try{return localStorage.getItem('qmCv3')||'gpu'}catch(e){return 'gpu'}}
 function libCvWR(){return libCvMode()=='cpu'}
-function libCvSet(v){try{localStorage.setItem('qmCv2',v)}catch(e){}}
+function libCvSet(v){try{localStorage.setItem('qmCv3',v)}catch(e){}}
 function libCF(){if(!libCF.k)libCF.k=class{constructor(o){this._d=(o&&o.ownerDocument)||document}create(w,h){const c=this._d.createElement('canvas');c.width=w;c.height=h;return{canvas:c,context:c.getContext('2d',{willReadFrequently:libCvWR()})}}reset(cc,w,h){cc.canvas.width=w;cc.canvas.height=h}destroy(cc){cc.canvas.width=0;cc.canvas.height=0;cc.canvas=null;cc.context=null}};return libCF.k}
 function libEngSwitch(v){libEngSet(v);libPdfP=null;libResP=null;libRes=null;try{libWk&&libWk.destroy()}catch(e){}libWk=null;qlog('engine',v)}
 /* بطء الرسم: يُسجَّل، وإن تجاوز 3.5 ثانية تُخفَّض دقة الرسم تلقائياً لباقي الجلسة */
@@ -3209,7 +3209,7 @@ async function libDiagTest(out){
    out('    تحليل الصفحة 1: عمليات='+f.length+' صور='+(cnt('paintImageXObject')+cnt('paintInlineImageXObject')+cnt('paintJpegXObject'))+' أقنعة='+cnt('paintImageMaskXObject')+' مجموعات شفافية='+cnt('beginGroup')+' gstate='+cnt('setGState')+' أكبر صورة='+(mx||'-'))}catch(e){out('    تعذّر تحليل العمليات: '+(e&&e.message))}
   const A=libCvMode(),B=A=='cpu'?'gpu':'cpu';out('  وضع الكانفس الحالي: '+A);
   const a1=await R('رسم ص1 [وضع '+A+']');libCvSet(B);const b1=await R('رسم ص1 [وضع '+B+']');libCvSet(A);const a2=await R('رسم ص1 [وضع '+A+' ثانية]');
-  const best=(b1<Math.min(a1,a2)*.85)?B:A;libCvSet(best);out('  ⇒ الأسرع: '+best+(best!=A?' (تم تغيير الوضع تلقائياً)':' (بلا تغيير)'));
+  const nn=libNat(),nOk=!!(nn&&nn.pdfRender),fast=(b1<Math.min(a1,a2)*.6)?B:A;if(nOk){out('  ⇒ الأسرع: '+fast+' (لا تغيير: الرسم الأصلي يتولى الصفحات)')}else{libCvSet(fast);out('  ⇒ الأسرع: '+fast+(fast!=A?' (تم تغيير الوضع تلقائياً)':' (بلا تغيير)'))}
   if(pdf.numPages>2){await T('جلب+رسم صفحة في المنتصف',async()=>{const q=await pdf.getPage(Math.ceil(pdf.numPages/2)),v2=q.getViewport({scale:1}),[c2,x2]=libCanvas(v2.width,v2.height);await q.render({canvasContext:x2,viewport:v2}).promise;c2.width=c2.height=0},40000)}}
  try{pdf.destroy()}catch(e){}}
 async function libDiagReport(runTest){const o=[],P=(k,v)=>o.push(k+': '+v);
