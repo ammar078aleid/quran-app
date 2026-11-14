@@ -3176,9 +3176,9 @@ function libEngSet(v){try{if(v=='auto')localStorage.removeItem('qmEng');else loc
 function libEngEff(){const g=libEngGet();return g=='auto'?(natIs()?'v3':'v6'):g}
 function libIsV3(){return libPdfV?String(libPdfV)[0]=='3':libEngEff()=='v3'}
 /* وضع الكانفس: cpu = willReadFrequently (رسم برمجي، يتفادى توقّف قراءة بيانات الصورة من GPU وهو ما يجمّد الواجهة على أجهزة ضعيفة) */
-function libCvMode(){try{return localStorage.getItem('qmCv')||(natIs()?'cpu':'gpu')}catch(e){return 'gpu'}}
+function libCvMode(){try{return localStorage.getItem('qmCv2')||'gpu'}catch(e){return 'gpu'}}
 function libCvWR(){return libCvMode()=='cpu'}
-function libCvSet(v){try{localStorage.setItem('qmCv',v)}catch(e){}}
+function libCvSet(v){try{localStorage.setItem('qmCv2',v)}catch(e){}}
 function libCF(){if(!libCF.k)libCF.k=class{constructor(o){this._d=(o&&o.ownerDocument)||document}create(w,h){const c=this._d.createElement('canvas');c.width=w;c.height=h;return{canvas:c,context:c.getContext('2d',{willReadFrequently:libCvWR()})}}reset(cc,w,h){cc.canvas.width=w;cc.canvas.height=h}destroy(cc){cc.canvas.width=0;cc.canvas.height=0;cc.canvas=null;cc.context=null}};return libCF.k}
 function libEngSwitch(v){libEngSet(v);libPdfP=null;libResP=null;libRes=null;try{libWk&&libWk.destroy()}catch(e){}libWk=null;qlog('engine',v)}
 /* بطء الرسم: يُسجَّل، وإن تجاوز 3.5 ثانية تُخفَّض دقة الرسم تلقائياً لباقي الجلسة */
