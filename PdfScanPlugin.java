@@ -453,6 +453,152 @@ public class PdfScanPlugin extends Plugin {
     }
   }
 
+  /* ===== رسم PDF أصلي عبر PdfRenderer (بدون ضغط على خيط الواجهة) ===== */
+  private static final Object qLock = new Object();
+  private static android.graphics.pdf.PdfRenderer qR = null;
+  private static android.os.ParcelFileDescriptor qFd = null;
+  private static String qPath = null;
+
+  private static void qClose() {
+    try { if (qR != null) qR.close(); } catch (Exception e) { }
+    try { if (qFd != null) qFd.close(); } catch (Exception e) { }
+    qR = null; qFd = null; qPath = null;
+  }
+
+  private static void qOpen(String p) throws Exception {
+    if (qR != null && p.equals(qPath)) return;
+    qClose();
+    qFd = android.os.ParcelFileDescriptor.open(new File(p), android.os.ParcelFileDescriptor.MODE_READ_ONLY);
+    qR = new android.graphics.pdf.PdfRenderer(qFd);
+    qPath = p;
+  }
+
+  private File qDir() {
+    File d = new File(getContext().getCacheDir(), "qpdf");
+    if (!d.exists()) d.mkdirs();
+    return d;
+  }
+
+  @PluginMethod
+  public void pdfInfo(PluginCall call) {
+    final String p = call.getString("path");
+    if (p == null || p.length() == 0) { call.reject("bad args"); return; }
+    new Thread(() -> {
+      synchronized (qLock) {
+        try {
+          qOpen(p);
+          JSObject o = new JSObject();
+          o.put("pages", qR.getPageCount());
+          call.resolve(o);
+        } catch (Throwable e) {
+          qClose();
+          call.reject("info: " + e);
+        }
+      }
+    }).start();
+  }
+
+  /* page: 0-based. وضعان: width فقط (صفحة كاملة) أو tw/th/scale/ox/oy (بلاطة). scale = بكسل لكل نقطة PDF */
+  @PluginMethod
+  public void pdfRender(PluginCall call) {
+    final String p = call.getString("path");
+    final int pg = call.getData().optInt("page", 0);
+    final double width = call.getData().optDouble("width", 0);
+    final int tw = call.getData().optInt("tw", 0);
+    final int th = call.getData().optInt("th", 0);
+    final double sc = call.getData().optDouble("scale", 0);
+    final double ox = call.getData().optDouble("ox", 0);
+    final double oy = call.getData().optDouble("oy", 0);
+    final int qual = call.getData().optInt("q", 88);
+    if (p == null || p.length() == 0) { call.reject("bad args"); return; }
+    new Thread(() -> {
+      synchronized (qLock) {
+        android.graphics.pdf.PdfRenderer.Page page = null;
+        android.graphics.Bitmap b = null;
+        try {
+          qOpen(p);
+          if (pg < 0 || pg >= qR.getPageCount()) { call.reject("page range"); return; }
+          page = qR.openPage(pg);
+          int pw = page.getWidth(), ph = page.getHeight();
+          int w, h;
+          android.graphics.Matrix m = new android.graphics.Matrix();
+          if (tw > 0 && th > 0 && sc > 0) {
+            w = tw; h = th;
+            m.postScale((float) sc, (float) sc);
+            m.postTranslate((float) ox, (float) oy);
+          } else {
+            double k = width > 0 ? width / pw : 1.0;
+            w = Math.max(1, (int) Math.round(pw * k));
+            h = Math.max(1, (int) Math.round(ph * k));
+            m.postScale((float) k, (float) k);
+          }
+          if ((long) w * h > 9000000L) { call.reject("too big"); return; }
+          b = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
+          b.eraseColor(android.graphics.Color.WHITE);
+          page.render(b, null, m, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+          java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(Math.max(4096, w * h / 6));
+          b.compress(android.graphics.Bitmap.CompressFormat.JPEG, Math.max(40, Math.min(95, qual)), bo);
+          JSObject o = new JSObject();
+          o.put("data", Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP));
+          o.put("w", w); o.put("h", h); o.put("pw", pw); o.put("ph", ph);
+          call.resolve(o);
+        } catch (Throwable e) {
+          call.reject("render: " + e);
+        } finally {
+          try { if (page != null) page.close(); } catch (Throwable x) { }
+          try { if (b != null) b.recycle(); } catch (Throwable x) { }
+        }
+      }
+    }).start();
+  }
+
+  /* نسخ ملف مخزّن (blob) إلى الكاش على دفعات: cacheBegin → cacheAppend* */
+  @PluginMethod
+  public void cacheBegin(PluginCall call) {
+    try {
+      String id = call.getString("id", "x").replaceAll("[^A-Za-z0-9_-]", "_");
+      long want = call.getData().optLong("size", 0);
+      File d = qDir();
+      File f = new File(d, id + ".pdf");
+      JSObject o = new JSObject();
+      if (f.exists() && want > 0 && f.length() == want) {
+        f.setLastModified(System.currentTimeMillis());
+        o.put("path", f.getAbsolutePath()); o.put("ready", true);
+        call.resolve(o); return;
+      }
+      File[] all = d.listFiles();
+      if (all != null) {
+        long tot = 0;
+        java.util.Arrays.sort(all, (a, c) -> Long.compare(c.lastModified(), a.lastModified()));
+        for (File x : all) {
+          tot += x.length();
+          if (tot > 300L * 1048576L && !x.equals(f)) x.delete();
+        }
+      }
+      synchronized (qLock) { if (qPath != null && qPath.equals(f.getAbsolutePath())) qClose(); }
+      new FileOutputStream(f, false).close();
+      o.put("path", f.getAbsolutePath()); o.put("ready", false);
+      call.resolve(o);
+    } catch (Throwable e) {
+      call.reject("cacheBegin: " + e);
+    }
+  }
+
+  @PluginMethod
+  public void cacheAppend(PluginCall call) {
+    try {
+      String p = call.getString("path");
+      String data = call.getString("data");
+      if (p == null || data == null || !p.startsWith(qDir().getAbsolutePath())) { call.reject("bad args"); return; }
+      byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+      FileOutputStream fo = new FileOutputStream(new File(p), true);
+      try { fo.write(bytes); } finally { fo.close(); }
+      call.resolve();
+    } catch (Throwable e) {
+      call.reject("cacheAppend: " + e);
+    }
+  }
+
   @PluginMethod
   public void diag(PluginCall call) {
     try {

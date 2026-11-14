@@ -3218,7 +3218,7 @@ async function libDiagReport(runTest){const o=[],P=(k,v)=>o.push(k+': '+v);
  P('الذاكرة GB',navigator.deviceMemory||'؟');P('الأنوية',navigator.hardwareConcurrency||'؟');P('الشاشة',innerWidth+'×'+innerHeight+' @'+(window.devicePixelRatio||1));
  try{if(performance.memory)P('heap MB',Math.round(performance.memory.usedJSHeapSize/1048576)+' / '+Math.round(performance.memory.jsHeapSizeLimit/1048576))}catch(e){}
  P('المحرك المفضّل',libEngGet()+' → '+libEngEff());P('المحرك المحمَّل',libPdfV||'لم يُحمَّل بعد');P('جودة الرسم',Math.round(libCapK*100)+'%');P('وضع الكانفس',libCvMode());
- P('الجسر الأصلي',libNat()?'نعم':'لا');const N=libNat();
+ P('الجسر الأصلي',libNat()?'نعم':'لا');const N=libNat();P('الرسم الأصلي (PdfRenderer)',N&&N.pdfRender&&N.pdfInfo&&N.cacheBegin?'متاح ✔':'غير متاح ✘ — ملف PdfScanPlugin.java القديم داخل الـ APK');
  if(N){try{const d=await N.diag();P('الإشعارات/المنبّهات',JSON.stringify(d))}catch(e){P('diag','غير متاح')}try{const a=await N.hasAccess();P('إذن الملفات',JSON.stringify(a))}catch(e){}}
  try{await Promise.race([libPdfJs().then(libResProbe),new Promise(r=>setTimeout(r,6000))]);P('موارد pdf.js',libRes&&libRes.cMapUrl?libRes.cMapUrl.replace('cmaps/',''):'غير متاحة (بلا خطوط/cmaps/wasm)')}catch(e){P('موارد pdf.js','فشل: '+(e&&e.message))}
  P('عدد الملفات',(libM||[]).length);
