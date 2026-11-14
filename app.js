@@ -1536,7 +1536,7 @@ function settings(){const P=prof(),E=pe.on,u=fu;
  <div id="sm" aria-live="polite" style="padding:10px 24px;min-height:24px;font-size:14px">${esc(sm)}</div></div>`}
 
 /* ===== جودة الكود: تسجيل الأخطاء بدل إخفائها ===== */
-const QERR=[];function dbg(e,w){try{QERR.push({t:Date.now(),w:w||'',m:String(e&&e.message||e)});if(QERR.length>30)QERR.shift();console.warn('[مثبّت]',w||'',e&&e.message||e)}catch(_){}}
+const QERR=[];function dbg(e,w){try{QERR.push({t:Date.now(),w:w||'',m:String(e&&e.message||e)});if(QERR.length>30)QERR.shift();if(typeof qlog=='function')qlog('err:'+(w||''),String(e&&e.message||e).slice(0,160));console.warn('[مثبّت]',w||'',e&&e.message||e)}catch(_){}}
 window.addEventListener('error',e=>dbg(e.error||e.message,'window'));window.addEventListener('unhandledrejection',e=>dbg(e.reason,'promise'));
 /* ===== إمكانية الوصول: أسماء للأزرار الأيقونية وتنقّل بالكيبورد ===== */
 (function(){const N={chev:'رجوع',edit:'تعديل',check:'تم',camera:'تغيير الصورة',copy:'نسخ',plus:'إضافة',trash:'حذف',bell:'التنبيهات',dots:'المزيد',refresh:'تحديث',download:'تنزيل',play:'تشغيل',pause:'إيقاف مؤقت',reset:'إعادة',volume:'الصوت',sun:'الوضع النهاري',moon:'الوضع الليلي',lock:'قفل',unlock:'فتح',lines:'القائمة',grid:'الأقسام',cloud:'المزامنة',user:'الحساب',users:'المعلّم والطلاب',logout:'تسجيل الخروج',mail:'البريد'};
@@ -2092,14 +2092,14 @@ function libDays(v){libCfgSet({days:Math.max(1,Math.min(365,+v||7))});libPurge()
 async function libFav(id){const m=libM_(id);if(!m)return;m.fav=!m.fav;await libPut(m);libSX();draw()}
 
 /* ---------- pdf.js: نسخة محلية بجانب التطبيق (سريعة وتعمل بلا إنترنت)، وإن غابت فمن الشبكة ---------- */
-const LIB_CDN=['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],LIB_CDW=['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'];
+const LIB_CDN=[new URL('pdfjs-v3/pdf.min.js',document.baseURI).href,'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],LIB_CDW=[new URL('pdfjs-v3/pdf.worker.min.js',document.baseURI).href,'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'];
 function libPdfJs(){if(libPdfP)return libPdfP;
  libPdfP=(async()=>{
-  try{const mod=await import(new URL('pdf.min.mjs',document.baseURI).href);mod.GlobalWorkerOptions.workerSrc=new URL('pdf.worker.min.mjs',document.baseURI).href;libPdfV='6.2.108';return mod}catch(e){dbg(e,'pdf-local')}
+  if(libEngGet()!='v3')try{const mod=await import(new URL('pdf.min.mjs',document.baseURI).href);mod.GlobalWorkerOptions.workerSrc=new URL('pdf.worker.min.mjs',document.baseURI).href;libPdfV='6.2.108';return mod}catch(e){dbg(e,'pdf-local')}
   const loadS=u=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.crossOrigin='anonymous';s.onload=ok;s.onerror=()=>{s.remove();no(new Error('script'))};document.head.appendChild(s)});
-  if(!window.pdfjsLib){let err;for(const u of LIB_CDN){try{await loadS(u);if(window.pdfjsLib)break}catch(e){err=e}}if(!window.pdfjsLib)throw err||new Error('pdfjs')}
+  if(!window.pdfjsLib||libEngGet()=='v3'&&!window.pdfjsLib.__v3){let err;for(const u of LIB_CDN){try{await loadS(u);if(window.pdfjsLib)break}catch(e){err=e}}if(!window.pdfjsLib)throw err||new Error('pdfjs')}
   let wk=null;for(const u of LIB_CDW){try{const r=await fetch(u);if(r.ok){wk=URL.createObjectURL(new Blob([await r.text()],{type:'text/javascript'}));break}}catch(e){}}
-  if(!wk)throw new Error('worker');window.pdfjsLib.GlobalWorkerOptions.workerSrc=wk;libPdfV='3.11.174';return window.pdfjsLib})().catch(e=>{libPdfP=null;throw e});return libPdfP}
+  if(!wk)throw new Error('worker');window.pdfjsLib.GlobalWorkerOptions.workerSrc=wk;window.pdfjsLib.__v3=1;libPdfV='3.11.174';return window.pdfjsLib})().catch(e=>{libPdfP=null;throw e});return libPdfP}
 const libWarm=()=>{if(libWarmed)return;libWarmed=1;(window.requestIdleCallback||setTimeout)(()=>libPdfJs().then(libResProbe).catch(dbg))};
 /* عامل pdf.js واحد مشترك: لا يُنشأ عامل جديد (وتحليل ملف 1.3MB) عند كل فتح */
 let libWk=null;
@@ -2108,7 +2108,7 @@ function libWorker(lib){try{if(libWk&&libWk.destroyed)libWk=null;if(!libWk&&lib&
 let libRes=null,libResP=null;
 function libResProbe(){if(libResP)return libResP;
  libResP=(async()=>{const ok=async b=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),2500);try{const r=await fetch(b+'standard_fonts/FoxitSerif.pfb',{method:'HEAD',signal:c.signal});return r.ok&&!/html/i.test(r.headers.get('content-type')||'')}catch(e){return false}finally{clearTimeout(t)}};
-  let b=null;const loc=new URL('pdfjs/',document.baseURI).href,cdn='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(libPdfV||'6.2.108')+'/';
+  let b=null;const loc=new URL(libEngGet()=='v3'?'pdfjs-v3/':'pdfjs/',document.baseURI).href,cdn='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(libEngGet()=='v3'?'3.11.174':(libPdfV||'6.2.108'))+'/';
   if(await ok(loc))b=loc;else if(navigator.onLine!==false&&await ok(cdn))b=cdn;
   libRes=b?{cMapUrl:b+'cmaps/',cMapPacked:true,standardFontDataUrl:b+'standard_fonts/',wasmUrl:b+'wasm/',iccUrl:b+'iccs/'}:{};return libRes})().catch(()=>(libRes={}));return libResP}
 const libLowMem=()=>{try{return natIs()||!!(navigator.deviceMemory&&navigator.deviceMemory<=6)}catch(e){return false}};
@@ -2262,7 +2262,7 @@ function libPage(){
  const top=`<div class="lbTop"><div><h2>المكتبة</h2><p>${live.length?live.length+' ملف • '+libSz(used)+' على جهازك':'ملفاتك تُحفظ على جهازك فقط'}</p></div><div class="lbVw"><button type="button" class="${cfg.view=='g'?'on':''}" aria-label="شبكة" onclick="libCfgSet({view:'g'});draw()">${svg('lbGrid')}</button><button type="button" class="${cfg.view=='l'?'on':''}" aria-label="قائمة" onclick="libCfgSet({view:'l'});draw()">${svg('lbRows')}</button></div></div>
   <div class="lbSr">${svg('lbSearch')}<input id="libSr" type="search" placeholder="ابحث في مكتبتك…" value="${esc(libQ)}" autocomplete="off" oninput="libQ=this.value;$('#libGrid').innerHTML=libList()"></div>
   <div class="lbAct"><button type="button" class="lbPri" onclick="$('#libFp').click()">${svg('lbUp')} رفع ملف</button><button type="button" class="lbSec" onclick="$('#libFd').click()">${svg('lbFold')} مجلد</button>${libNat()?`<button type="button" class="lbSec" onclick="libScan(1)">${svg('refresh')} فحص</button>`:''}</div>
-  <input type="file" id="libFp" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden onchange="libPick(this.files);this.value=''"><input type="file" id="libFd" webkitdirectory multiple hidden onchange="libPickDir(this.files);this.value=''"><input type="file" id="libFa" multiple hidden onchange="libPick(this.files);this.value=''"><div class="lbDz" role="button" tabindex="0" onclick="$('#libFp').click()">${svg('lbUp')}<span>اسحب ملفات PDF أو Word وأفلتها هنا، أو اضغط للاختيار</span></div><div class="m" style="text-align:center;font-size:11px;opacity:.55;margin-top:6px">${libDiag()}</div>${imp}${(libNat()&&libAcc===false)?`<div class="lbIm"><div><b>لعرض ملفات PDF الموجودة على جهازك</b><span>يلزم السماح بالوصول إلى الملفات</span></div><button type="button" class="lbPri" onclick="libAskAccess()" style="margin-top:8px">السماح بالوصول</button></div>`:''}${libScn?`<div class="lbIm"><div><b>جارٍ فحص الجهاز عن ملفات PDF…</b></div><div class="lbpb"><i style="width:100%;opacity:.45"></i></div></div>`:''}`;
+  <input type="file" id="libFp" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden onchange="libPick(this.files);this.value=''"><input type="file" id="libFd" webkitdirectory multiple hidden onchange="libPickDir(this.files);this.value=''"><input type="file" id="libFa" multiple hidden onchange="libPick(this.files);this.value=''"><div class="lbDz" role="button" tabindex="0" onclick="$('#libFp').click()">${svg('lbUp')}<span>اسحب ملفات PDF أو Word وأفلتها هنا، أو اضغط للاختيار</span></div><div class="m" style="text-align:center;font-size:11px;opacity:.55;margin-top:6px">${libDiag()} • <a href="#" onclick="libDiagOpen();return false" style="color:inherit;text-decoration:underline">🩺 تشخيص</a></div>${imp}${(libNat()&&libAcc===false)?`<div class="lbIm"><div><b>لعرض ملفات PDF الموجودة على جهازك</b><span>يلزم السماح بالوصول إلى الملفات</span></div><button type="button" class="lbPri" onclick="libAskAccess()" style="margin-top:8px">السماح بالوصول</button></div>`:''}${libScn?`<div class="lbIm"><div><b>جارٍ فحص الجهاز عن ملفات PDF…</b></div><div class="lbpb"><i style="width:100%;opacity:.45"></i></div></div>`:''}`;
  if(!libM.length)return `${top}<div class="lbEm"><div class="lbEi"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="22" y="20" width="26" height="82" rx="5" fill="none" stroke="var(--gold)" stroke-width="3.5"/><rect x="54" y="20" width="26" height="82" rx="5" fill="var(--pri)" opacity=".92"/><path d="m88 28 20-5 14 70-20 5z" transform="translate(-10 0)" fill="none" stroke="var(--pri)" stroke-width="3.5" stroke-linejoin="round"/></svg></div><b>مكتبتك فارغة</b><span>ارفع ملف PDF أو Word أو استورد مجلداً كاملاً، وسيظهر هنا بغلاف وتقدّم قراءة ويُفتح بسرعة. كل شيء يبقى على جهازك.</span><a href="#" onclick="$('#libFa').click();return false">ملف آخر (نص، صور…)</a></div>`;
  const seg=[['all','الكل',live.length],['fav','المفضلة',fav],['tr','السلة',tr.length]].map(([k,t,n])=>`<button type="button" class="${libTabF==k?'on':''}" onclick="libTabF='${k}';libSel=null;draw()">${t}<b>${n}</b></button>`).join('');
  const sort=libTabF=='tr'?'':`<button type="button" class="lbSo" aria-label="ترتيب" onclick="libSortMenu()">${svg('sliders')}</button>`;
@@ -2283,10 +2283,18 @@ async function libView1(id,sp){const m=libM_(id);if(!m||LV)return;libThumbAbort(
  const L=LV={m,pdf:null,np:m.np||1,cur:Math.max(1,sp||m.lp||1),dir:P.dir,bg:P.bg,snap:P.snap,keep:P.keep,z:1,ed:false,tool:null,cols:P.cols,sz:P.sz,es:Math.max(8,Math.min(72,+P.es||24)),ew:!!P.ew,fz:1,sb:null,fl:P.fl,fx:P.fx||'slide',tz:!!P.tz,two:!!P.two,cc:P.cc||'',ar:0,anim:0,undo:[],redo:[],live:null,ta:null,ign:0,els:[],done:new Set(),run:new Set(),want:new Set(),stale:new Set(),ratio:1.414,wake:null,obs:null,raf:0,st:0,sheet:'',nt:'th',busy:0,txt:{},fid:0,padT:60,padB:110,lt:0,pz:0,tp:{t:0,x:0,y:0,tm:0}};
  lvBuild();
  lvLoadNote('جارٍ قراءة الملف من الجهاز…',8);const s=await libSrc(m);if(LV!==L)return;if(!s){lvClose(true);return}lvLoadNote('جارٍ فتح المستند…',20);
- let pdf,tk=null,late=false;try{pdf=await Promise.race([libOpenDoc(s,t=>{tk=t;if(late)try{t.destroy()}catch(e3){}},lvProg,()=>LV!==L||late),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),45000))])}catch(e){dbg(e);late=true;try{tk&&tk.destroy()}catch(e2){}if(LV!==L)return;const pw=e&&e.name=='PasswordException';lvClose(true);toast(pw?'لم تُدخل كلمة سر صحيحة':'تعذّر قراءة الملف — سيُفتح بتطبيق آخر');if(!pw){const bb=await libBlob(m);if(bb)libShow(bb,m.name)}return}
+ let pdf=null,p1=null,tk=null,late=false;const T0=performance.now();qJank();qlog('open:start',{n:m.name&&m.name.slice(0,40),size:s.size,range:!!s.read&&s.size>262144,eng:libPdfV||libEngGet()});
+ const attempt=async(t1,t2)=>{late=false;tk=null;pdf=null;p1=null;const t0=performance.now();
+  pdf=await Promise.race([libOpenDoc(s,t=>{tk=t;if(late)try{t.destroy()}catch(e3){}},lvProg,()=>LV!==L||late),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout-open')),t1))]);
+  qlog('open:doc',{ms:Math.round(performance.now()-t0),np:pdf.numPages});lvLoadNote('جارٍ تجهيز الصفحة الأولى…',80);
+  p1=await Promise.race([pdf.getPage(1),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout-p1')),t2))]);qlog('open:p1',{ms:Math.round(performance.now()-t0)})};
+ const cleanup=()=>{late=true;try{tk&&tk.destroy()}catch(e2){}try{pdf&&pdf.destroy()}catch(e2){}pdf=null;tk=null};
+ let err=null;try{await attempt(20000,12000)}catch(e){err=e;dbg(e,'open1');cleanup();if(LV!==L)return;
+  const prev=libEngGet();if(!(e&&/^(PasswordException|InvalidPDFException|MissingPDFException)$/.test(e.name))&&prev!='v3'){qlog('engine:switch','v3');toast('جارٍ التبديل إلى وضع التوافق…');libEngSwitch('v3');lvLoadNote('وضع التوافق: جارٍ فتح المستند…',30);
+   try{await attempt(45000,30000);err=null;qlog('engine:v3-ok')}catch(e2){err=e2;dbg(e2,'open2');cleanup();libEngSwitch(prev)}}}
+ if(err){if(LV!==L)return;const pw=err&&err.name=='PasswordException';qlog('open:fail',String(err&&err.message));lvClose(true);toast(pw?'لم تُدخل كلمة سر صحيحة':'تعذّر قراءة الملف — سيُفتح بتطبيق آخر');if(!pw){const bb=await libBlob(m);if(bb)libShow(bb,m.name)}return}
  if(LV!==L){try{pdf.destroy()}catch(e){}return}
- L.pdf=pdf;L.lib=await libPdfJs();L.np=pdf.numPages;L.cur=Math.min(L.cur,L.np);
- lvLoadNote('جارٍ تجهيز الصفحة الأولى…',80);try{const p1=await Promise.race([pdf.getPage(1),new Promise((_,no)=>setTimeout(()=>no(new Error('p1')),20000))]),v=p1.getViewport({scale:1});L.ratio=v.height/v.width}catch(e){dbg(e)}
+ L.pdf=pdf;L.lib=await libPdfJs();L.np=pdf.numPages;L.cur=Math.min(L.cur,L.np);if(p1){const v=p1.getViewport({scale:1});L.ratio=v.height/v.width}qlog('open:ready',{ms:Math.round(performance.now()-T0)});
  if(LV!==L)return;if(m.np!=L.np){m.np=L.np;libPut(m)}
  lvLoadNote('',100);lvLayout();const ld=$('#lvLd');if(ld){ld.classList.add('out');setTimeout(()=>ld.remove(),300)}}
 function lvBuild(){const o=document.createElement('div');o.id='libV';o.className='lv bg-'+LV.bg+' fx-'+LV.fx+(LV.dir=='h'?' hz':'');
@@ -2307,13 +2315,14 @@ function lvObserve(){if(LV.obs)LV.obs.disconnect();const h=LV.dir=='h';LV.obs=ne
 function lvPump(){if(!LV||!LV.pdf)return;while(LV.busy<2){let best=0,bd=1e9;LV.want.forEach(i=>{if(LV.run.has(i)||LV.done.has(i)&&!LV.stale.has(i))return;const gg=LV.els[i-1];if(gg&&gg._nx>Date.now())return;const d=Math.abs(i-LV.cur);if(d<bd){bd=d;best=i}});if(!best)break;lvDraw(best)}}
 async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g||g._nx>Date.now())return;L.run.add(i);L.busy++;const k=g._k=(g._k||0)+1;
  try{const pg=await Promise.race([L.pdf.getPage(i),new Promise((_,no)=>setTimeout(()=>no(new Error('page timeout')),30000))]);if(LV!==L||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS'),h=lvFit();if(!h)lvRatio(g,i,v1);
-  const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=libLowMem()?2.2e6:3.2e6;if(px>cap)sc*=Math.sqrt(cap/px);
+  const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=(libLowMem()?2.2e6:3.2e6)*libCapK;if(px>cap)sc*=Math.sqrt(cap/px);
   const vp=pg.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);if(h){c.style.width=Math.round(cssW)+'px';c.style.height='auto'}
-  const t=pg.render({canvasContext:x,viewport:vp});g._t=t;await Promise.race([t.promise,new Promise((_,no)=>setTimeout(()=>{try{t.cancel()}catch(x2){}no(new Error('render timeout'))},30000))]);if(LV!==L||g._k!==k)return;
-  g._fail=0;g._nx=0;const rb=g._i.querySelector('.lvrt');if(rb)rb.remove();lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
+  const t0=performance.now(),t=pg.render({canvasContext:x,viewport:vp});g._t=t;await Promise.race([t.promise,new Promise((_,no)=>setTimeout(()=>{try{t.cancel()}catch(x2){}no(new Error('render timeout'))},30000))]);if(LV!==L||g._k!==k)return;
+  libSlow('draw',i,performance.now()-t0,c.width+'x'+c.height);g._fail=0;g._nx=0;const rb=g._i.querySelector('.lvrt');if(rb)rb.remove();lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
  catch(e){if(!(e&&e.name=='RenderingCancelledException')&&g._k===k){dbg(e);g._fail=(g._fail||0)+1;if(g._fail<3){g._nx=Date.now()+g._fail*700;setTimeout(()=>{if(LV===L)lvPump()},g._fail*700+40)}else{g._nx=9e15;lvFailUi(g,i)}}}
  finally{L.run.delete(i);L.busy--;if(LV===L){lvPump();lvIdle()}}}
-function lvFailUi(g,i){if(!g._i||g._i.querySelector('.lvrt'))return;const b=document.createElement('button');b.type='button';b.className='lvrt';b.textContent='تعذّر عرض الصفحة — اضغط لإعادة المحاولة';b.onclick=ev=>{ev.stopPropagation();lvRetry(i)};g._i.appendChild(b)}
+function lvFailUi(g,i){if(!g._i||g._i.querySelector('.lvrt'))return;qlog('draw:fail',{i});const b=document.createElement('button');b.type='button';b.className='lvrt';b.textContent='تعذّر عرض الصفحة — اضغط لإعادة المحاولة';b.onclick=ev=>{ev.stopPropagation();lvRetry(i)};g._i.appendChild(b);const c2=document.createElement('button');c2.type='button';c2.className='lvrt lvrt2';c2.textContent='فتح بوضع التوافق';c2.onclick=ev=>{ev.stopPropagation();lvCompat()};g._i.appendChild(c2)}
+function lvCompat(){const L=LV;if(!L)return;const id=L.m.id,p=L.cur;qlog('compat-click');libEngSwitch(libEngGet()=='v3'?'auto':'v3');lvClose(true);setTimeout(()=>libView(id,p),250)}
 function lvRetry(i){const g=LV&&LV.els[i-1];if(!g)return;g._fail=0;g._nx=0;const b=g._i.querySelector('.lvrt');if(b)b.remove();LV.done.delete(i);LV.want.add(i);lvPump()}
 function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;g._fail=0;g._nx=0;const rb=g._i&&g._i.querySelector('.lvrt');if(rb)rb.remove();try{g._t&&g._t.cancel()}catch(e){}g._t=null;lvTileDel(g);const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}const tl=g._i&&g._i.querySelector('.textLayer');if(tl)tl.remove();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
 /* نافذة الذاكرة: لا يبقى مرسوماً إلا ما هو ظاهر + الصفحة السابقة والتالية (cur-1 .. cur+1)، وما سواه يُحرَّر فوراً */
@@ -2396,12 +2405,12 @@ async function lvTilePage(L,i,sr,dpr){const g=L.els[i-1];if(!g||!g._i||!g.classL
  if(x1-x0<8||y1-y0<8||q.width<20||q.height<20){lvTileDel(g);return}
  const k=g._tk=(g._tk||0)+1;try{g._tt&&g._tt.cancel()}catch(er){}
  const pg=await L.pdf.getPage(i);if(LV!==L||g._tk!==k)return;
- const v1=pg.getViewport({scale:1});let d=dpr;const area=(x1-x0)*(y1-y0);const cap=(typeof libLowMem=='function'&&libLowMem())?2.6e6:4.2e6;if(area*d*d>cap)d=Math.sqrt(cap/area);
- const s=q.width/v1.width*d,vp=pg.getViewport({scale:s,offsetX:-(x0-q.left)*d,offsetY:-(y0-q.top)*d}),[c,x]=libCanvas((x1-x0)*d,(y1-y0)*d);
+ const v1=pg.getViewport({scale:1});let d=dpr;const area=(x1-x0)*(y1-y0);const cap=((typeof libLowMem=='function'&&libLowMem())?2.6e6:4.2e6)*(typeof libCapK=='number'?libCapK:1);if(area*d*d>cap)d=Math.sqrt(cap/area);
+ const tt0=performance.now(),s=q.width/v1.width*d,vp=pg.getViewport({scale:s,offsetX:-(x0-q.left)*d,offsetY:-(y0-q.top)*d}),[c,x]=libCanvas((x1-x0)*d,(y1-y0)*d);
  c.className='lvtile';c.style.left=((x0-q.left)/q.width*100)+'%';c.style.top=((y0-q.top)/q.height*100)+'%';c.style.width=((x1-x0)/q.width*100)+'%';c.style.height=((y1-y0)/q.height*100)+'%';
  const t=pg.render({canvasContext:x,viewport:vp});g._tt=t;
- try{await t.promise}catch(er){if(er&&er.name=='RenderingCancelledException')return;throw er}
- if(LV!==L||g._tk!==k)return;
+ try{await Promise.race([t.promise,new Promise((_,no)=>setTimeout(()=>{try{t.cancel()}catch(x2){}no(new Error('tile timeout'))},20000))])}catch(er){if(er&&er.name=='RenderingCancelledException')return;throw er}
+ if(LV!==L||g._tk!==k)return;if(typeof libSlow=='function')libSlow('tile',i,performance.now()-tt0,c.width+'x'+c.height);
  const old=e.querySelector('.lvtile'),base=e.querySelector('canvas:not(.lvtile)');if(old){old.width=old.height=0;old.remove()}
  if(base)base.after(c);else e.insertBefore(c,e.firstChild);try{pg.cleanup()}catch(er){}}
 function lvTapAt(x,y){if(LV.tool)return;const T=LV.tp,n=Date.now();if(n-T.t<300&&Math.hypot(x-T.x,y-T.y)<36){clearTimeout(T.tm);T.t=0;lvZoomTo((LV.lf?LV.fz||1:LV.z)<1.6?2.5:1,x,y);return}T.t=n;T.x=x;T.y=y;T.tm=setTimeout(()=>{if(!LV)return;T.t=0;lvTap(x,y)},260)}
@@ -3139,3 +3148,53 @@ function ptrInit(){const ind=document.createElement('div');ind.id='ptrInd';ind.i
 try{const rt=sessionStorage.getItem('qmTab');if(rt&&['pr','td','tc','lb','ar','st','al','nb','re','bk','hp','wr','jm','rv','kh','ap'].includes(rt))tab=rt}catch(e){dbg(e)}
 applyTheme();initLang();draw();try{bbInit()}catch(e){dbg(e)}try{ptrInit()}catch(e){dbg(e)}
 try{const y=+sessionStorage.getItem('qmY')||0;if(y){[120,700].forEach(d=>setTimeout(()=>{if(!(typeof LV!='undefined'&&LV))window.scrollTo(0,y)},d))}addEventListener('pagehide',()=>{try{sessionStorage.setItem('qmY',String(Math.round(window.scrollY)))}catch(e){}})}catch(e){dbg(e)}if(window.firebase)fbInit();else addEventListener('DOMContentLoaded',()=>{if(window.firebase)fbInit();else addEventListener('load',fbInit)});remTick();bkCheck();
+
+/* ===== تشخيص القارئ: سجل مراحل + كشف البطء والتعليق + تبديل المحرك + تقرير قابل للنسخ ===== */
+var QLOG=[],libCapK=1,qJk=0;
+function qlog(k,d){try{QLOG.push({t:Date.now(),k:k,d:d==null?'':(typeof d=='string'?d:JSON.stringify(d))});if(QLOG.length>300)QLOG.shift()}catch(e){}}
+/* المحرك: auto = pdf.js 6 (النسخة المرفقة) ثم تبديل تلقائي لـ v3 «وضع التوافق» عند تعذّر الفتح؛ v3 = يفضَّل مباشرة */
+function libEngGet(){try{return localStorage.getItem('qmEng')||'auto'}catch(e){return 'auto'}}
+function libEngSet(v){try{if(v=='auto')localStorage.removeItem('qmEng');else localStorage.setItem('qmEng',v)}catch(e){}}
+function libEngSwitch(v){libEngSet(v);libPdfP=null;libResP=null;libRes=null;try{libWk&&libWk.destroy()}catch(e){}libWk=null;qlog('engine',v)}
+/* بطء الرسم: يُسجَّل، وإن تجاوز 3.5 ثانية تُخفَّض دقة الرسم تلقائياً لباقي الجلسة */
+function libSlow(kind,i,ms,sz){ms=Math.round(ms);if(ms>1200)qlog('slow-'+kind,{i:i,ms:ms,px:sz});if(ms>3500&&libCapK>.45){libCapK=Math.max(.45,libCapK*.75);qlog('quality-down',libCapK.toFixed(2))}}
+/* مراقب التقطيع: فجوات الإطارات أثناء فتح القارئ (تعليق الواجهة) */
+function qJank(){if(qJk)return;qJk=1;let last=performance.now();try{if(window.PerformanceObserver)new PerformanceObserver(l=>{for(const e of l.getEntries())if(e.duration>400)qlog('longtask',Math.round(e.duration)+'ms')}).observe({entryTypes:['longtask']})}catch(e){}
+ const loop=t=>{if(!LV){qJk=0;return}const g=t-last;last=t;if(g>350)qlog('jank',Math.round(g)+'ms');requestAnimationFrame(loop)};requestAnimationFrame(loop)}
+const qfmt=t=>{const d=new Date(t);return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0')};
+async function libDiagTest(out){
+ const m=(libM||[]).filter(x=>libIsPdf(x)&&!x.trashAt&&libHas(x)).sort((a,b)=>(b.lo||0)-(a.lo||0))[0];
+ if(!m){out('اختبار الملف: لا يوجد ملف PDF');return}
+ out('اختبار على: '+(m.name||'').slice(0,50)+' ('+libSz(m.size||0)+')'+(m.dev?' [جهاز]':' [مخزّن]'));
+ const T=async(l,f,ms)=>{const t0=performance.now();try{const r=await Promise.race([f(),new Promise((_,no)=>setTimeout(()=>no(new Error('انتهت المهلة '+ms/1000+'ث')),ms))]);out('  ✔ '+l+': '+Math.round(performance.now()-t0)+'ms');return r}catch(e){out('  ✘ '+l+': '+(e&&e.message||e));return null}};
+ const N=libNat();
+ if(N&&N.readRange&&m.dev){const r=await T('قراءة 512KB من الأصل',()=>N.readRange({path:m.dev,offset:0,length:524288}),8000);if(r)out('    حجم الملف المُبلَّغ: '+r.size+' ، وصل: '+(r.data||'').length*3/4+'B')}
+ const s=await T('تجهيز مصدر الملف',()=>libGetS(m),15000);if(!s)return;
+ let pdf=null;pdf=await T('فتح المستند (محرك '+(libPdfV||'؟')+')',()=>libOpenDoc(s),25000);if(!pdf)return;
+ out('    عدد الصفحات: '+pdf.numPages);
+ const p=await T('جلب الصفحة 1',()=>pdf.getPage(1),15000);
+ if(p){const v=p.getViewport({scale:1}),sc=Math.min(2,900/v.width),vp=p.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);
+  await T('رسم الصفحة 1 ('+c.width+'×'+c.height+')',()=>p.render({canvasContext:x,viewport:vp}).promise,25000);
+  try{const d=x.getImageData(0,0,c.width,c.height).data;let w=0,k=0,st=Math.max(4,Math.floor(d.length/4/4000))*4;for(let i=0;i<d.length;i+=st){k++;if(d[i]>250&&d[i+1]>250&&d[i+2]>250)w++}out('    نسبة البياض: '+Math.round(w/k*100)+'%'+(w/k>.995?' ⚠ الصفحة تبدو بيضاء':''))}catch(e){}
+  c.width=c.height=0;if(pdf.numPages>2){const p2=await T('جلب+رسم صفحة في المنتصف',async()=>{const q=await pdf.getPage(Math.ceil(pdf.numPages/2)),v2=q.getViewport({scale:1}),[c2,x2]=libCanvas(v2.width,v2.height);await q.render({canvasContext:x2,viewport:v2}).promise;c2.width=c2.height=0},25000)}}
+ try{pdf.destroy()}catch(e){}}
+async function libDiagReport(runTest){const o=[],P=(k,v)=>o.push(k+': '+v);
+ let ver='';try{ver=(document.querySelector('script[src*="app.js"]')||{}).src||''}catch(e){}
+ P('الوقت',new Date().toLocaleString('en-GB'));P('app.js',ver.split('/').pop());P('Chrome/WebView',navigator.userAgent.replace(/^.*?(Chrome\/[\d.]+).*$/,'$1'));P('UA',navigator.userAgent.slice(0,140));
+ P('الذاكرة GB',navigator.deviceMemory||'؟');P('الأنوية',navigator.hardwareConcurrency||'؟');P('الشاشة',innerWidth+'×'+innerHeight+' @'+(window.devicePixelRatio||1));
+ try{if(performance.memory)P('heap MB',Math.round(performance.memory.usedJSHeapSize/1048576)+' / '+Math.round(performance.memory.jsHeapSizeLimit/1048576))}catch(e){}
+ P('المحرك المفضّل',libEngGet());P('المحرك المحمَّل',libPdfV||'لم يُحمَّل بعد');P('جودة الرسم',Math.round(libCapK*100)+'%');
+ P('الجسر الأصلي',libNat()?'نعم':'لا');const N=libNat();
+ if(N){try{const d=await N.diag();P('الإشعارات/المنبّهات',JSON.stringify(d))}catch(e){P('diag','غير متاح')}try{const a=await N.hasAccess();P('إذن الملفات',JSON.stringify(a))}catch(e){}}
+ try{await Promise.race([libPdfJs().then(libResProbe),new Promise(r=>setTimeout(r,6000))]);P('موارد pdf.js',libRes&&libRes.cMapUrl?libRes.cMapUrl.replace('cmaps/',''):'غير متاحة (بلا خطوط/cmaps/wasm)')}catch(e){P('موارد pdf.js','فشل: '+(e&&e.message))}
+ P('عدد الملفات',(libM||[]).length);
+ if(runTest){o.push('— اختبار —');await libDiagTest(x=>o.push(x))}
+ const L=QLOG.slice(-60);o.push('— السجل (آخر '+L.length+') —');L.forEach(e=>o.push(qfmt(e.t)+' '+e.k+' '+e.d));
+ return o.join('\n')}
+async function libDiagOpen(){let el=document.getElementById('libDg');if(el)el.remove();
+ el=document.createElement('div');el.id='libDg';el.className='lbdg';
+ el.innerHTML='<div class="lbdgc"><b>🩺 تشخيص القارئ</b><textarea id="libDgT" readonly dir="ltr" spellcheck="false">جارٍ جمع المعلومات…</textarea><div class="lbdgb"><button type="button" onclick="libDiagGo(1)">▶ تشغيل الاختبار</button><button type="button" class="g" onclick="libDiagCopy()">نسخ التقرير</button></div><div class="lbdgb"><button type="button" class="g" onclick="libDiagEng(\'auto\')">المحرك: الافتراضي</button><button type="button" class="g" onclick="libDiagEng(\'v3\')">المحرك: وضع التوافق</button></div><button type="button" class="g lbdgx" onclick="document.getElementById(\'libDg\').remove()">إغلاق</button></div>';
+ document.body.appendChild(el);libDiagGo(0)}
+async function libDiagGo(t){const a=document.getElementById('libDgT');if(!a)return;a.value='جارٍ '+(t?'تشغيل الاختبار (قد يستغرق حتى دقيقة)…':'جمع المعلومات…');let r='';try{r=await libDiagReport(!!t)}catch(e){r='فشل التقرير: '+(e&&e.message)}const b=document.getElementById('libDgT');if(b){b.value=r;b.scrollTop=0}}
+async function libDiagCopy(){const a=document.getElementById('libDgT');if(!a)return;const t=a.value;try{await navigator.clipboard.writeText(t);toast('تم نسخ التقرير ✅')}catch(e){try{a.removeAttribute('readonly');a.select();document.execCommand('copy');a.setAttribute('readonly','');toast('تم نسخ التقرير ✅')}catch(e2){toast('حدّد النص وانسخه يدوياً')}}}
+function libDiagEng(v){libEngSwitch(v);toast(v=='v3'?'تم اختيار وضع التوافق للفتح القادم':'عاد المحرك الافتراضي');libDiagGo(0)}
