@@ -827,3 +827,9 @@ iframe,embed,object{max-width:100%}
 .lbdgc{background:var(--card);color:var(--tx);border-radius:18px;padding:14px;width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;gap:10px}
 .lbdgc textarea{flex:1;min-height:46vh;width:100%;box-sizing:border-box;font:11.5px/1.5 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px;resize:none}
 .lbdgb{display:flex;gap:8px}.lbdgb button{flex:1;margin:0;padding:10px 6px;font-size:13px}.lbdgx{margin:0}
+
+/* وضع خفيف للأجهزة الضعيفة: بلا رسوم متحركة تُعيد الطلاء ولا ضبابية خلفية ولا ظلال ثقيلة (تسبّب تجمّد الواجهة) */
+.lv.lite .lvg::before{animation:none;background:none}
+.lv.lite .lvt,.lv.lite .lvb,.lv.lite .lvfb,.lvsm{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,20,27,.97)}
+.lv.lite .lvs.v .lvg,.lv.lite .lvg canvas,.lv.lite .lvs.v.fit .lvg canvas{box-shadow:none}
+.lv.lite .lvg.lvfl .lvi{animation:none}
