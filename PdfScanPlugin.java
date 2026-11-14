@@ -54,6 +54,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
+import android.util.Base64;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -408,6 +410,49 @@ public class PdfScanPlugin extends Plugin {
   }
 
   /* تشخيص كل ما يلزم لوصول الإشعارات والتطبيق مغلق */
+  /* قراءة جزء من ملف على الجهاز (offset/length) بدل Range عبر خادم Capacitor الذي لا يقتطع الجسم فعلياً */
+  @PluginMethod
+  public void readRange(PluginCall call) {
+    RandomAccessFile f = null;
+    try {
+      String p = call.getString("path");
+      long off = call.getData().optLong("offset", 0);
+      int len = call.getData().optInt("length", 262144);
+      if (p == null || p.length() == 0 || len <= 0 || off < 0) {
+        call.reject("bad args");
+        return;
+      }
+      if (len > 4194304) len = 4194304;
+      f = new RandomAccessFile(new File(p), "r");
+      long size = f.length();
+      JSObject o = new JSObject();
+      o.put("size", size);
+      if (off >= size) {
+        o.put("data", "");
+        call.resolve(o);
+        return;
+      }
+      int n = (int) Math.min((long) len, size - off);
+      byte[] buf = new byte[n];
+      f.seek(off);
+      int got = 0;
+      while (got < n) {
+        int r = f.read(buf, got, n - got);
+        if (r < 0) break;
+        got += r;
+      }
+      o.put("data", Base64.encodeToString(buf, 0, got, Base64.NO_WRAP));
+      call.resolve(o);
+    } catch (Exception e) {
+      call.reject("read: " + e.getMessage());
+    } finally {
+      try {
+        if (f != null) f.close();
+      } catch (Exception x) {
+      }
+    }
+  }
+
   @PluginMethod
   public void diag(PluginCall call) {
     try {

@@ -2107,33 +2107,34 @@ function libWorker(lib){try{if(libWk&&libWk.destroyed)libWk=null;if(!libWk&&lib&
 /* موارد pdf.js (cmaps/خطوط/wasm): تُفحص في الخلفية (محلياً ثم CDN) ولا يُنتظر أي شبكة عند فتح الكتاب؛ إن لم تتوفر تُترك فارغة فلا تعلّق الصفحة الأولى */
 let libRes=null,libResP=null;
 function libResProbe(){if(libResP)return libResP;
- libResP=(async()=>{const ok=async b=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),2500);try{const r=await fetch(b+'standard_fonts/FoxitSans.pfb',{method:'HEAD',signal:c.signal});return r.ok&&!/html/i.test(r.headers.get('content-type')||'')}catch(e){return false}finally{clearTimeout(t)}};
+ libResP=(async()=>{const ok=async b=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),2500);try{const r=await fetch(b+'standard_fonts/FoxitSerif.pfb',{method:'HEAD',signal:c.signal});return r.ok&&!/html/i.test(r.headers.get('content-type')||'')}catch(e){return false}finally{clearTimeout(t)}};
   let b=null;const loc=new URL('pdfjs/',document.baseURI).href,cdn='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+(libPdfV||'6.2.108')+'/';
   if(await ok(loc))b=loc;else if(navigator.onLine!==false&&await ok(cdn))b=cdn;
   libRes=b?{cMapUrl:b+'cmaps/',cMapPacked:true,standardFontDataUrl:b+'standard_fonts/',wasmUrl:b+'wasm/',iccUrl:b+'iccs/'}:{};return libRes})().catch(()=>(libRes={}));return libResP}
 const libLowMem=()=>{try{return natIs()||!!(navigator.deviceMemory&&navigator.deviceMemory<=6)}catch(e){return false}};
 /* قراءة على الطلب (نطاقات 64KB) بدل تحميل الملف كله؛ سقف لحجم الصور؛ لا جلب تلقائي لباقي الصفحات */
-function libDocOpts(lib){const o=Object.assign({isEvalSupported:false,enableXfa:false,stopAtErrors:false,disableAutoFetch:true,disableStream:false,rangeChunkSize:65536,maxImageSize:24e6},libRes||{}),w=libWorker(lib);if(w)o.worker=w;return o}
+function libDocOpts(lib,ck){const o=Object.assign({isEvalSupported:false,enableXfa:false,stopAtErrors:false,disableAutoFetch:true,disableStream:false,rangeChunkSize:ck||65536,maxImageSize:libLowMem()?6.4e7:1.2e8},libRes||{}),w=libWorker(lib);if(w)o.worker=w;return o}
 /* مصدر الملف: size + read(begin,end) يقرأ جزءاً فقط (Blob.slice أو طلب Range لملف الجهاز) + full() احتياطي */
 function libBlobSrc(b){return{size:b.size,read:async(a,e)=>new Uint8Array(await b.slice(a,e).arrayBuffer()),full:async()=>b}}
-async function libDevSrc(m){const u=libFileUrl(m.dev);let sz=m.size||0;
- const r=await fetch(u,{headers:{Range:'bytes=0-65535'}});
- if(r.status!=206){try{r.body&&r.body.cancel()}catch(e){}return null}
- const cr=/\/(\d+)\s*$/.exec(r.headers.get('content-range')||'');if(cr)sz=+cr[1];
- const first=new Uint8Array(await r.arrayBuffer());if(!sz)return null;
- return{size:sz,first,read:async(a,e)=>{const q=await fetch(u,{headers:{Range:'bytes='+a+'-'+(e-1)}});if(q.status!=206){try{q.body&&q.body.cancel()}catch(x){}throw new Error('range '+q.status)}return new Uint8Array(await q.arrayBuffer())},full:()=>libDevBlob(m)}}
+const libB2U=t=>{if(!t)return new Uint8Array(0);const b=atob(t),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+/* ملف الجهاز: قراءة نطاقات حقيقية عبر الإضافة الأصلية (خادم Capacitor يتجاهل Range ويُرجع الملف كاملاً فيُفسد القراءة)؛ وإلا الملف كاملاً */
+async function libDevSrc(m){const N=libNat(),CK=524288;
+ if(N&&N.readRange){try{const r0=await N.readRange({path:m.dev,offset:0,length:CK}),sz=+r0.size||0;
+  if(sz>0){const first=libB2U(r0.data);if(first.length!=Math.min(CK,sz))throw new Error('first '+first.length);
+   return{size:sz,first,chunk:CK,read:async(a,e)=>{for(let k=0;;k++){try{const r=await N.readRange({path:m.dev,offset:a,length:e-a}),u=libB2U(r.data);if(u.length!=Math.min(e,sz)-a)throw new Error('short '+u.length);return u}catch(x){if(k)throw x;await new Promise(r=>setTimeout(r,150))}}},full:()=>libDevBlob(m)}}}catch(e){dbg(e,'readRange')}}
+ return null}
 async function libGetS(m){if(m.dev){try{const s=await libDevSrc(m);if(s)return s}catch(e){dbg(e)}}const b=await libGetB(m);return b?libBlobSrc(b):null}
 async function libSrc(m){if(!libHas(m)){toast('هذا الملف لم يعد موجوداً على الجهاز — احذفه وأضفه من جديد');return null}const s=await libGetS(m);if(!s)toast('تعذّر قراءة الملف من الجهاز');return s}
 async function libOpenDoc(s,onTask,onProg,dead){
  const lib=await libPdfJs();if(typeof Blob!='undefined'&&s instanceof Blob)s=libBlobSrc(s);
  await Promise.race([libResProbe(),new Promise(r=>setTimeout(r,1200))]);
  let pwc=0;const gone=()=>!!(dead&&dead()),pwErr=()=>{const e=new Error('password');e.name='PasswordException';return e};
- const start=o=>{const task=lib.getDocument(Object.assign(libDocOpts(lib),o));task.onPassword=(cb,why)=>{const p=prompt(why==2?'كلمة السر غير صحيحة، أعد المحاولة':'هذا الملف محمي بكلمة سر');if(p)cb(p);else{pwc=1;task.destroy()}};if(onProg)task.onProgress=onProg;if(onTask)onTask(task);return task};
- if(lib.PDFDataRangeTransport&&s.size>262144){let t1=null;
+ const start=o=>{const task=lib.getDocument(Object.assign(libDocOpts(lib,s.chunk),o));task.onPassword=(cb,why)=>{const p=prompt(why==2?'كلمة السر غير صحيحة، أعد المحاولة':'هذا الملف محمي بكلمة سر');if(p)cb(p);else{pwc=1;task.destroy()}};if(onProg)task.onProgress=onProg;if(onTask)onTask(task);return task};
+ if(lib.PDFDataRangeTransport&&s.size>262144&&s.read){let t1=null,rej=null;const bad=new Promise((_,no)=>{rej=no});bad.catch(()=>{});
   try{const first=s.first||await s.read(0,Math.min(s.size,65536));if(gone())throw new Error('abort');
-   class RT extends lib.PDFDataRangeTransport{requestDataRange(a,e){s.read(a,e).then(d=>{if(!gone())this.onDataRange(a,d)}).catch(dbg)}abort(){}}
+   class RT extends lib.PDFDataRangeTransport{requestDataRange(a,e){s.read(a,e).then(d=>{if(!gone())this.onDataRange(a,d)}).catch(x=>{dbg(x);rej(x)})}abort(){}}
    t1=start({range:new RT(s.size,first)});
-   return await Promise.race([t1.promise,new Promise((_,no)=>setTimeout(()=>no(new Error('range timeout')),20000))])}
+   return await Promise.race([t1.promise,bad,new Promise((_,no)=>setTimeout(()=>no(new Error('range timeout')),20000))])}
   catch(e){if(t1){try{t1.destroy()}catch(x){}}if(pwc)throw pwErr();if(e&&e.name=='PasswordException')throw e;if(gone())throw e;dbg(e)}}
  if(gone())throw new Error('abort');
  const b=await s.full(),t2=start({data:new Uint8Array(await b.arrayBuffer())});
@@ -2303,22 +2304,24 @@ function lvLayout(){const S=$('#lvS'),W=$('#lvW'),h=LV.dir=='h',fit=lvFit();LV.l
  W.appendChild(fr);$('#libV').classList.toggle('hz',h);lvObserve();S.removeEventListener('scroll',lvScroll);S.addEventListener('scroll',lvScroll,{passive:true});
  requestAnimationFrame(()=>{lvGo(LV.cur,false);lvSizes()})}
 function lvObserve(){if(LV.obs)LV.obs.disconnect();const h=LV.dir=='h';LV.obs=new IntersectionObserver(es=>{if(!LV)return;es.forEach(e=>{const i=+e.target.dataset.p;if(e.isIntersecting)LV.want.add(i);else{LV.want.delete(i);lvFree(i)}});lvPump()},{root:$('#lvS'),rootMargin:h?(LV.two?'0px 55%':'0px 100%'):'100% 0px'});LV.els.forEach(g=>LV.obs.observe(g))}
-function lvPump(){if(!LV||!LV.pdf)return;while(LV.busy<2){let best=0,bd=1e9;LV.want.forEach(i=>{if(LV.run.has(i)||LV.done.has(i)&&!LV.stale.has(i))return;const d=Math.abs(i-LV.cur);if(d<bd){bd=d;best=i}});if(!best)break;lvDraw(best)}}
-async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g)return;L.run.add(i);L.busy++;const k=g._k=(g._k||0)+1;
- try{const pg=await L.pdf.getPage(i);if(LV!==L||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS'),h=lvFit();if(!h)lvRatio(g,i,v1);
+function lvPump(){if(!LV||!LV.pdf)return;while(LV.busy<2){let best=0,bd=1e9;LV.want.forEach(i=>{if(LV.run.has(i)||LV.done.has(i)&&!LV.stale.has(i))return;const gg=LV.els[i-1];if(gg&&gg._nx>Date.now())return;const d=Math.abs(i-LV.cur);if(d<bd){bd=d;best=i}});if(!best)break;lvDraw(best)}}
+async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g||g._nx>Date.now())return;L.run.add(i);L.busy++;const k=g._k=(g._k||0)+1;
+ try{const pg=await Promise.race([L.pdf.getPage(i),new Promise((_,no)=>setTimeout(()=>no(new Error('page timeout')),30000))]);if(LV!==L||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS'),h=lvFit();if(!h)lvRatio(g,i,v1);
   const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=libLowMem()?2.2e6:3.2e6;if(px>cap)sc*=Math.sqrt(cap/px);
   const vp=pg.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);if(h){c.style.width=Math.round(cssW)+'px';c.style.height='auto'}
-  const t=pg.render({canvasContext:x,viewport:vp});g._t=t;await t.promise;if(LV!==L||g._k!==k)return;
-  lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
- catch(e){if(!(e&&e.name=='RenderingCancelledException'))dbg(e)}
+  const t=pg.render({canvasContext:x,viewport:vp});g._t=t;await Promise.race([t.promise,new Promise((_,no)=>setTimeout(()=>{try{t.cancel()}catch(x2){}no(new Error('render timeout'))},30000))]);if(LV!==L||g._k!==k)return;
+  g._fail=0;g._nx=0;const rb=g._i.querySelector('.lvrt');if(rb)rb.remove();lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
+ catch(e){if(!(e&&e.name=='RenderingCancelledException')&&g._k===k){dbg(e);g._fail=(g._fail||0)+1;if(g._fail<3){g._nx=Date.now()+g._fail*700;setTimeout(()=>{if(LV===L)lvPump()},g._fail*700+40)}else{g._nx=9e15;lvFailUi(g,i)}}}
  finally{L.run.delete(i);L.busy--;if(LV===L){lvPump();lvIdle()}}}
-function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;try{g._t&&g._t.cancel()}catch(e){}g._t=null;lvTileDel(g);const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}const tl=g._i&&g._i.querySelector('.textLayer');if(tl)tl.remove();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
+function lvFailUi(g,i){if(!g._i||g._i.querySelector('.lvrt'))return;const b=document.createElement('button');b.type='button';b.className='lvrt';b.textContent='تعذّر عرض الصفحة — اضغط لإعادة المحاولة';b.onclick=ev=>{ev.stopPropagation();lvRetry(i)};g._i.appendChild(b)}
+function lvRetry(i){const g=LV&&LV.els[i-1];if(!g)return;g._fail=0;g._nx=0;const b=g._i.querySelector('.lvrt');if(b)b.remove();LV.done.delete(i);LV.want.add(i);lvPump()}
+function lvFree(i){const g=LV&&LV.els[i-1];if(!g)return;g._k=(g._k||0)+1;g._fail=0;g._nx=0;const rb=g._i&&g._i.querySelector('.lvrt');if(rb)rb.remove();try{g._t&&g._t.cancel()}catch(e){}g._t=null;lvTileDel(g);const c=g._i&&g._i.querySelector('canvas');if(c){c.width=c.height=0;c.remove()}const tl=g._i&&g._i.querySelector('.textLayer');if(tl)tl.remove();g.classList.remove('ok');LV.done.delete(i);LV.stale.delete(i)}
 /* نافذة الذاكرة: لا يبقى مرسوماً إلا ما هو ظاهر + الصفحة السابقة والتالية (cur-1 .. cur+1)، وما سواه يُحرَّر فوراً */
 function lvTrim(){const L=LV;if(!L)return;const k=lvTw()?2:1,keep=new Set(L.want);for(let d=-1;d<=k;d++)keep.add(L.cur+d);[...L.done].forEach(i=>{if(!keep.has(i)&&!L.run.has(i))lvFree(i)})}
 /* رسم استباقي صامت للصفحة التالية ثم السابقة في وقت خمول المعالج، فيصبح التقليب فورياً */
 function lvIdle(){const L=LV;if(!L||!L.pdf||L.busy||L.idl)return;L.idl=1;(window.requestIdleCallback||(f=>setTimeout(f,350)))(()=>{L.idl=0;if(LV!==L||L.busy||L.anim||L.fz>1||!L.pdf)return;for(const d of (lvTw()?[2,-1,3]:[1,-1])){const i=L.cur+d;if(i<1||i>L.np||L.run.has(i)||(L.done.has(i)&&!L.stale.has(i)))continue;lvDraw(i);break}},{timeout:1500})}
 function lvRatio(g,i,v1){if(lvFit())return;const r=v1.height/v1.width,c=g._r||LV.ratio;if(Math.abs(r-c)/c<.004)return;const S=$('#lvS'),b=g.offsetHeight;g._r=r;g.style.aspectRatio='1/'+r;if(LV.m.an&&LV.m.an[i])lvAnRender(i);if(i<LV.cur){const d=g.offsetHeight-b;if(d)S.scrollTop+=d}}
-async function lvSizes(){const L=LV;if(!L||lvFit()||L.np>150)return;for(let s=1;s<=L.np;s+=16){const ids=[];for(let i=s;i<s+16&&i<=L.np;i++)ids.push(i);await Promise.all(ids.map(async i=>{try{const pg=await L.pdf.getPage(i);if(LV===L&&L.dir=='v')lvRatio(L.els[i-1],i,pg.getViewport({scale:1}))}catch(e){}}));if(LV!==L)return;await new Promise(r=>setTimeout(r,40))}}
+async function lvSizes(){const L=LV;if(!L||lvFit()||L.np>60)return;for(let s=1;s<=L.np;s+=4){while(LV===L&&L.busy)await new Promise(r=>setTimeout(r,250));if(LV!==L)return;const ids=[];for(let i=s;i<s+4&&i<=L.np;i++)ids.push(i);await Promise.all(ids.map(async i=>{try{const pg=await L.pdf.getPage(i);if(LV===L&&L.dir=='v')lvRatio(L.els[i-1],i,pg.getViewport({scale:1}))}catch(e){}}));await new Promise(r=>setTimeout(r,120))}}
 function lvScroll(){if(LV&&!LV.lf&&LV.z>=1.6)lvTileSoon();if(!LV||LV.raf||LV.anim)return;LV.raf=requestAnimationFrame(()=>{if(!LV)return;LV.raf=0;const S=$('#lvS'),h=LV.dir=='h';let best=LV.cur;
   if(!h){const y=S.scrollTop+LV.padT+(S.clientHeight-LV.padT-LV.padB)*.3;let lo=0,hi=LV.np-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(LV.els[mid].offsetTop<=y)lo=mid;else hi=mid-1}best=lo+1}
   else{const r=S.getBoundingClientRect(),line=(r.left+r.right)/2;let bd=1e9;for(let i=Math.max(1,LV.cur-6);i<=Math.min(LV.np,LV.cur+6);i++){const q=LV.els[i-1].getBoundingClientRect(),d=Math.abs((q.left+q.right)/2-line);if(d<bd){bd=d;best=i}}if(bd>r.width)for(let i=1;i<=LV.np;i++){const q=LV.els[i-1].getBoundingClientRect(),d=Math.abs((q.left+q.right)/2-line);if(d<bd){bd=d;best=i}}}
@@ -2357,7 +2360,7 @@ function lvAnim(S,prop,to,ms,g){const L=LV;lvAnimStop(1);const from=S[prop],d=to
 function lvFlip(k){if(!LV)return;LV.fl=k;lvPrefSet({fl:k});$('#lvP').innerHTML=lvSetHtml()}
 function lvStep(d){if(!LV||LV.fxb)return;const two=lvTw(),c=two&&LV.cur%2==0?LV.cur-1:LV.cur,t=c+(two?2*d:d);if(t<1||t>LV.np){lvNote(t<1?'هذه الصفحة الأولى':'هذه آخر صفحة');return}lvGo(t,true);lvNote(two?'صفحة '+t+(t<LV.np?'–'+(t+1):'')+' من '+LV.np:'صفحة '+t+' من '+LV.np)}
 const lvScrub=v=>{if(!LV)return;const n=Math.max(1,Math.min(LV.np,+v||1));if(n!=LV.cur)lvGo(n,false);const a=$('#lvA');if(a&&document.activeElement!==a)a.value=n};
-function lvZoomTo(z,cx,cy){if(!LV)return;if(LV.lf)return lvStageZoom(z,cx,cy);if(LV.dir=='h')return;z=Math.max(1,Math.min(10,z));const z0=LV.z;if(Math.abs(z-z0)<.01)return;lvTileSoon();const S=$('#lvS'),W=$('#lvW'),r=z/z0,x=S.scrollLeft+cx,y=S.scrollTop+cy-LV.padT;LV.z=z;W.style.width=(z*100)+'%';S.scrollLeft=x*r-cx;S.scrollTop=y*r+LV.padT-cy;LV.done.forEach(i=>LV.stale.add(i));lvPump();lvPadSet()}
+function lvZoomTo(z,cx,cy){if(!LV)return;if(LV.lf)return lvStageZoom(z,cx,cy);if(LV.dir=='h')return;z=Math.max(1,Math.min(10,z));const z0=LV.z;if(Math.abs(z-z0)<.01)return;lvTileSoon();const S=$('#lvS'),W=$('#lvW'),r=z/z0,x=S.scrollLeft+cx,y=S.scrollTop+cy-LV.padT;LV.z=z;W.style.width=(z*100)+'%';S.scrollLeft=x*r-cx;S.scrollTop=y*r+LV.padT-cy;const L0=LV;clearTimeout(L0.zst);L0.zst=setTimeout(()=>{if(LV!==L0)return;L0.done.forEach(i=>L0.stale.add(i));lvPump()},240);lvPadSet()}
 function lvPadSet(){const t=$('#lvZt');if(t)t.textContent=Math.round((LV.lf?LV.fz||1:LV.z)*100)+'%'}
 function lvZoomBy(d){const S=$('#lvS');lvZoomTo((LV.lf?LV.fz||1:LV.z)*(d>0?1.25:.8),S.clientWidth/2,S.clientHeight/2)}
 /* ---------- تكبير الصفحة في وضع «صفحة واحدة» والوضع الأفقي (يشمل عرض الصفحتين) ----------
@@ -2393,7 +2396,7 @@ async function lvTilePage(L,i,sr,dpr){const g=L.els[i-1];if(!g||!g._i||!g.classL
  if(x1-x0<8||y1-y0<8||q.width<20||q.height<20){lvTileDel(g);return}
  const k=g._tk=(g._tk||0)+1;try{g._tt&&g._tt.cancel()}catch(er){}
  const pg=await L.pdf.getPage(i);if(LV!==L||g._tk!==k)return;
- const v1=pg.getViewport({scale:1});let d=dpr;const area=(x1-x0)*(y1-y0);if(area*d*d>7e6)d=Math.sqrt(7e6/area);
+ const v1=pg.getViewport({scale:1});let d=dpr;const area=(x1-x0)*(y1-y0);const cap=(typeof libLowMem=='function'&&libLowMem())?2.6e6:4.2e6;if(area*d*d>cap)d=Math.sqrt(cap/area);
  const s=q.width/v1.width*d,vp=pg.getViewport({scale:s,offsetX:-(x0-q.left)*d,offsetY:-(y0-q.top)*d}),[c,x]=libCanvas((x1-x0)*d,(y1-y0)*d);
  c.className='lvtile';c.style.left=((x0-q.left)/q.width*100)+'%';c.style.top=((y0-q.top)/q.height*100)+'%';c.style.width=((x1-x0)/q.width*100)+'%';c.style.height=((y1-y0)/q.height*100)+'%';
  const t=pg.render({canvasContext:x,viewport:vp});g._tt=t;
