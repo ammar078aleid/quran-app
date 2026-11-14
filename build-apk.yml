@@ -53,6 +53,15 @@ jobs:
         run: |
           rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='apk-keystore.jks' --exclude='*.apk' --exclude='*.java' --exclude='patch.py' ./ /tmp/apk/www/
 
+      - name: Bundle PDF reader resources
+        run: |
+          mkdir -p /tmp/pdfjsdl && cd /tmp/pdfjsdl
+          npm init -y > /dev/null
+          npm i pdfjs-dist@6.2.108
+          mkdir -p /tmp/apk/www/pdfjs
+          for d in cmaps standard_fonts wasm iccs; do cp -r node_modules/pdfjs-dist/$d /tmp/apk/www/pdfjs/$d; done
+          du -sh /tmp/apk/www/pdfjs
+
       - name: Create Android project
         working-directory: /tmp/apk
         run: |

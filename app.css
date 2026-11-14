@@ -833,3 +833,7 @@ iframe,embed,object{max-width:100%}
 .lv.lite .lvt,.lv.lite .lvb,.lv.lite .lvfb,.lvsm{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,20,27,.97)}
 .lv.lite .lvs.v .lvg,.lv.lite .lvg canvas,.lv.lite .lvs.v.fit .lvg canvas{box-shadow:none}
 .lv.lite .lvg.lvfl .lvi{animation:none}
+
+/* كتابة النص مباشرة على الصفحة: بلا إطار ولا خلفية، مؤشر فقط، والصندوق يتسع مع المحتوى */
+.lvta{border:0!important;background:transparent!important;padding:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;field-sizing:content;min-width:2ch;width:auto;line-height:1.4;-webkit-user-select:text;user-select:text}
+.lvta::placeholder{color:transparent}
