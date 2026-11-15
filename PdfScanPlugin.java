@@ -639,6 +639,27 @@ public class PdfScanPlugin extends Plugin {
     }
   }
 
+  /* شعار التطبيق كصورة كبيرة في الإشعار (الأيقونة الصغيرة يفرض أندرويد أن تكون صورة ظلّية أحادية اللون) */
+  private static android.graphics.Bitmap appIcon(Context c) {
+    try {
+      int id = c.getResources().getIdentifier("ic_launcher", "mipmap", c.getPackageName());
+      if (id == 0) return null;
+      android.graphics.drawable.Drawable d = ContextCompat.getDrawable(c, id);
+      if (d == null) return null;
+      if (d instanceof android.graphics.drawable.BitmapDrawable) {
+        android.graphics.Bitmap b = ((android.graphics.drawable.BitmapDrawable) d).getBitmap();
+        return b == null ? null : android.graphics.Bitmap.createScaledBitmap(b, 192, 192, true);
+      }
+      android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(192, 192, android.graphics.Bitmap.Config.ARGB_8888);
+      android.graphics.Canvas cv = new android.graphics.Canvas(b);
+      d.setBounds(0, 0, 192, 192);
+      d.draw(cv);
+      return b;
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+
   @PluginMethod
   public void diag(PluginCall call) {
     try {
@@ -706,7 +727,7 @@ public class PdfScanPlugin extends Plugin {
       JSONObject it = new JSONObject();
       it.put("id", 990000 + (int) ((System.currentTimeMillis() / 1000L) % 9000L));
       it.put("kind", "remind");
-      it.put("title", "تجربة الإشعار ✅");
+      it.put("title", "✅ تجربة الإشعار");
       it.put("body", delay > 0 ? "وصل هذا الإشعار والتطبيق مغلق" : "الإشعارات تعمل");
       it.put("once", true);
       it.put("snz", 1);
@@ -892,7 +913,8 @@ public class PdfScanPlugin extends Plugin {
       if (icon == 0) icon = android.R.drawable.ic_dialog_info;
       NotificationCompat.Builder b = new NotificationCompat.Builder(c, alarm ? CH_ALARM : CH_REMIND)
           .setSmallIcon(icon)
-          .setColor(0xFF1B5E20)
+          .setColor(0xFF7A1B3E)
+          .setLargeIcon(appIcon(c))
           .setContentTitle(title)
           .setContentText(body)
           .setStyle(new NotificationCompat.BigTextStyle().bigText(body))

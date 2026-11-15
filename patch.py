@@ -85,7 +85,8 @@ open('android/app/src/main/res/drawable/ic_stat_qm.xml', 'w', encoding='utf8').w
     android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M12,22c1.1,0 2,-0.9 2,-2h-4c0,1.1 0.89,2 2,2zM18,16v-5c0,-3.07 -1.64,-5.64 -4.5,-6.32V4c0,-0.83 -0.67,-1.5 -1.5,-1.5s-1.5,0.67 -1.5,1.5v0.68C7.63,5.36 6,7.92 6,11v5l-2,2v1h16v-1l-2,-2z" />
+        android:fillType="evenOdd"
+        android:pathData="M12.00,1.40 L15.10,4.50 L19.50,4.50 L19.50,8.90 L22.60,12.00 L19.50,15.10 L19.50,19.50 L15.10,19.50 L12.00,22.60 L8.90,19.50 L4.50,19.50 L4.50,15.10 L1.40,12.00 L4.50,8.90 L4.50,4.50 L8.90,4.50 Z M8.6,12 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 Z" />
 </vector>
 ''')
 print('patched OK')

@@ -371,7 +371,7 @@ function tmNew(id){$('#sh').innerHTML=shW(`<b>مدة تايمر المهمة</b>
 function tmAdd(id){const v=parseT($('#tmv').value);if(!(v>0))return;tkG(id).tm=mkT(v);save();$('#sh').innerHTML='';draw()}
 const tmM=(k,id)=>((k=='t'?S.tasks:S.cont).find(x=>x.id==id)||{}).tm;
 function tmTick(){[...(S.tasks||[]).filter(t=>t.tm).map(t=>['t',t.id,t.tm,t.s]),...(S.cont||[]).map(c=>['c',c.id,c.tm,c.name])].forEach(([k,id,m,nm])=>{if(!m.run)return;const l=mLeft(m);
- if(l<=0&&!m.ex){m.ex=m.end;save();ringStart();tmBanner(k,id,nm);notif('انتهى الوقت',{body:nm})}
+ if(l<=0&&!m.ex){m.ex=m.end;save();ringStart();tmBanner(k,id,nm);notif('⏳ انتهى الوقت',{body:nm})}
  else if(m.ex&&l>0){m.ov=(m.ov||0)+(Date.now()-m.ex)/1000;m.ex=0}
  const e=document.getElementById((k=='t'?'tm':'ct')+id);if(e){const z=mShow(m);e.textContent=z.t;e.style.color=z.red?'var(--bad)':''}})}
 setInterval(tmTick,1000);
@@ -407,8 +407,8 @@ function tGo(){const m=tG();tMsg='';
  save();tDraw()}
 function tReset(){const m=tG();tMsg='';m.run=false;m.left=m.dur;save();tDraw()}
 setInterval(()=>{const m=S.timer;if(!m||!m.run)return;const l=tL(),e=document.getElementById('tmx');if(e)e.textContent=fmt(l);
- if(l<=0){m.run=false;m.left=0;save();beep();notif('انتهى المؤقت ⏱')
- $('#ban').innerHTML=`<div class="c" style="border-color:var(--pri)"><b>انتهى المؤقت ⏱</b><div class="row" style="margin-top:8px"><button type="button" onclick="ringStop();$('#ban').innerHTML=''">إغلاق</button></div></div>`;tDraw()}},1000);
+ if(l<=0){m.run=false;m.left=0;save();beep();notif('⏰ انتهى المؤقت')
+ $('#ban').innerHTML=`<div class="c" style="border-color:var(--pri)"><b>⏰ انتهى المؤقت</b><div class="row" style="margin-top:8px"><button type="button" onclick="ringStop();$('#ban').innerHTML=''">إغلاق</button></div></div>`;tDraw()}},1000);
 /* ---------- الاختبار ---------- */
 function pickQ(){
  const v=S.tasks.filter(t=>t.txt);let pool=v;
@@ -455,8 +455,8 @@ function ringStop(){clearInterval(ringT);ringT=null;try{navigator.vibrate&&navig
 function beep(){ringStart()}
 function fire(k){
  const m=MSG[Math.floor(Math.random()*MSG.length)];beep();
- notif(k=='حفظ'?'وقت الحفظ 📖':'وقت المراجعة 🔁',{body:m})
- $('#ban').innerHTML=`<div class="c" style="border-color:var(--pri)"><b>${k=='حفظ'?'وقت الحفظ 📖':'وقت المراجعة 🔁'}</b><div class="m">${m}</div>
+ notif(k=='حفظ'?'📖 وقت الحفظ':'🔁 وقت المراجعة',{body:m})
+ $('#ban').innerHTML=`<div class="c" style="border-color:var(--pri)"><b>${k=='حفظ'?'📖 وقت الحفظ':'🔁 وقت المراجعة'}</b><div class="m">${m}</div>
  <div class="row" style="margin-top:8px"><button type="button" onclick="bdone('${k}')">تم ✅</button><button type="button" class="g" onclick="snooze('${k}')">غفوة 15 دقيقة ⏰</button></div></div>`}
 function bdone(k){ringStop();const t=due().find(x=>x.type==k);$('#ban').innerHTML='';if(t)done(t.id,'mastered')}
 function snooze(k){ringStop();const n=new Date(Date.now()+9e5);S.alarms.push({id:S.id++,time:hm(n),k,days:[n.getDay()],on:true,once:true});save();$('#ban').innerHTML=''}
@@ -813,7 +813,7 @@ function remBody(){const R=(S.rem=S.rem||[]).slice().sort((a,b)=>a.at.localeComp
 function remAdd(){const t=$('#rt').value.trim(),d=$('#rd').value,h=$('#rh').value;if(!t||!d||!h)return;S.rem=S.rem||[];S.rem.push({id:S.id++,t,at:new Date(d+'T'+h).toISOString(),done:false});save();draw();try{if('Notification' in window&&Notification.permission=='default')Notification.requestPermission()}catch(e){dbg(e)}}
 function remMk(id,v){const r=S.rem.find(x=>x.id==id);chg(r.s,()=>{r.s=r.s==v?0:v;save();draw()})}
 function remDel(id){S.rem=(S.rem||[]).filter(x=>x.id!=id);save();draw()}
-function remTick(){const now=Date.now();let ch=0;(S.rem||[]).forEach(r=>{if(!r.done&&Date.parse(r.at)<=now){r.done=true;ch=1;const late=now-Date.parse(r.at)>3e5;beep();notif('تذكير: '+r.t)
+function remTick(){const now=Date.now();let ch=0;(S.rem||[]).forEach(r=>{if(!r.done&&Date.parse(r.at)<=now){r.done=true;ch=1;const late=now-Date.parse(r.at)>3e5;beep();notif('📌 تذكير: '+r.t)
  $('#ban').innerHTML+=`<div class="c" style="border-color:var(--pri)"><b>🔔 تذكير</b><div style="margin:6px 0">${esc(r.t)}</div>${late?`<div class="m">كان موعده ${hm(new Date(r.at))}</div>`:''}<button type="button" onclick="ringStop();this.parentNode.remove()">تم</button></div>`}});if(ch){save();if(tab=='re')draw()}}
 setInterval(remTick,15000);
 let reTab='r';
@@ -906,6 +906,8 @@ const pvMk=(id,v)=>tdPick('pvMk',pvMove,i=>pvD().items.find(y=>y.id==i),id,v);
 function pvMove(id,v){const P=pvD(),x=P.items.find(y=>y.id==id);x.s=v;x.at=Date.now();P.items=P.items.filter(y=>y.id!=id);(P.arc=P.arc||[]).push(x);save();toast('نُقلت المهمة إلى الأرشيف');draw()}
 function pvDel(id){pvD().items=pvD().items.filter(y=>y.id!=id);save();draw()}
 function arPv(){const P=pvD();if(!P.lock){toast('أنشئ كلمة سر أولاً من «المهام الخاصة» في تبويب اليوم');return}if(!pvOk){pvAfter='ar';tab='pv';draw();return}arPvOpen=!arPvOpen;draw()}
+
+Object.assign(EN,{'⏰ انتهى المؤقت':'⏰ Timer finished','⏳ انتهى الوقت':'⏳ Time is up','📖 وقت الحفظ':'📖 Time to memorize','🔁 وقت المراجعة':'🔁 Time to review','📌 تذكير: ':'📌 Reminder: '});
 
 /* ---------- المتسابقون ---------- */
 let ctTab='list',ctDraft={name:'',juz:[],min:''};const uLbl=u=>u[0]=='ج'?'جزء '+u.slice(1):u[0]=='ص'?'صفحة '+u.slice(1):'سورة '+u;const ctOpen={};
@@ -2802,12 +2804,12 @@ async function natBatAsk(){const N=libNat();if(!N)return;try{await N.batteryOpen
 function natQ(){if(!natOn())return;clearTimeout(natT);natT=setTimeout(()=>natSync(),1500)}
 function natBuild(){const out=[],now=Date.now();let id=1;
  const msg=(h,m)=>(typeof MSG!='undefined'&&MSG.length)?MSG[(h*60+m)%MSG.length]:'حان الوقت';
- (S.alarms||[]).filter(a=>a.on).forEach(a=>{const [h,m]=String(a.time).split(':').map(Number);if(isNaN(h)||isNaN(m))return;const title=a.k=='حفظ'?'وقت الحفظ 📖':'وقت المراجعة 🔁',body=msg(h,m);
+ (S.alarms||[]).filter(a=>a.on).forEach(a=>{const [h,m]=String(a.time).split(':').map(Number);if(isNaN(h)||isNaN(m))return;const title=a.k=='حفظ'?'📖 وقت الحفظ':'🔁 وقت المراجعة',body=msg(h,m);
   if(a.once){const d=new Date();d.setHours(h,m,0,0);if(d.getTime()<=now)d.setDate(d.getDate()+1);out.push({id:id++,kind:'alarm',title,body,once:true,at:d.getTime()})}
   else(a.days||[]).forEach(i=>out.push({id:id++,kind:'alarm',title,body,once:false,wd:i+1,h,m}))});
- (S.rem||[]).filter(r=>!r.done&&Date.parse(r.at)>now).forEach(r=>out.push({id:id++,kind:'remind',title:'تذكير: '+r.t,body:'حان موعد التذكير',once:true,at:Date.parse(r.at)}));
- [...(S.tasks||[]).filter(t=>t.tm).map(t=>[t.tm,t.s]),...(S.cont||[]).filter(c=>c.tm).map(c=>[c.tm,c.name])].forEach(([m,nm])=>{if(m.run&&!m.ex){const l=mLeft(m);if(l>0)out.push({id:id++,kind:'timer',title:'انتهى الوقت',body:String(nm||'المهمة'),once:true,at:Math.round((now+l*1000)/1000)*1000})}});
- if(S.timer&&S.timer.run){const l=tL();if(l>0)out.push({id:id++,kind:'timer',title:'انتهى المؤقت ⏱',body:'انتهى الوقت المحدد',once:true,at:Math.round((now+l*1000)/1000)*1000})}
+ (S.rem||[]).filter(r=>!r.done&&Date.parse(r.at)>now).forEach(r=>out.push({id:id++,kind:'remind',title:'📌 تذكير: '+r.t,body:'حان موعد التذكير',once:true,at:Date.parse(r.at)}));
+ [...(S.tasks||[]).filter(t=>t.tm).map(t=>[t.tm,t.s]),...(S.cont||[]).filter(c=>c.tm).map(c=>[c.tm,c.name])].forEach(([m,nm])=>{if(m.run&&!m.ex){const l=mLeft(m);if(l>0)out.push({id:id++,kind:'timer',title:'⏳ انتهى الوقت',body:String(nm||'المهمة'),once:true,at:Math.round((now+l*1000)/1000)*1000})}});
+ if(S.timer&&S.timer.run){const l=tL();if(l>0)out.push({id:id++,kind:'timer',title:'⏰ انتهى المؤقت',body:'انتهى الوقت المحدد',once:true,at:Math.round((now+l*1000)/1000)*1000})}
  return out}
 async function natSync(force){const N=libNat();if(!N||!N.setSchedule)return;
  const out=natBuild(),sig=JSON.stringify(out.map(({id,...r})=>r));if(!force&&sig==natSig)return;natSig=sig;
