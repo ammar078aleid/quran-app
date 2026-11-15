@@ -1,5 +1,7 @@
 package com.quran.muthabbit;
 
+import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +31,22 @@ public class MainActivity extends BridgeActivity {
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(PdfScanPlugin.class);
     super.onCreate(savedInstanceState);
+    /* عند الفتح من تطبيق آخر (تيليجرام مثلاً) لا نبقى داخل مهمّته: نُعيد التشغيل في مهمّة مستقلة كي يعمل الانتقال بين التطبيقين كما في بقية القرّاء */
+    try {
+      Intent in = getIntent();
+      String act = in == null ? null : in.getAction();
+      if (!isTaskRoot() && act != null && !in.getBooleanExtra("qmRelaunched", false)
+          && (Intent.ACTION_VIEW.equals(act) || Intent.ACTION_SEND.equals(act) || Intent.ACTION_SEND_MULTIPLE.equals(act))) {
+        Intent r = new Intent(in);
+        r.setComponent(new ComponentName(this, MainActivity.class));
+        r.putExtra("qmRelaunched", true);
+        r.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(r);
+        finish();
+        return;
+      }
+    } catch (Exception e) {
+    }
     /* زر الرجوع: نسأل صفحة الويب أولاً (تتراجع خطوة خطوة ثم تسأل عن الخروج في «اليوم»)،
        وإن لم تعالجه تُترك المعالجة الافتراضية */
     getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {

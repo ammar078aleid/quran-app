@@ -5,6 +5,8 @@ FULL_ACCESS = True
 p = 'android/app/src/main/AndroidManifest.xml'
 s = open(p, encoding='utf8').read()
 s = s.replace('<application', '<application android:requestLegacyExternalStorage="true"', 1)
+import re
+s = re.sub(r'android:launchMode="[^"]*"', 'android:launchMode="singleTask"', s)
 filters = '''
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

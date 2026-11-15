@@ -837,3 +837,10 @@ iframe,embed,object{max-width:100%}
 /* كتابة النص مباشرة على الصفحة: بلا إطار ولا خلفية، مؤشر فقط، والصندوق يتسع مع المحتوى */
 .lvta{border:0!important;background:transparent!important;padding:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;field-sizing:content;min-width:2ch;width:auto;line-height:1.4;-webkit-user-select:text;user-select:text}
 .lvta::placeholder{color:transparent}
+
+/* طيّ شريط التعديل بسهم صغير */
+.lvec{position:absolute;left:50%;bottom:calc(var(--pb,96px) - 4px);z-index:5;width:44px;height:24px;margin-left:-22px;border:1px solid #ffffff2a;border-radius:12px;background:rgba(18,20,27,.92);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;transition:bottom .26s ease}
+.lvec svg{transition:transform .26s ease}
+.lvecol .lvec svg{transform:rotate(180deg)}
+.lvecol .lvb{transform:translateY(135%)!important;pointer-events:none}
+.lvecol .lvec{bottom:8px}
