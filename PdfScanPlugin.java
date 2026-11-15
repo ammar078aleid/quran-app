@@ -16,6 +16,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.view.WindowCompat;
@@ -597,6 +601,33 @@ public class PdfScanPlugin extends Plugin {
     } catch (Throwable e) {
       call.reject("cacheAppend: " + e);
     }
+  }
+
+  /* طباعة / حفظ PDF: WebView مخفي يحمّل الـHTML ثم نافذة الطباعة الأصلية (فيها «حفظ كـ PDF») */
+  private static WebView qPrintWv;
+  @PluginMethod
+  public void printHtml(final PluginCall call) {
+    final String html = call.getString("html", "");
+    final String name = call.getString("name", "document");
+    final android.app.Activity act = getActivity();
+    if (act == null) { call.reject("no activity"); return; }
+    act.runOnUiThread(new Runnable() { public void run() {
+      try {
+        final WebView w = new WebView(act);
+        qPrintWv = w;
+        w.setWebViewClient(new WebViewClient() {
+          @Override public void onPageFinished(WebView v, String u) {
+            try {
+              PrintManager pm = (PrintManager) act.getSystemService(Context.PRINT_SERVICE);
+              PrintDocumentAdapter ad = v.createPrintDocumentAdapter(name);
+              pm.print(name, ad, new PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build());
+              call.resolve();
+            } catch (Throwable t) { call.reject(String.valueOf(t)); }
+          }
+        });
+        w.loadDataWithBaseURL("https://localhost/", html, "text/html", "utf-8", null);
+      } catch (Throwable t) { call.reject(String.valueOf(t)); }
+    }});
   }
 
   /* مشاركة ملف عبر قائمة المشاركة الأصلية (FileProvider): path = مسار ملف على الجهاز أو في الكاش */
