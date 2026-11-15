@@ -560,7 +560,7 @@ function accSeen(key,u){const L=accList();let e=L.find(a=>a.uid==u.uid);if(!e){e
 function accGone(key){accSave(accList().filter(a=>a.k!==key))}
 function accCacheSave(){if(!fu)return;try{localStorage.setItem('qmrm_u_'+fu.uid,JSON.stringify(S))}catch(e){dbg(e)}const L=accList(),e=L.find(a=>a.uid==fu.uid);if(e){e.n=prof().name||e.n||'';accSave(L)}}
 function accRemove(uid){const L=accList(),e=L.find(a=>a.uid==uid);accSave(L.filter(a=>a.uid!=uid));try{localStorage.removeItem('qmrm_u_'+uid)}catch(x){dbg(x)}if(e&&e.k!=='[DEFAULT]'){try{firebase.app(e.k).delete()}catch(x){dbg(x)}}}
-function accEnter(u){if(S._uid&&S._uid!==u.uid){S=accCache(u.uid)||EMPTY();S._uid=u.uid;S.lang=BOOT_LANG;migrate();try{localStorage.setItem('qmrm',JSON.stringify(S))}catch(e){dbg(e)}applyTheme();draw()}}
+function accEnter(u){if(S._uid&&S._uid!==u.uid){S=accCache(u.uid)||EMPTY();S._uid=u.uid;S.lang=BOOT_LANG;migrate();try{localStorage.setItem('qmrm',JSON.stringify(S))}catch(e){dbg(e)}applyTheme();draw()}try{window.qSplRel&&window.qSplRel()}catch(e){dbg(e)}}
 function accAttach(key,au){
  au.onAuthStateChanged(u=>{
   if(key===addKey&&u){const d=accList().find(a=>a.uid==u.uid);addKey='';awAdd=false;
@@ -756,7 +756,8 @@ function applyTheme(pv){const t=th(),r=document.documentElement,dm=typeof matchM
  if(t.mode=='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t.mode);
  const T=thCur(pv),P=thPal(T,dark),v={bg:P.bg,card:P.card,tx:P.tx,mut:P.mut,bd:P.bd,pri:P.pri,on:P.on,bad:P.bad,h1:P.h1,h2:P.h2,a3:hslHex(T.h,45*T.s+8,dark?35:60),a4:dark?P.bg:hslHex(40,60,94),gold:T.g,ff:T.ff+",system-ui,'Segoe UI',Tahoma,sans-serif",rd:T.rd+'px',rb:T.rb+'px',hp:thPat};
  for(const k in v)r.style.setProperty('--'+k,v[k]);r.style.colorScheme=dark?'dark':'light';
- const m=document.querySelector('meta[name=theme-color]');if(m)m.content=P.h1}
+ const m=document.querySelector('meta[name=theme-color]');if(m)m.content=P.h1;
+ try{const mx=(c,k)=>`color-mix(in srgb,${c} ${k}%,#000)`;localStorage.setItem('qmSpl',JSON.stringify({a:P.h2,b:P.h1,c:dark?P.bg:mx(P.h1,55),t:P.on=='#fff'||dark?'#fff':P.on,g:T.g||'#f5d07a',g2:dark?P.tx:'#fbe9c0'}))}catch(e){}}
 if(typeof matchMedia!='undefined')try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(th().mode=='auto')applyTheme()})}catch(e){dbg(e)}
 function setTheme(k,v){th()[k]=v;save();applyTheme();draw()}
 function appearance(){return `<div class="row sp" style="padding:4px 14px"><b style="font-size:18px">اللغة والمظهر</b><button type="button" class="g" onclick="go('home')">رجوع</button></div>${look()}`}
@@ -1985,10 +1986,10 @@ const AWI={mail:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" str
  eye:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3b3b55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
  g:'<svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.2 5.6c4.3-4 6.8-9.9 6.8-17.1z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.2-5.6c-2 1.4-4.6 2.2-8.7 2.2-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>'};
 const awLogo='<svg viewBox="0 0 64 64" width="58" height="58"><path d="M32 18c-5-4-13-5-22-4v32c9-1 17 0 22 4 5-4 13-5 22-4V14c-9-1-17 0-22 4Z" style="fill:var(--gold)"/><path d="M32 18v32" stroke="currentColor" stroke-width="2.2" opacity=".55"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".55"><path d="M38 24h10M38 30h10M38 36h10"/></g></svg>';
-function awSplash(){const a=document.getElementById('aw');if(!a)return;a.style.display='block';a.innerHTML=`<div class="awb" style="justify-content:center"><div class="awlogo">${awLogo}</div><h1>مُثبِّت القرآن</h1><div class="awspin"></div></div>`}
-function awHide(){const a=document.getElementById('aw');if(a){a.style.display='none';a.innerHTML=''}}
+function awSplash(){window.qSplHold=1}
+function awHide(){const a=document.getElementById('aw');if(a){a.style.display='none';a.innerHTML=''}try{window.qSplRel&&window.qSplRel()}catch(e){}}
 function awKeep(){awV.e=awGv('awe');awV.u=awGv('awu')}
-function awShow(){const a=document.getElementById('aw');if(!a)return;const up=awMode=='up',en=S.lang=='en';a.style.display='block';
+function awShow(){const a=document.getElementById('aw');if(!a)return;const up=awMode=='up',en=S.lang=='en';a.style.display='block';try{window.qSplRel&&window.qSplRel()}catch(e){}
  a.innerHTML=`<div class="awb"><div class="awlogo">${awLogo}</div><h1>مُثبِّت القرآن</h1><div class="awcard"><h2>${up?'إنشاء حساب':'تسجيل الدخول'}</h2>
  <div class="awf"><input id="awe" type="text" dir="ltr" autocapitalize="off" autocomplete="username" placeholder="${up?'البريد الإلكتروني':'البريد الإلكتروني أو اسم المستخدم'}" value="${esc(awV.e)}" oninput="awV.e=this.value"><span class="awi">${AWI.mail}</span></div>
  ${up?`<div class="awf"><input id="awu" type="text" dir="ltr" autocapitalize="off" placeholder="اسم المستخدم (إنجليزي)" value="${esc(awV.u)}" oninput="awV.u=this.value"><span class="awi">${AWI.user}</span></div>`:''}

@@ -101,10 +101,10 @@ try:
         m = re.search(r'(<style name="AppTheme\.NoActionBarLaunch"[^>]*>)', st)
         if m and 'Theme.SplashScreen' in m.group(1):
             st = re.sub(r'\s*<item name="windowSplashScreenBackground">[^<]*</item>', '', st)
-            st = st.replace(m.group(1), m.group(1) + '\n        <item name="windowSplashScreenBackground">#4A0F27</item>', 1)
+            st = st.replace(m.group(1), m.group(1) + '\n        <item name="windowSplashScreenBackground">#FFFFFF</item>', 1)
             open(sp, 'w', encoding='utf8').write(st)
         elif m:
-            st = st.replace(m.group(1), m.group(1) + '\n        <item name="android:windowBackground">#4A0F27</item>', 1)
+            st = st.replace(m.group(1), m.group(1) + '\n        <item name="android:windowBackground">#FFFFFF</item>', 1)
             open(sp, 'w', encoding='utf8').write(st)
 except Exception as e:
     print('splash style skipped', e)
