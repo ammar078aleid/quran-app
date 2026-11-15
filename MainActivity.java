@@ -31,6 +31,7 @@ public class MainActivity extends BridgeActivity {
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(PdfScanPlugin.class);
     super.onCreate(savedInstanceState);
+    try { getBridge().getWebView().setBackgroundColor(0xFF4A0F27); } catch (Throwable t) { }
     /* عند الفتح من تطبيق آخر (تيليجرام مثلاً) لا نبقى داخل مهمّته: نُعيد التشغيل في مهمّة مستقلة كي يعمل الانتقال بين التطبيقين كما في بقية القرّاء */
     try {
       Intent in = getIntent();

@@ -3184,7 +3184,7 @@ function ptrInit(){const ind=document.createElement('div');ind.id='ptrInd';ind.i
  window.addEventListener('touchend',()=>{if(!ptrOn)return;ptrOn=0;if(ptrD>=55)ptrRun();else ptrSet(0,1)},{passive:true});
  window.addEventListener('touchcancel',()=>{if(ptrOn){ptrOn=0;ptrSet(0,1)}},{passive:true})}
 try{const rt=sessionStorage.getItem('qmTab');if(rt&&['pr','td','tc','lb','ar','st','al','nb','re','bk','hp','wr','jm','rv','kh','ap'].includes(rt))tab=rt}catch(e){dbg(e)}
-applyTheme();initLang();draw();try{bbInit()}catch(e){dbg(e)}try{ptrInit()}catch(e){dbg(e)}
+applyTheme();initLang();draw();try{window.qSplashHide&&window.qSplashHide()}catch(e){}try{bbInit()}catch(e){dbg(e)}try{ptrInit()}catch(e){dbg(e)}
 try{const y=+sessionStorage.getItem('qmY')||0;if(y){[120,700].forEach(d=>setTimeout(()=>{if(!(typeof LV!='undefined'&&LV))window.scrollTo(0,y)},d))}addEventListener('pagehide',()=>{try{sessionStorage.setItem('qmY',String(Math.round(window.scrollY)))}catch(e){}})}catch(e){dbg(e)}if(window.firebase)fbInit();else addEventListener('DOMContentLoaded',()=>{if(window.firebase)fbInit();else addEventListener('load',fbInit)});remTick();bkCheck();
 
 /* بدائل صامتة: كانت هنا أدوات التشخيص ومحرك التوافق، وأُزيلت بعد استقرار الرسم الأصلي */

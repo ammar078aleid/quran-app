@@ -90,3 +90,21 @@ open('android/app/src/main/res/drawable/ic_stat_qm.xml', 'w', encoding='utf8').w
 </vector>
 ''')
 print('patched OK')
+
+
+# ===== شاشة البدء: لون العنّابي بدل الأبيض (آمن: لا يكسر البناء إن اختلف القالب) =====
+import os
+try:
+    sp = 'android/app/src/main/res/values/styles.xml'
+    if os.path.exists(sp):
+        st = open(sp, encoding='utf8').read()
+        m = re.search(r'(<style name="AppTheme\.NoActionBarLaunch"[^>]*>)', st)
+        if m and 'Theme.SplashScreen' in m.group(1):
+            st = re.sub(r'\s*<item name="windowSplashScreenBackground">[^<]*</item>', '', st)
+            st = st.replace(m.group(1), m.group(1) + '\n        <item name="windowSplashScreenBackground">#4A0F27</item>', 1)
+            open(sp, 'w', encoding='utf8').write(st)
+        elif m:
+            st = st.replace(m.group(1), m.group(1) + '\n        <item name="android:windowBackground">#4A0F27</item>', 1)
+            open(sp, 'w', encoding='utf8').write(st)
+except Exception as e:
+    print('splash style skipped', e)
