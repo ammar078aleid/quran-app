@@ -555,7 +555,7 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvi{position:relative}.lvs.v .lvi{position:absolute;inset:0}.lvs.h .lvi{display:flex;max-width:100%;max-height:100%}.lvg canvas{display:block;width:100%;height:100%}.lvi .lva{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}.lvs.h .lvg canvas{width:auto;height:auto}
 .lvg::before{content:attr(data-p);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:#0000001c;background:linear-gradient(110deg,transparent 30%,#0000000a 50%,transparent 70%) 0 0/200% 100%;animation:lvsh 1.4s linear infinite}
 .lvg.ok::before{display:none}@keyframes lvsh{to{background-position:-200% 0}}
-.lvs.v.snap{scroll-snap-type:y mandatory}.lvs.v.snap .lvg{scroll-snap-align:start}
+.lvs.v.snap{scroll-snap-type:none}
 .lvs.h{display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;direction:rtl;padding-top:var(--pt);padding-bottom:var(--pb)}
 .lvs.h .lvw{display:contents}.lvs.h .lvg{flex:0 0 100%;height:100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;background:transparent}.lvs.h .lvg canvas{width:auto;height:auto;max-width:100%;max-height:100%;background:#fff;box-shadow:0 3px 16px #0007}.lvs.h .lvg::before{color:#ffffff22}
 .lvt,.lvb{position:absolute;inset-inline:0;z-index:3;background:rgba(14,15,20,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);transition:transform .26s ease}
@@ -670,7 +670,7 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lbL .lbm{position:static;transform:none;flex:none;width:40px;height:40px;margin-inline-start:-4px}
 .lbL .lbt .lbi b{white-space:normal}.lbL .lbt .lbi>span{white-space:normal}
 /* ===== تقليب الصفحات: لا تخطّي أثناء السحب السريع + حركة دخول ناعمة ===== */
-.lvs.v.snap .lvg,.lvs.h .lvg{scroll-snap-stop:always}
+.lvs.h .lvg{scroll-snap-stop:always}
 .lvg.lvfl .lvi{animation:lvflip var(--fd,640ms) cubic-bezier(.22,.7,.2,1)}
 @keyframes lvflip{from{opacity:.55;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.lvg.lvfl .lvi{animation:none}}
@@ -844,3 +844,7 @@ iframe,embed,object{max-width:100%}
 .lvecol .lvec svg{transform:rotate(180deg)}
 .lvecol .lvb{transform:translateY(135%)!important;pointer-events:none}
 .lvecol .lvec{bottom:8px}
+
+.lv .lvcm,.lv .lvcm:focus{background:#0e0f14;color:#fff;border-color:#ffffff40;box-shadow:none;outline:0}.lv .lvcm::placeholder{color:#8b91a0}
+.lva .cm{pointer-events:all;cursor:pointer}
+.lvnr{display:flex;align-items:stretch;gap:6px;margin:0 0 6px}.lvnr .lvnt2{margin:0;flex:1;min-width:0}.lvnx{flex:none;width:44px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;background:#ffffff0f;color:#ff8a80;border-radius:13px;box-shadow:none;min-height:0}.lvnx svg{width:19px;height:19px}
