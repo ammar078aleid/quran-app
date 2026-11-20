@@ -2572,11 +2572,11 @@ function lvUndo(){lvTaDone();const t=LV.undo.pop();if(!t)return;LV.redo.push(t);
 function lvRedo(){lvTaDone();const t=LV.redo.pop();if(!t)return;LV.undo.push(t);lvApply(t,true)}
 function lvAnSave(){if(!LV)return;clearTimeout(LV.at);LV.at=setTimeout(lvAnFlush,700)}
 function lvAnFlush(){if(!LV)return;clearTimeout(LV.at);libPut(LV.m)}
-function lvPt(g,e){const r=lvR(g),H=1000*r.height/r.width;return{x:Math.round(Math.max(0,Math.min(1000,(e.clientX-r.left)/r.width*1000))*10)/10,y:Math.round(Math.max(0,Math.min(H,(e.clientY-r.top)/r.width*1000))*10)/10,H}}
+function lvPt(g,e){let r;if(LV.live&&LV.rcg===g&&LV.rcr)r=LV.rcr;else{r=lvR(g);if(LV.live){LV.rcg=g;LV.rcr=r}}const H=1000*r.height/r.width;return{x:Math.round(Math.max(0,Math.min(1000,(e.clientX-r.left)/r.width*1000))*10)/10,y:Math.round(Math.max(0,Math.min(H,(e.clientY-r.top)/r.width*1000))*10)/10,H}}
 function lvHit(it,pt,r){if(it.t=='r')return it.rs.some(q=>pt.x>=q[0]-r&&pt.x<=q[0]+q[2]+r&&pt.y>=q[1]-r&&pt.y<=q[1]+q[3]+r);if(it.t=='x')return pt.x>=it.x-r&&pt.x<=it.x+it.w+r&&pt.y>=it.y-r&&pt.y<=it.y+Math.max(it.h||0,it.z*1.4)+r;const P=it.p,rr=r+it.w/2;for(let i=0;i<P.length;i+=2){const x1=P[i],y1=P[i+1],x2=i+2<P.length?P[i+2]:x1,y2=i+2<P.length?P[i+3]:y1,dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy;let t=l?((pt.x-x1)*dx+(pt.y-y1)*dy)/l:0;t=Math.max(0,Math.min(1,t));const cx=x1+t*dx-pt.x,cy=y1+t*dy-pt.y;if(cx*cx+cy*cy<=rr*rr)return true}return false}
-function lvCancelLive(){const L=LV&&LV.live;if(!L)return;clearTimeout(L.tm);LV.live=null;if(L.raf)cancelAnimationFrame(L.raf);if(L.el)L.el.remove();lvAnRender(L.p)}
+function lvCancelLive(){const L=LV&&LV.live;if(!L)return;clearTimeout(L.tm);LV.live=null;if(L.raf)cancelAnimationFrame(L.raf);if(L.el)L.el.remove();if(L.sv2)L.sv2.remove();lvAnRender(L.p)}
 function lvProbe(g,e,t){try{if(typeof qlog!='function')return;const c=g._i.querySelector('canvas:not(.lvtile)'),sv=lvAnSvg(g),a=sv.getBoundingClientRect(),b=c?c.getBoundingClientRect():null,v=window.visualViewport,R=q=>q?[q.left,q.top,q.width,q.height].map(Math.round):null;qlog('stroke',{t,x:Math.round(e.clientX),y:Math.round(e.clientY),svg:R(a),cv:R(b),vv:v?[Math.round(v.offsetLeft),Math.round(v.offsetTop),+v.scale.toFixed(2)]:null,ih:innerHeight,r:+(g._r||0).toFixed(3),cr:c&&c.width?+(c.height/c.width).toFixed(3):0,two:!!LV.two,z:+(LV.fz||LV.z||1).toFixed(2)})}catch(_){}}
-function lvPD(e){if(!LV||!LV.tool||LV.ign||e.button>0)return;if(e.target.closest&&e.target.closest('.lvta'))return;const g=e.target.closest&&e.target.closest('.lvg');if(LV.ta)lvTaDone();if(!g||!g._i)return;const S=$('#lvS'),p=+g.dataset.p,pt=lvPt(g,e),t=LV.tool,a=(LV.m.an&&LV.m.an[p])||[];
+function lvPD(e){if(!LV||!LV.tool||LV.ign||e.button>0)return;LV.rcg=null;if(e.target.closest&&e.target.closest('.lvta'))return;const g=e.target.closest&&e.target.closest('.lvg');if(LV.ta)lvTaDone();if(!g||!g._i)return;const S=$('#lvS'),p=+g.dataset.p,pt=lvPt(g,e),t=LV.tool,a=(LV.m.an&&LV.m.an[p])||[];
  if(t=='txt'){e.preventDefault();const hit=[...a].reverse().find(it=>it.t=='x'&&lvHit(it,pt,2));try{S.setPointerCapture(e.pointerId)}catch(_){}
   if(LV.ta&&!hit){lvTaDone();return}
   if(hit){const lv=LV.live={k:'d',p,g,it:hit,cl:Object.assign({},hit),sx:pt.x,sy:pt.y,moved:0,armed:0,cancel:0};lv.tm=setTimeout(()=>{if(LV&&LV.live===lv){lv.armed=1;try{navigator.vibrate&&navigator.vibrate(30)}catch(_){}}},1200);return}
@@ -2585,7 +2585,7 @@ function lvPD(e){if(!LV||!LV.tool||LV.ign||e.button>0)return;if(e.target.closest
  lvProbe(g,e,t);
  if(t=='er'){const rc=lvR(g);LV.live={k:'e',p,g,orig:a.slice(),w:a.slice(),ch:0,raf:0,lp:[pt.x,pt.y],rad:LV.es/2/Math.max(1,rc.width/1000)};lvErAt([pt.x,pt.y],[pt.x,pt.y]);return}
  const it={t:t=='hl'?'h':'p',c:LV.cols[t],w:LV_W[t][LV.sz],p:[pt.x,pt.y]};if(t=='ul'){it.p=[pt.x,pt.y,pt.x,pt.y];it.ul=1}
- const sv=lvAnSvg(g,p),el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('fill','none');el.setAttribute('stroke',it.c);el.setAttribute('stroke-width',it.w);el.setAttribute('stroke-linecap',it.t=='h'?'butt':'round');el.setAttribute('stroke-linejoin','round');if(it.t=='h'){el.setAttribute('opacity','.4');el.style.mixBlendMode='multiply'}el.setAttribute('d',lvD(it.p));sv.appendChild(el);LV.live={k:'s',p,g,it,el}}
+ const sv=lvAnSvg(g,p),el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('fill','none');el.setAttribute('stroke',it.c);el.setAttribute('stroke-width',it.w);el.setAttribute('stroke-linecap',it.t=='h'?'butt':'round');el.setAttribute('stroke-linejoin','round');if(it.t=='h')el.setAttribute('opacity','.4');el.setAttribute('d',lvD(it.p));const sv2=sv.cloneNode(false);sv2.setAttribute('class','lvl');sv.after(sv2);sv2.appendChild(el);LV.live={k:'s',p,g,it,el,sv2}}
 /*ER-BEGIN*/
 /* ممحاة PDF: مسح تدريجي دقيق مثل ممحاة الدفتر — تقصّ الخط عند دائرة الممحاة وتُبقي ما تبقّى منه.
    قطر الدائرة بالبكسل (لا يتغيّر مع التكبير)، وخيار «مسح الخط كاملاً» يحذف الخط كله عند لمسه.
@@ -2615,10 +2615,10 @@ function lvErAt(a,b){const L=LV&&LV.live;if(!L||L.k!='e')return;let ch=0;const n
  if(ch){L.w=nw;L.ch=1}L.lp=b;lvErPaint()}
 function lvErPaint(){const L=LV&&LV.live;if(!L||L.k!='e'||L.raf)return;L.raf=requestAnimationFrame(()=>{L.raf=0;if(!LV||LV.live!==L)return;lvAnRender(L.p,L.w,`<circle cx="${L.lp[0]}" cy="${L.lp[1]}" r="${L.rad}" fill="#ffffff40" stroke="#444" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`)})}
 function lvPM(e){const L=LV&&LV.live;if(!L||LV.ign)return;const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e];(ev.length?ev:[e]).forEach(q=>{const pt=lvPt(L.g,q);
- if(L.k=='s'){const P=L.it.p;if(L.it.ul){const dx=pt.x-P[0],dy=pt.y-P[1];P[2]=pt.x;P[3]=Math.abs(dy)<Math.abs(dx)*.14?P[1]:pt.y}else{const lx=P[P.length-2],ly=P[P.length-1];if(Math.hypot(pt.x-lx,pt.y-ly)>.8)P.push(pt.x,pt.y)}L.el.setAttribute('d',lvD(P))}
+ if(L.k=='s'){const P=L.it.p;if(L.it.ul){const dx=pt.x-P[0],dy=pt.y-P[1];P[2]=pt.x;P[3]=Math.abs(dy)<Math.abs(dx)*.14?P[1]:pt.y}else{const lx=P[P.length-2],ly=P[P.length-1];if(Math.hypot(pt.x-lx,pt.y-ly)>.8)P.push(pt.x,pt.y)}if(!L.raf)L.raf=requestAnimationFrame(()=>{L.raf=0;if(L.el)L.el.setAttribute('d',lvD(L.it.p))})}
  else if(L.k=='e')lvErAt(L.lp,[pt.x,pt.y]);
  else if(L.k=='d'){const dx=pt.x-L.sx,dy=pt.y-L.sy;if(L.cancel)return;if(!L.armed){if(Math.hypot(dx,dy)>14){clearTimeout(L.tm);L.cancel=1}return}if(!L.moved&&Math.hypot(dx,dy)<7)return;L.moved=1;L.cl.x=Math.max(0,Math.min(1000-L.cl.w,L.it.x+dx));L.cl.y=Math.max(0,L.it.y+dy);const a=LV.m.an[L.p];lvAnRender(L.p,a.map(x=>x===L.it?L.cl:x))}})}
-function lvPU(e){const L=LV&&LV.live;if(!L)return;LV.live=null;if(L.el)L.el.remove();
+function lvPU(e){const L=LV&&LV.live;if(!L)return;LV.live=null;if(L.raf){cancelAnimationFrame(L.raf);L.raf=0}if(L.el)L.el.remove();if(L.sv2)L.sv2.remove();
  if(L.k=='s'){const it=L.it;if(it.ul&&Math.hypot(it.p[2]-it.p[0],it.p[3]-it.p[1])<6){lvAnRender(L.p);return}lvDo({p:L.p,rm:[],ad:[it]})}
  else if(L.k=='e'){if(L.raf)cancelAnimationFrame(L.raf);const keep=new Set(L.w),was=new Set(L.orig),rm=[];L.orig.forEach((it,i)=>{if(!keep.has(it))rm.push({i,it})});const ad=L.w.filter(it=>!was.has(it));if(rm.length||ad.length)lvDo({p:L.p,rm,ad});else lvAnRender(L.p)}
  else if(L.k=='d'){clearTimeout(L.tm);const a=LV.m.an[L.p],i=a.indexOf(L.it);if(L.cancel||(L.armed&&!L.moved)){lvAnRender(L.p)}else if(L.moved&&i>=0)lvDo({p:L.p,rm:[{i,it:L.it}],ad:[L.cl]});else{lvAnRender(L.p);lvTa(L.p,L.g,L.it,L.it)}}}
@@ -2631,7 +2631,7 @@ function lvTa(p,g,it,old){lvTaDone();const r=lvR(g),ir=g._i.getBoundingClientRec
  if(!LV.kbLock){LV.kbLock=1;LV.kbH=o.offsetHeight;o.style.height=LV.kbH+'px'}
  LV.ta={ta,p,g,it,old};if(old)lvAnRender(p,(LV.m.an[p]||[]).filter(x=>x!==old));
  const fit=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'},vis=()=>{try{const vv=window.visualViewport;if(!vv)return;const kb=vv.height+vv.offsetTop,b=ta.getBoundingClientRect();if(b.bottom>kb-28){const d=b.bottom-(kb-28);S.scrollTop+=d}}catch(_){}};
- ta.addEventListener('input',()=>{place();fit();vis()});ta.addEventListener('pointerdown',ev=>ev.stopPropagation());ta.addEventListener('blur',()=>setTimeout(lvTaDone,150));fit();setTimeout(()=>{ta.focus();setTimeout(vis,380)},30)}
+ let rq=0;ta.addEventListener('input',()=>{if(rq)return;rq=requestAnimationFrame(()=>{rq=0;place();fit();vis()})});ta.addEventListener('pointerdown',ev=>ev.stopPropagation());ta.addEventListener('blur',()=>setTimeout(lvTaDone,150));fit();setTimeout(()=>{ta.focus();setTimeout(vis,380)},30)}
 function lvTaDone(){const T=LV&&LV.ta;if(!T)return;LV.ta=null;const o=$('#libV');if(LV.kbLock){LV.kbLock=0;LV.taT=Date.now()+700;if(o)o.style.height=''}
  const s=T.ta.value.replace(/\s+$/,''),r=lvR(T.g),tr=T.ta.getBoundingClientRect(),h=Math.round(T.ta.scrollHeight/r.width*1000);let x=Math.max(0,Math.round((tr.left-r.left)/r.width*1000)),w=Math.round(tr.width/r.width*1000)+16;w=Math.max(40,Math.min(w,1000-x));T.ta.remove();
  const nit=Object.assign({},T.it,{s,h,x,w,ax:undefined});
@@ -2687,7 +2687,7 @@ async function lvTL(L,pg,g,v1,cssW,k){if(LV!==L||g._k!==k)return;let tc=null;try
 function lvTheme(){if(!LV)return;lvBg(LV.bg=='night'?'orig':'night')}
 function lvRot(){if(!LV)return;const M=[['auto','تدوير تلقائي'],['landscape','عرضي'],['portrait','طولي']];LV.rot=((LV.rot||0)+1)%3;const m=M[LV.rot];try{const N=libNat();if(N&&N.orient)N.orient({mode:m[0]}).catch(dbg);else if(screen.orientation&&screen.orientation.lock)screen.orientation.lock(m[0]=='auto'?'any':m[0]).catch(()=>lvNote('غير مدعوم هنا'))}catch(e){dbg(e)}lvNote(m[1])}
 function lvFull(){try{const N=libNat();if(N&&N.immersive){LV.fs=!LV.fs;N.immersive({on:LV.fs}).catch(dbg);$('#libV').classList.toggle('lvh',LV.fs);lvNote(LV.fs?'ملء الشاشة':'إنهاء ملء الشاشة');return}const d=document;if(d.fullscreenElement){d.exitFullscreen()}else if(d.documentElement.requestFullscreen)d.documentElement.requestFullscreen()}catch(e){dbg(e)}}
-document.addEventListener('selectionchange',()=>{if(!LV||LV.tool)return;clearTimeout(LV.selT);LV.selT=setTimeout(lvSelMenu,320)});
+document.addEventListener('selectionchange',()=>{if(!LV||LV.tool)return;clearTimeout(LV.selT);LV.selT=setTimeout(lvSelMenu,450)});
 /* الكتابة على الملف: لمسة عليها تُظهر قائمة التطبيق السوداء (نسخ / حذف) بدل قائمة أندرويد */
 function lvTxTap(x,y){try{const S=$('#lvS'),r=S.getBoundingClientRect(),cx=x+r.left,cy=y+r.top,el=document.elementsFromPoint(cx,cy).find(e=>e.closest&&e.closest('.lvg')),g=el&&el.closest('.lvg');if(!g||!g._i)return false;const p=+g.dataset.p,a=(LV.m.an&&LV.m.an[p])||[],rr=lvR(g),k=1000/rr.width,pt={x:(cx-rr.left)*k,y:(cy-rr.top)*k},cmI=[...a].map((q,ix)=>({q,ix})).reverse().find(o=>o.q.t=='r'&&o.q.n&&lvHit(o.q,pt,4));if(cmI){lvCm(p,cmI.ix);return true}const it=[...a].reverse().find(q=>q.t=='x'&&lvHit(q,pt,6));if(!it)return false;
  LV.txr={p,it};let m=$('#lvSm');if(!m){m=document.createElement('div');m.id='lvSm';m.className='lvsm';$('#libV').appendChild(m)}
@@ -2699,13 +2699,13 @@ function lvSmHide(){if(LV&&(LV.cpOpen||LV.txm))return;const m=$('#lvSm');if(m)m.
 /* نص التحديد مع إعادة الفراغات بين الكلمات: بعض ملفات PDF العربية ترسم الفراغ فجوةً بلا حرف مسافة، فنقيسها هندسياً */
 function lvSelText(r,tl,sel){const plain=()=>sel.toString().replace(/\s+/g,' ').trim();try{const w=document.createTreeWalker(tl,NodeFilter.SHOW_TEXT),cr=document.createRange();let out='',prev=null,cnt=0,n;
  while((n=w.nextNode())){if(!r.intersectsNode(n))continue;const a=n===r.startContainer?r.startOffset:0,b=n===r.endContainer?r.endOffset:n.data.length;
-  for(let i=a;i<b;i++){const c=n.data[i];if(/\s/.test(c)){if(out&&!out.endsWith(' '))out+=' ';prev=null;continue}if(++cnt>4000)return plain();
+  for(let i=a;i<b;i++){const c=n.data[i];if(/\s/.test(c)){if(out&&!out.endsWith(' '))out+=' ';prev=null;continue}if(++cnt>1500)return plain();
    cr.setStart(n,i);cr.setEnd(n,i+1);const q=cr.getBoundingClientRect();if(q.width<0.5||q.height<0.5){out+=c;continue}
    if(prev&&out&&!out.endsWith(' ')){const hh=Math.max(q.height,prev.h);if(Math.abs((q.top+q.bottom)/2-prev.cy)>0.6*hh)out+=' ';else if(Math.max(prev.l-q.right,q.left-prev.r)>0.17*hh)out+=' '}
    out+=c;prev={l:q.left,r:q.right,cy:(q.top+q.bottom)/2,h:q.height}}}
  return out.replace(/\s+/g,' ').trim()||plain()}catch(e){dbg(e,'seltext');return plain()}}
 function lvSelMenu(){if(!LV||LV.tool||LV.cpOpen)return;const sel=getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount){lvSmHide();return}const r=sel.getRangeAt(0);let n=r.commonAncestorContainer;n=n.nodeType==1?n:n.parentElement;const tl=n&&n.closest&&n.closest('.textLayer');const g=tl&&tl.closest('.lvg');if(!g||!g._i){lvSmHide();return}
- const rs=[...r.getClientRects()].filter(q=>q.width>2&&q.height>2);if(!rs.length){lvSmHide();return}LV.txm=0;LV.sel={p:+g.dataset.p,g,rs,text:lvSelText(r,tl,sel)};
+ const rs=[...r.getClientRects()].filter(q=>q.width>2&&q.height>2);if(!rs.length){lvSmHide();return}LV.txm=0;{let _t=null;const rc=r.cloneRange();LV.sel={p:+g.dataset.p,g,rs,get text(){if(_t==null){_t=lvSelText(rc,tl,sel)}return _t}}}
  let m=$('#lvSm');if(!m){m=document.createElement('div');m.id='lvSm';m.className='lvsm';$('#libV').appendChild(m)}
  m.innerHTML=['#ffd600','#69f0ae','#ff80ab','#82b1ff'].concat(LV.cc&&!['#ffd600','#69f0ae','#ff80ab','#82b1ff'].includes(LV.cc)?[LV.cc]:[]).map(c=>`<button type="button" class="lvsc2" style="--c:${c}" onclick="lvSelHl('${c}')" aria-label="تظليل"></button>`).join('')+`<button type="button" class="lvsc2 lvrb" onclick="lvCpSel()" aria-label="طيف الألوان"></button>`+`<button type="button" class="lvsb" onclick="lvSelHl('#ffd600',1)">${svg('lbCm')}<span>تعليق</span></button><button type="button" class="lvsb" onclick="lvSelCopy()">${svg('lbCopy')}<span>نسخ</span></button>`;
  const f=rs[0],W=window.innerWidth,mw=m.offsetWidth||250;let top=f.top-58;if(top<(LV.padT||70)+4)top=rs[rs.length-1].bottom+16;m.style.top=Math.round(Math.min(top,window.innerHeight-90))+'px';m.style.left=Math.round(Math.max(8,Math.min(W-mw-8,f.left+f.width/2-mw/2)))+'px'}

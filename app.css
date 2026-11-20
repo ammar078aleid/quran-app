@@ -552,7 +552,7 @@ nav{left:8px;right:8px;padding:5px;gap:0}nav button{min-width:0;font-size:10.5px
 .lvs{overflow-anchor:none;position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;background:#3b3c42;touch-action:pan-x pan-y;overscroll-behavior:contain;outline:0}
 .lvs.v{direction:ltr}.lvs.v .lvw{position:relative;min-width:100%;padding-top:var(--pt);padding-bottom:var(--pb)}
 .lvs.v .lvg{width:100%;margin-bottom:1.6%;background:#fff;position:relative;overflow:hidden;box-shadow:0 3px 16px #0007}
-.lvi{position:relative}.lvs.v .lvi{position:absolute;inset:0}.lvs.h .lvi{display:flex;max-width:100%;max-height:100%}.lvg canvas{display:block;width:100%;height:100%}.lvi .lva{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}.lvs.h .lvg canvas{width:auto;height:auto}
+.lvi{position:relative}.lvs.v .lvi{position:absolute;inset:0}.lvs.h .lvi{display:flex;max-width:100%;max-height:100%}.lvg canvas{display:block;width:100%;height:100%}.lvi .lva,.lvi .lvl{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}.lvs.h .lvg canvas{width:auto;height:auto}
 .lvg::before{content:attr(data-p);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:#0000001c;background:linear-gradient(110deg,transparent 30%,#0000000a 50%,transparent 70%) 0 0/200% 100%;animation:lvsh 1.4s linear infinite}
 .lvg.ok::before{display:none}@keyframes lvsh{to{background-position:-200% 0}}
 .lvs.v.snap{scroll-snap-type:none}
@@ -858,3 +858,7 @@ iframe,embed,object{max-width:100%}
 .qdr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px dashed var(--bd,#0001)}.qdr:last-child{border:0}.qdr span:first-child{opacity:.7}.qdr b{font-weight:600;text-align:left;direction:ltr;unicode-bidi:plaintext}
 .qdr .ok{color:#2e7d32}.qdr .bad{color:#d32f2f}.qdr .wr{color:#e08a00}.qdev{font:11px/1.8 ui-monospace,monospace;direction:ltr;text-align:left;max-height:240px;overflow:auto;padding:6px 0}.qdev i{opacity:.55;font-style:normal}
 
+
+.lvl{will-change:transform;contain:strict}
+.lver{min-width:0;max-width:100%;gap:6px}.lvcs{gap:5px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none}.lvcs::-webkit-scrollbar{display:none}.lvcs button{width:22px;height:22px;flex:none}.lvzs{flex:none}.lvzs button{width:26px}
+.lvs.ed,.lvs.ed *{touch-action:none}
