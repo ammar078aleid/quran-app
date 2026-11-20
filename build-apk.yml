@@ -29,23 +29,38 @@ jobs:
           test -f patch.py || { echo "patch.py غير موجود"; exit 1; }
 
       - name: Signing key
+        env:
+          KS_B64: ${{ secrets.QM_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.QM_KS_PASS }}
+          KS_ALIAS: ${{ secrets.QM_KS_ALIAS }}
         run: |
-          if [ ! -f apk-keystore.jks ]; then
-            keytool -genkeypair -keystore apk-keystore.jks -alias qm -keyalg RSA -keysize 2048 -validity 36500 \
-              -storepass qmpass123 -keypass qmpass123 -dname "CN=Quran Muthabbit"
-            git config user.name "apk-bot"
-            git config user.email "apk-bot@users.noreply.github.com"
-            git add apk-keystore.jks
-            git commit -m "add apk signing key"
-            git push || true
-          fi
           mkdir -p /tmp/apk/www
-          cp apk-keystore.jks /tmp/apk/ks.jks
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            # مفتاح من أسرار GitHub (الأفضل أمنياً)
+            echo "$KS_B64" | base64 -d > /tmp/apk/ks.jks
+            echo "QM_STOREPASS=$KS_PASS" >> $GITHUB_ENV
+            echo "QM_ALIAS=${KS_ALIAS:-qm}" >> $GITHUB_ENV
+            echo "المفتاح: من أسرار GitHub" >> $GITHUB_STEP_SUMMARY
+          else
+            # احتياطي: المفتاح القديم داخل المستودع (يُبقي التحديث فوق النسخة المثبّتة)
+            if [ ! -f apk-keystore.jks ]; then
+              keytool -genkeypair -keystore apk-keystore.jks -alias qm -keyalg RSA -keysize 2048 -validity 36500 \
+                -storepass qmpass123 -keypass qmpass123 -dname "CN=Quran Muthabbit"
+              git config user.name "apk-bot"
+              git config user.email "apk-bot@users.noreply.github.com"
+              git add apk-keystore.jks
+              git commit -m "add apk signing key"
+              git push || true
+            fi
+            cp apk-keystore.jks /tmp/apk/ks.jks
+            echo "QM_STOREPASS=qmpass123" >> $GITHUB_ENV
+            echo "QM_ALIAS=qm" >> $GITHUB_ENV
+          fi
 
       - name: Key fingerprint
         id: fp
         run: |
-          FP=$(keytool -list -v -keystore apk-keystore.jks -storepass qmpass123 | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
+          FP=$(keytool -list -v -keystore /tmp/apk/ks.jks -storepass "$QM_STOREPASS" | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
           echo "sha1=$FP" >> $GITHUB_OUTPUT
           echo "SHA-1: $FP" >> $GITHUB_STEP_SUMMARY
 

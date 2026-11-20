@@ -464,6 +464,8 @@ public class PdfScanPlugin extends Plugin {
       new java.util.concurrent.LinkedBlockingDeque<Runnable>() {
         @Override public Runnable take() throws InterruptedException { return takeLast(); }
       });
+  private static int qSlot = 0;
+  private static long qSeq = 0;
   private static final Object qLock = new Object();
   private static android.graphics.pdf.PdfRenderer qR = null;
   private static android.os.ParcelFileDescriptor qFd = null;
@@ -520,6 +522,7 @@ public class PdfScanPlugin extends Plugin {
     final double ox = call.getData().optDouble("ox", 0);
     final double oy = call.getData().optDouble("oy", 0);
     final int qual = call.getData().optInt("q", 88);
+    final boolean asFile = call.getData().optBoolean("file", false);
     if (p == null || p.length() == 0) { call.reject("bad args"); return; }
     QX.execute(() -> {
       synchronized (qLock) {
@@ -549,7 +552,19 @@ public class PdfScanPlugin extends Plugin {
           java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(Math.max(4096, w * h / 6));
           b.compress(android.graphics.Bitmap.CompressFormat.JPEG, Math.max(40, Math.min(95, qual)), bo);
           JSObject o = new JSObject();
-          o.put("data", Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP));
+          if (asFile) {
+            /* حلقة من 32 ملفاً في الكاش: بلا Base64 ولا JSON، والواجهة تحمّل الصورة من المسار مباشرة */
+            File rd = new File(getContext().getCacheDir(), "qr");
+            if (!rd.exists()) rd.mkdirs();
+            qSlot = (qSlot + 1) % 32;
+            File rf = new File(rd, "r" + qSlot + ".jpg");
+            java.io.FileOutputStream fo = new java.io.FileOutputStream(rf, false);
+            try { bo.writeTo(fo); } finally { fo.close(); }
+            qSeq++;
+            o.put("path", rf.getAbsolutePath()); o.put("v", qSeq);
+          } else {
+            o.put("data", Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP));
+          }
           o.put("w", w); o.put("h", h); o.put("pw", pw); o.put("ph", ph);
           call.resolve(o);
         } catch (Throwable e) {
