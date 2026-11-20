@@ -61,14 +61,12 @@ sign = '''android {
     signingConfigs {
         debug {
             storeFile file("/tmp/apk/ks.jks")
-            storePassword "@@SP@@"
-            keyAlias "@@AL@@"
-            keyPassword "@@SP@@"
+            storePassword "qmpass123"
+            keyAlias "qm"
+            keyPassword "qmpass123"
         }
     }'''
 assert 'android {' in t
-import os as _os
-sign = sign.replace('@@SP@@', _os.environ.get('QM_STOREPASS', 'qmpass123')).replace('@@AL@@', _os.environ.get('QM_ALIAS', 'qm'))
 t = t.replace('android {', sign, 1)
 deps = '''dependencies {
     implementation "androidx.credentials:credentials:1.3.0"
