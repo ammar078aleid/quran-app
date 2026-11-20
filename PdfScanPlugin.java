@@ -458,6 +458,12 @@ public class PdfScanPlugin extends Plugin {
   }
 
   /* ===== رسم PDF أصلي عبر PdfRenderer (بدون ضغط على خيط الواجهة) ===== */
+  /* طابور رسم بخيط واحد: الأحدث أولاً (الصفحة المطلوبة الآن قبل الطلبات القديمة)، بدل خيط جديد لكل طلب */
+  private static final java.util.concurrent.ThreadPoolExecutor QX = new java.util.concurrent.ThreadPoolExecutor(
+      1, 1, 0L, java.util.concurrent.TimeUnit.MILLISECONDS,
+      new java.util.concurrent.LinkedBlockingDeque<Runnable>() {
+        @Override public Runnable take() throws InterruptedException { return takeLast(); }
+      });
   private static final Object qLock = new Object();
   private static android.graphics.pdf.PdfRenderer qR = null;
   private static android.os.ParcelFileDescriptor qFd = null;
@@ -487,7 +493,7 @@ public class PdfScanPlugin extends Plugin {
   public void pdfInfo(PluginCall call) {
     final String p = call.getString("path");
     if (p == null || p.length() == 0) { call.reject("bad args"); return; }
-    new Thread(() -> {
+    QX.execute(() -> {
       synchronized (qLock) {
         try {
           qOpen(p);
@@ -499,7 +505,7 @@ public class PdfScanPlugin extends Plugin {
           call.reject("info: " + e);
         }
       }
-    }).start();
+    });
   }
 
   /* page: 0-based. وضعان: width فقط (صفحة كاملة) أو tw/th/scale/ox/oy (بلاطة). scale = بكسل لكل نقطة PDF */
@@ -515,7 +521,7 @@ public class PdfScanPlugin extends Plugin {
     final double oy = call.getData().optDouble("oy", 0);
     final int qual = call.getData().optInt("q", 88);
     if (p == null || p.length() == 0) { call.reject("bad args"); return; }
-    new Thread(() -> {
+    QX.execute(() -> {
       synchronized (qLock) {
         android.graphics.pdf.PdfRenderer.Page page = null;
         android.graphics.Bitmap b = null;
@@ -553,7 +559,7 @@ public class PdfScanPlugin extends Plugin {
           try { if (b != null) b.recycle(); } catch (Throwable x) { }
         }
       }
-    }).start();
+    });
   }
 
   /* نسخ ملف مخزّن (blob) إلى الكاش على دفعات: cacheBegin → cacheAppend* */
@@ -631,6 +637,42 @@ public class PdfScanPlugin extends Plugin {
   }
 
   /* مشاركة ملف عبر قائمة المشاركة الأصلية (FileProvider): path = مسار ملف على الجهاز أو في الكاش */
+  /* فتح الملف بتطبيق آخر (عارض PDF خارجي) */
+  @PluginMethod
+  public void openExternal(PluginCall call) {
+    final String p = call.getString("path");
+    final String name = call.getString("name", "file.pdf");
+    final String mime = call.getString("mime", "application/pdf");
+    if (p == null || p.length() == 0) { call.reject("bad args"); return; }
+    try {
+      java.io.File src = new java.io.File(p);
+      if (!src.exists()) { call.reject("missing"); return; }
+      java.io.File dir = new java.io.File(getContext().getCacheDir(), "qshare");
+      if (!dir.exists()) dir.mkdirs();
+      java.io.File[] old = dir.listFiles();
+      if (old != null) for (java.io.File o : old) o.delete();
+      String safe = name.replaceAll("[\\\\/:*?\"<>|]", "_");
+      if (safe.length() == 0) safe = "file.pdf";
+      java.io.File dst = new java.io.File(dir, safe);
+      java.io.InputStream in = new java.io.FileInputStream(src);
+      java.io.FileOutputStream out = new java.io.FileOutputStream(dst, false);
+      try {
+        byte[] buf = new byte[65536];
+        int r;
+        while ((r = in.read(buf)) > 0) out.write(buf, 0, r);
+      } finally { in.close(); out.close(); }
+      final Uri uri = androidx.core.content.FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", dst);
+      final Intent it = new Intent(Intent.ACTION_VIEW);
+      it.setDataAndType(uri, mime);
+      it.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      final Intent ch = Intent.createChooser(it, name);
+      ch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      getActivity().runOnUiThread(() -> {
+        try { getContext().startActivity(ch); call.resolve(); } catch (Throwable t) { call.reject(String.valueOf(t)); }
+      });
+    } catch (Throwable t) { call.reject(String.valueOf(t)); }
+  }
+
   @PluginMethod
   public void shareFile(PluginCall call) {
     final String p = call.getString("path");

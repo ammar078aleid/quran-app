@@ -32,6 +32,18 @@ public class MainActivity extends BridgeActivity {
     registerPlugin(PdfScanPlugin.class);
     super.onCreate(savedInstanceState);
     try { getBridge().getWebView().setBackgroundColor(0xFFFFFFFF); } catch (Throwable t) { }
+    /* انهيار/قتل عملية WebView (نفاد الذاكرة): نُعيد إنشاء الواجهة بدل أن يُغلق التطبيق، ويستأنف القارئ آخر كتاب */
+    try {
+      if (Build.VERSION.SDK_INT >= 26) {
+        getBridge().setWebViewClient(new com.getcapacitor.BridgeWebViewClient(getBridge()) {
+          @Override
+          public boolean onRenderProcessGone(android.webkit.WebView view, android.webkit.RenderProcessGoneDetail detail) {
+            runOnUiThread(new Runnable() { public void run() { try { recreate(); } catch (Throwable t) { } } });
+            return true;
+          }
+        });
+      }
+    } catch (Throwable t) { }
     /* عند الفتح من تطبيق آخر (تيليجرام مثلاً) لا نبقى داخل مهمّته: نُعيد التشغيل في مهمّة مستقلة كي يعمل الانتقال بين التطبيقين كما في بقية القرّاء */
     try {
       Intent in = getIntent();
