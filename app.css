@@ -858,4 +858,3 @@ iframe,embed,object{max-width:100%}
 .qdr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px dashed var(--bd,#0001)}.qdr:last-child{border:0}.qdr span:first-child{opacity:.7}.qdr b{font-weight:600;text-align:left;direction:ltr;unicode-bidi:plaintext}
 .qdr .ok{color:#2e7d32}.qdr .bad{color:#d32f2f}.qdr .wr{color:#e08a00}.qdev{font:11px/1.8 ui-monospace,monospace;direction:ltr;text-align:left;max-height:240px;overflow:auto;padding:6px 0}.qdev i{opacity:.55;font-style:normal}
 
-.lver{min-width:0;max-width:100%;gap:6px}.lvcs{gap:5px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none}.lvcs::-webkit-scrollbar{display:none}.lvcs button{width:22px;height:22px;flex:none}.lvzs{flex:none}.lvzs button{width:26px}
