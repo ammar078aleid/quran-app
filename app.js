@@ -2586,16 +2586,16 @@ function lvLines(g){try{const tl=g._i.querySelector('.textLayer');if(!tl)return 
 const lvCl=(v,l)=>Math.max(l.ul,Math.min(l.ur,v));
 function lvSnapAt(L,cy){let b=null,bd=1e9;for(const l of L){const d=Math.abs(l.cy-cy);if(d<bd){bd=d;b=l}}return b&&bd<b.h*.95?b:null}
 function lvHlMove(L,q,pt){const ln=lvSnapAt(L.sn,q.clientY);if(ln&&ln!==L.cur&&Math.abs(ln.cy-L.cur.cy)>L.cur.h*.6){L.more.push(L.it);const it=Object.assign({},L.it,{p:[lvCl(pt.x,ln),ln.y,lvCl(pt.x,ln),ln.y],w:ln.w}),el=L.el.cloneNode(false);el.setAttribute('stroke-width',ln.w);L.sv2.appendChild(el);L.it=it;L.el=el;L.cur=ln}L.it.p[2]=lvCl(pt.x,L.cur);if(!L.raf)L.raf=requestAnimationFrame(()=>{L.raf=0;if(L.el)L.el.setAttribute('d',lvD(L.it.p))})}
-function lvProbe(g,e,t){try{if(typeof qlog!='function')return;const c=g._i.querySelector('canvas:not(.lvtile)'),sv=lvAnSvg(g),a=sv.getBoundingClientRect(),b=c?c.getBoundingClientRect():null,v=window.visualViewport,R=q=>q?[q.left,q.top,q.width,q.height].map(Math.round):null;qlog('stroke',{t,x:Math.round(e.clientX),y:Math.round(e.clientY),svg:R(a),cv:R(b),vv:v?[Math.round(v.offsetLeft),Math.round(v.offsetTop),+v.scale.toFixed(2)]:null,ih:innerHeight,r:+(g._r||0).toFixed(3),cr:c&&c.width?+(c.height/c.width).toFixed(3):0,two:!!LV.two,z:+(LV.fz||LV.z||1).toFixed(2)})}catch(_){}}
+function lvProbe(g,e,t){try{if(typeof qlog!='function')return;const c=g._i.querySelector('canvas:not(.lvtile)'),sv=lvAnSvg(g),a=sv.getBoundingClientRect(),b=c?c.getBoundingClientRect():null,v=window.visualViewport,R=q=>q?[q.left,q.top,q.width,q.height].map(Math.round):null;qlog('stroke',{t,x:Math.round(e.clientX),y:Math.round(e.clientY),svg:R(a),cv:R(b),vv:v?[Math.round(v.offsetLeft),Math.round(v.offsetTop),+v.scale.toFixed(2)]:null,ih:innerHeight,r:+(g._r||0).toFixed(3),cr:c&&c.width?+(c.height/c.width).toFixed(3):0,two:!!LV.two,z:+(LV.fz||LV.z||1).toFixed(2),sp:g._i.querySelectorAll('.textLayer span').length,nd:sv.childNodes.length})}catch(_){}}
 function lvPD(e){if(!LV||!LV.tool||LV.ign||e.button>0)return;LV.rcg=null;if(e.target.closest&&e.target.closest('.lvta'))return;const g=e.target.closest&&e.target.closest('.lvg');if(LV.ta)lvTaDone();if(!g||!g._i)return;const S=$('#lvS'),p=+g.dataset.p,pt=lvPt(g,e),t=LV.tool,a=(LV.m.an&&LV.m.an[p])||[];
  if(t=='txt'){e.preventDefault();const hit=[...a].reverse().find(it=>it.t=='x'&&lvHit(it,pt,2));try{S.setPointerCapture(e.pointerId)}catch(_){}
   if(LV.ta&&!hit){lvTaDone();return}
   if(hit){const lv=LV.live={k:'d',p,g,it:hit,cl:Object.assign({},hit),sx:pt.x,sy:pt.y,moved:0,armed:0,cancel:0};lv.tm=setTimeout(()=>{if(LV&&LV.live===lv){lv.armed=1;try{navigator.vibrate&&navigator.vibrate(30)}catch(_){}}},1200);return}
   const w=Math.max(380,Math.min(620,1000-pt.x));lvTa(p,g,{t:'x',x:Math.min(pt.x,1000-w),y:pt.y,w,z:LV_W.txt[LV.sz],c:LV.cols.txt,s:'',h:0,ax:pt.x},null);return}
  e.preventDefault();try{S.setPointerCapture(e.pointerId)}catch(_){}
- setTimeout(()=>lvProbe(g,{clientX:e.clientX,clientY:e.clientY},t),0);
+ if(typeof qdIn=='function')qdIn(t,e.timeStamp);setTimeout(()=>lvProbe(g,{clientX:e.clientX,clientY:e.clientY},t),0);
  if(t=='er'){const rc=lvR(g);LV.live={k:'e',p,g,orig:a.slice(),w:a.slice(),ch:0,raf:0,lp:[pt.x,pt.y],rad:LV.es/2/Math.max(1,rc.width/1000)};lvErAt([pt.x,pt.y],[pt.x,pt.y]);return}
- const it={t:t=='hl'?'h':'p',c:LV.cols[t],w:LV_W[t][LV.sz],p:[pt.x,pt.y]};if(t=='ul'){it.p=[pt.x,pt.y,pt.x,pt.y];it.ul=1}let sn=null,cur=null;if(t=='hl'){sn=lvLines(g);cur=sn&&lvSnapAt(sn,e.clientY);if(cur){const x0=lvCl(pt.x,cur);it.p=[x0,cur.y,x0,cur.y];it.w=cur.w}else{sn=null;it.p=[pt.x,pt.y,pt.x,pt.y];it.ul=1}}
+ const it={t:t=='hl'?'h':'p',c:LV.cols[t],w:LV_W[t][LV.sz],p:[pt.x,pt.y]};if(t=='ul'){it.p=[pt.x,pt.y,pt.x,pt.y];it.ul=1}let sn=null,cur=null;
  const sv=lvAnSvg(g,p),el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('fill','none');el.setAttribute('stroke',it.c);el.setAttribute('stroke-width',it.w);el.setAttribute('stroke-linecap',it.t=='h'?'butt':'round');el.setAttribute('stroke-linejoin','round');if(it.t=='h')el.setAttribute('opacity','.4');el.setAttribute('d',lvD(it.p));const sv2=sv.cloneNode(false);sv2.setAttribute('class','lvlv');sv.after(sv2);sv2.appendChild(el);LV.live={k:'s',p,g,it,el,sv2,sn,cur,more:[]}}
 /*ER-BEGIN*/
 /* ممحاة PDF: مسح تدريجي دقيق مثل ممحاة الدفتر — تقصّ الخط عند دائرة الممحاة وتُبقي ما تبقّى منه.
@@ -2605,7 +2605,7 @@ const lvPS=(x,y,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((x
 const lvBBm=new WeakMap();
 function lvBBox(it){let b=lvBBm.get(it);if(!b){const P=it.p;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let i=0;i<P.length;i+=2){if(P[i]<x0)x0=P[i];if(P[i]>x1)x1=P[i];if(P[i+1]<y0)y0=P[i+1];if(P[i+1]>y1)y1=P[i+1]}b=[x0,y0,x1,y1];lvBBm.set(it,b)}return b}
 /* يعيد null إن لم تلمس الممحاةُ الخطَّ، أو مصفوفة الأجزاء المتبقية منه (فارغة إن مُسح كله). a و b طرفا حركة الممحاة. */
-function lvCut(it,a,b,R,whole){const rr=R+it.w/2,x0=Math.min(a[0],b[0])-rr,x1=Math.max(a[0],b[0])+rr,y0=Math.min(a[1],b[1])-rr,y1=Math.max(a[1],b[1])+rr,bb=lvBBox(it);
+function lvCut(it,a,b,R,whole){const rr=R*1.25+it.w/2,x0=Math.min(a[0],b[0])-rr,x1=Math.max(a[0],b[0])+rr,y0=Math.min(a[1],b[1])-rr,y1=Math.max(a[1],b[1])+rr,bb=lvBBox(it);
  if(bb[2]<x0||bb[0]>x1||bb[3]<y0||bb[1]>y1)return null;const P=it.p,near=(x,y)=>lvPS(x,y,a,b)<rr;
  if(P.length<4)return near(P[0],P[1])?[]:null;
  const pts=[[P[0],P[1]]];
@@ -2616,7 +2616,7 @@ function lvCut(it,a,b,R,whole){const rr=R+it.w/2,x0=Math.min(a[0],b[0])-rr,x1=Ma
  const out=[];let run=[];
  const fl=()=>{if(run.length>1){const f=[run[0][0],run[0][1]];let len=0,lx=run[0][0],ly=run[0][1];
    for(let i=1;i<run.length;i++){const q=run[i],d=Math.hypot(q[0]-lx,q[1]-ly);if(d>=2||i==run.length-1){f.push(q[0],q[1]);len+=d;lx=q[0];ly=q[1]}}
-   if(len>=1.5)out.push(Object.assign({},it,{p:f.map(v=>Math.round(v*10)/10)}))}run=[]};
+   if(len>=Math.max(1.5,it.w*.6))out.push(Object.assign({},it,{p:f.map(v=>Math.round(v*10)/10)}))}run=[]};
  pts.forEach((q,i)=>{if(dead[i])fl();else run.push(q)});fl();return out}
 const lvHitSeg=(it,a,b,R)=>{const n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/Math.max(2,R/2)));for(let k=0;k<=n;k++)if(lvHit(it,{x:a[0]+(b[0]-a[0])*k/n,y:a[1]+(b[1]-a[1])*k/n},R))return true;return false};
 /*ER-END*/
@@ -2625,11 +2625,11 @@ function lvErAt(a,b){const L=LV&&LV.live;if(!L||L.k!='e')return;let ch=0;const n
   const r=lvCut(it,a,b,L.rad,!!LV.ew);if(r===null)nw.push(it);else{ch=1;r.forEach(f=>nw.push(f))}});
  if(ch){L.w=nw;L.ch=1}L.lp=b;lvErPaint()}
 function lvErPaint(){const L=LV&&LV.live;if(!L||L.k!='e'||L.raf)return;L.raf=requestAnimationFrame(()=>{L.raf=0;if(!LV||LV.live!==L)return;lvAnRender(L.p,L.w,`<circle cx="${L.lp[0]}" cy="${L.lp[1]}" r="${L.rad}" fill="#ffffff40" stroke="#444" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`)})}
-function lvPM(e){const L=LV&&LV.live;if(!L||LV.ign)return;const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e];(ev.length?ev:[e]).forEach(q=>{const pt=lvPt(L.g,q);
+function lvPM(e){const L=LV&&LV.live;if(!L||LV.ign)return;if(typeof qdMv=='function')qdMv(LV.tool,e);const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e];(ev.length?ev:[e]).forEach(q=>{const pt=lvPt(L.g,q);
  if(L.k=='s'){if(L.sn){lvHlMove(L,q,pt);return}const P=L.it.p;if(L.it.ul){const dx=pt.x-P[0],dy=pt.y-P[1];P[2]=pt.x;P[3]=Math.abs(dy)<Math.abs(dx)*.14?P[1]:pt.y}else{const lx=P[P.length-2],ly=P[P.length-1];if(Math.hypot(pt.x-lx,pt.y-ly)>.8)P.push(pt.x,pt.y)}if(!L.raf)L.raf=requestAnimationFrame(()=>{L.raf=0;if(L.el)L.el.setAttribute('d',lvD(L.it.p))})}
  else if(L.k=='e')lvErAt(L.lp,[pt.x,pt.y]);
  else if(L.k=='d'){const dx=pt.x-L.sx,dy=pt.y-L.sy;if(L.cancel)return;if(!L.armed){if(Math.hypot(dx,dy)>14){clearTimeout(L.tm);L.cancel=1}return}if(!L.moved&&Math.hypot(dx,dy)<7)return;L.moved=1;L.cl.x=Math.max(0,Math.min(1000-L.cl.w,L.it.x+dx));L.cl.y=Math.max(0,L.it.y+dy);if(!L.dom){const a=LV.m.an[L.p],sv=lvAnSvg(L.g,L.p);L.dom=sv.querySelector('[data-k="'+a.indexOf(L.it)+'"]')}if(L.dom){if(!L.raf)L.raf=requestAnimationFrame(()=>{L.raf=0;if(L.dom)L.dom.style.transform='translate('+(L.cl.x-L.it.x)+'px,'+(L.cl.y-L.it.y)+'px)'})}else{const a=LV.m.an[L.p];lvAnRender(L.p,a.map(x=>x===L.it?L.cl:x))}}})}
-function lvPU(e){const L=LV&&LV.live;if(!L)return;LV.live=null;if(L.raf){cancelAnimationFrame(L.raf);L.raf=0}if(L.el)L.el.remove();if(L.sv2)L.sv2.remove();
+function lvPU(e){const L=LV&&LV.live;if(!L)return;LV.live=null;if(typeof qdEnd=='function'&&L.it)qdEnd(LV.tool,L.it.p.length/2);if(L.raf){cancelAnimationFrame(L.raf);L.raf=0}if(L.el)L.el.remove();if(L.sv2)L.sv2.remove();
  if(L.k=='s'){const it=L.it;const ok=x=>!((x.t=='h'||x.ul)&&x.p.length==4&&Math.hypot(x.p[2]-x.p[0],x.p[3]-x.p[1])<5),ad=[...(L.more||[]),it].filter(ok);if((it.ul&&Math.hypot(it.p[2]-it.p[0],it.p[3]-it.p[1])<6)&&!ad.length||!ad.length){lvAnRender(L.p);return}lvDo({p:L.p,rm:[],ad})}
  else if(L.k=='e'){if(L.raf)cancelAnimationFrame(L.raf);const keep=new Set(L.w),was=new Set(L.orig),rm=[];L.orig.forEach((it,i)=>{if(!keep.has(it))rm.push({i,it})});const ad=L.w.filter(it=>!was.has(it));if(rm.length||ad.length)lvDo({p:L.p,rm,ad});else lvAnRender(L.p)}
  else if(L.k=='d'){clearTimeout(L.tm);if(L.raf){cancelAnimationFrame(L.raf);L.raf=0}const a=LV.m.an[L.p],i=a.indexOf(L.it);if(L.cancel||(L.armed&&!L.moved)){lvAnRender(L.p)}else if(L.moved&&i>=0)lvDo({p:L.p,rm:[{i,it:L.it}],ad:[L.cl]});else{lvAnRender(L.p);lvTa(L.p,L.g,L.it,L.it)}}}
@@ -3288,13 +3288,13 @@ function qlog(tag,d){try{const t=Math.round(performance.now()-QD.t0);QD.ev.push(
   if(tag=='open:doc'){S.open.doc=o.ms;S.np=o.np||S.np}else if(tag=='open:p1')S.open.p1=o.ms;else if(tag=='open:ready')S.open.ready=o.ms;else if(tag=='open:fail')S.open.fail=String(d);
   else if(tag=='nat:ok'){const m=/(\d+)ms/.exec(String(d));if(m)S.nat.ms.push(+m[1])}else if(tag=='nat:fail'){S.nat.fail++;if(S.nat.msgs.length<5)S.nat.msgs.push(String(d).slice(0,120))}
   else if(tag=='nat:pages')S.nat.pages=String(d);else if(tag=='nat:ready')S.nat.ready=true;else if(tag=='nat:prep-fail')S.nat.prepFail=String(d);else if(tag=='nat:wait-none')S.nat.waitNone++;
-  else if(tag=='stroke'){S.strokes=(S.strokes||0)+1;try{const sv=o.svg,cv=o.cv,bad=[];if(sv&&cv&&(Math.abs(sv[0]-cv[0])>2||Math.abs(sv[1]-cv[1])>2||Math.abs(sv[2]-cv[2])>2||Math.abs(sv[3]-cv[3])>2))bad.push('الطبقة لا تطابق الصفحة');if(o.cr&&o.r&&Math.abs(o.cr-o.r)/o.r>.015)bad.push('نسبة الصفحة المرسومة '+o.cr+' تختلف عن نسبة الملف '+o.r);if(o.vv&&(Math.abs(o.vv[1])>1||Math.abs(o.vv[0])>1||Math.abs(o.vv[2]-1)>.02))bad.push('إزاحة في نافذة العرض '+o.vv.join('/'));if(bad.length){S.alignBad=(S.alignBad||0)+1;S.alignInfo=bad.join(' + ')+' | '+JSON.stringify(o).slice(0,230)}}catch(e){}}
+  else if(tag=='stroke'){S.strokes=(S.strokes||0)+1;if(o.sp>(S.spMax||0))S.spMax=o.sp;if(o.nd>(S.ndMax||0))S.ndMax=o.nd;if(o.z>(S.zMax||0))S.zMax=o.z;try{const sv=o.svg,cv=o.cv,bad=[];if(sv&&cv&&(Math.abs(sv[0]-cv[0])>2||Math.abs(sv[1]-cv[1])>2||Math.abs(sv[2]-cv[2])>2||Math.abs(sv[3]-cv[3])>2))bad.push('الطبقة لا تطابق الصفحة');if(o.cr&&o.r&&Math.abs(o.cr-o.r)/o.r>.015)bad.push('نسبة الصفحة المرسومة '+o.cr+' تختلف عن نسبة الملف '+o.r);if(o.vv&&(Math.abs(o.vv[1])>1||Math.abs(o.vv[0])>1||Math.abs(o.vv[2]-1)>.02))bad.push('إزاحة في نافذة العرض '+o.vv.join('/'));if(bad.length){S.alignBad=(S.alignBad||0)+1;S.alignInfo=bad.join(' + ')+' | '+JSON.stringify(o).slice(0,230)}}catch(e){}}
   else if(tag=='draw:fail')S.drawFail++;else if(tag=='tile:s')S.tileN++;else if(tag=='layout')S.layout=String(d);
   else if(tag.indexOf('err:')==0&&S.errs.length<8)S.errs.push(tag.slice(4)+': '+String(d).slice(0,120))}
  qdSave()}catch(e){}}
 function libSlow(k,i,ms,sz){try{const S=QD.sess;if(!S)return;const a=k=='tile'?S.tiles:S.draws;a.push(Math.round(ms));if(a.length>300)a.shift()}catch(e){}}
-function qJank(){if(QD.jOn)return;QD.jOn=1;try{let last=performance.now(),vis=0;document.addEventListener('visibilitychange',()=>{vis=performance.now();last=vis});const tick=()=>{const n=performance.now(),g=n-last;last=n;if(g>250&&n-vis>3000&&document.visibilityState=='visible'&&QD.sess&&typeof LV!='undefined'&&LV){const S=QD.sess;if(S.jank.length<60){const ev=QD.ev[QD.ev.length-1];S.jank.push({t:Math.round(n-QD.t0),g:Math.round(g),a:ev?ev.tag:''})}}requestAnimationFrame(tick)};requestAnimationFrame(tick)}catch(e){}
- try{new PerformanceObserver(l=>{const S=QD.sess;if(S)S.longtask+=l.getEntries().length}).observe({entryTypes:['longtask']})}catch(e){}
+function qJank(){if(QD.jOn)return;QD.jOn=1;try{let last=performance.now(),vis=0;document.addEventListener('visibilitychange',()=>{vis=performance.now();last=vis});const tick=()=>{const n=performance.now(),g=n-last;last=n;if(g>250&&n-vis>3000&&document.visibilityState=='visible'&&QD.sess&&typeof LV!='undefined'&&LV){const S=QD.sess;if(S.jank.length<60){const ev=QD.ev[QD.ev.length-1];S.jank.push({t:Math.round(n-QD.t0),g:Math.round(g),a:ev?ev.tag:'',c:qdCtx(n-g,n)});qdCx(S,qdCtx(n-g,n),g,'j')}}requestAnimationFrame(tick)};requestAnimationFrame(tick)}catch(e){}
+ try{new PerformanceObserver(l=>{const S=QD.sess;if(!S)return;l.getEntries().forEach(en=>{S.longtask++;S.ltSum=(S.ltSum||0)+en.duration;qdCx(S,qdCtx(en.startTime,en.startTime+en.duration),en.duration,'l')})}).observe({entryTypes:['longtask']})}catch(e){}
  setInterval(()=>{try{const m=performance.memory;if(m&&QD.sess&&typeof LV!='undefined'&&LV){const u=m.usedJSHeapSize;if(u>QD.sess.heap)QD.sess.heap=u}}catch(e){}},2000)}
 let qdTm=0;function qdSave(){if(qdTm)return;qdTm=setTimeout(()=>{qdTm=0;(window.requestIdleCallback||setTimeout)(()=>{try{if(QD.sess)localStorage.setItem('qmDiag',JSON.stringify({s:QD.sess,ev:QD.ev.slice(-80)}))}catch(e){}})},6000)}
 function qdLoad(){if(QD.sess)return{s:QD.sess,ev:QD.ev.slice(-80),live:true};try{const o=JSON.parse(localStorage.getItem('qmDiag')||'null');return o&&o.s?{s:o.s,ev:o.ev||[],live:false}:null}catch(e){return null}}
@@ -3322,6 +3322,7 @@ function qdAnalyze(dv,S,st){const R=[],add=(lv,t,why,fix)=>R.push({lv,t,why,fix}
  if(p95&&p95>900)add(1,'بعض الصفحات تُرسم ببطء (الأبطأ '+qdMs(mx)+')','وسيط الرسم '+qdMs(p50)+' و95% منها أسرع من '+qdMs(p95)+'.','الصفحات الثقيلة غالباً صور كبيرة؛ التكبير الشديد يزيد زمن الرسم.');
  if(S.pdfjsDraw)add(0,'جزء من الصفحات رُسم بـ pdf.js','هذا طبيعي عند فشل الرسم الأصلي لصفحة معيّنة.','');
  if(S.alignBad)add(2,'عدم تطابق بين مكان اللمس والصفحة أثناء الكتابة ('+S.alignBad+' من '+S.strokes+')',S.alignInfo,'أرسل هذا التقرير للمطوّر لتصحيح الإزاحة.');else if(S.strokes)add(-1,'مكان القلم مطابق للصفحة','فُحصت '+S.strokes+' لمسة كتابة وكلها منسجمة.','');
+ qdAnX(S,add);
  const jk=S.jank.length,jm=jk?Math.max(...S.jank.map(j=>j.g)):0;
  if(jm>1500&&jk>=3)add(2,'تجمّد واضح في الواجهة (أطوله '+qdMs(jm)+')','وقع '+jk+' مرة أثناء القراءة (استُثنيت لحظات العودة من الخلفية). ذروة ذاكرة JS '+(S.heap?qdMB(S.heap):'—')+(S.heap&&S.heap<1e8?' وهي منخفضة، فالسبب على الأرجح حجب الواجهة أثناء فك صور الصفحات وليس نفاد الذاكرة.':'.'),'أغلق التطبيقات الخلفية، وتجنب التكبير الشديد على الكتب الضخمة.');
  else if(jm>1500||jk>3)add(1,'تقطّع متكرر في الواجهة ('+jk+' مرة)','أطول توقف '+qdMs(jm)+'.','فعّل وضع «صفحة بصفحة» وقلل مستوى التكبير.');
@@ -3342,6 +3343,7 @@ function qdText(B){const{dv,st,S,R,books,big,L}=B,o=[];const h=t=>o.push('','■
  if(S){h('آخر جلسة قراءة'+(L.live?'':' (محفوظة)'));const n=S.nat.ms;o.push('الكتاب: '+S.name+' • '+qdMB(S.size)+(S.np?' • '+S.np+' صفحة':'')+' • '+new Date(S.at).toLocaleTimeString('ar'),'الفتح: المستند '+qdMs(S.open.doc)+' • الصفحة الأولى '+qdMs(S.open.p1)+' • الجاهزية '+qdMs(S.open.ready)+(S.open.fail?' • فشل: '+S.open.fail:''),
   'الرسم الأصلي: '+n.length+' صفحة • وسيط '+qdMs(qdPct(n,.5))+' • الأبطأ '+qdMs(n.length?Math.max(...n):null)+' • أخطاء '+S.nat.fail,'إجمالي الصفحات المرسومة: '+S.draws.length+' • بلاطات التكبير: '+S.tileN,'تجمّد الواجهة: '+S.jank.length+' مرة'+(S.jank.length?' (الأطول '+qdMs(Math.max(...S.jank.map(j=>j.g)))+')':'')+' • مهام طويلة: '+S.longtask,'ذروة ذاكرة JS: '+(S.heap?qdMB(S.heap):'غير مدعوم'));
   if(S.errs.length)o.push('الأخطاء: '+S.errs.join(' | '))}else{h('آخر جلسة قراءة');o.push('لا توجد جلسة مسجّلة بعد، افتح كتاباً ثم عد هنا.')}
+ if(S)qdTextX(S,o,h);
  h('التحليل والتوصيات');R.forEach((r,i)=>{o.push((i+1)+'. '+qdLv[r.lv][0]+' '+r.t,'   السبب: '+r.why);if(r.fix)o.push('   الحل: '+r.fix)});
  if(L&&L.ev&&L.ev.length){h('آخر الأحداث');L.ev.slice(-40).forEach(e=>o.push((e.t/1000).toFixed(1)+'ث  '+e.tag+(e.d?'  '+e.d:'')))}
  return o.join('\n')}
@@ -3355,6 +3357,7 @@ function qdRender(B){const{dv,st,S,R,books,big,L}=B,v=qdVerdict(R),c=$('#qdg .qd
  <div class="qdrc">${R.map(r=>`<div class="qdi l${r.lv<0?'g':r.lv}"><b>${qdLv[r.lv][0]} ${esc(r.t)}</b><p>${esc(r.why)}</p>${r.fix?`<p class="fx">💡 ${esc(r.fix)}</p>`:''}</div>`).join('')}</div>
  ${sec('📱 الجهاز',qdRow('الطراز',esc(dv.model))+qdRow('أندرويد / WebView',dv.android+' / '+dv.webview)+qdRow('الذاكرة / المعالج',(dv.ram?dv.ram+' جيجا':'—')+' / '+(dv.cores||'—')+' نواة')+qdRow('الشاشة',dv.scr+' ('+dv.dpr+'×)')+qdRow('الرسم الأصلي',dv.nat?'<span class="ok">متاح</span>':'<span class="bad">غير متاح</span>')+(dv.meth.length?qdRow('الإضافة الأصلية',dv.meth.map(m=>`<span class="${m.ok?'ok':'bad'}">${m.k}</span>`).join(' ')):'')+qdRow('الوصول للملفات',dv.access===true?'ممنوح':dv.access===false?'غير ممنوح':'—')+(st?qdRow('التخزين',qdMB(st.use)+' / '+qdMB(st.quota)):''))}
  ${sec('📚 المكتبة',qdRow('عدد الكتب',books.length)+qdRow('الحجم الإجمالي',qdMB(books.reduce((a,m)=>a+(m.size||0),0)))+big.map(m=>qdRow(libTitle(m).slice(0,26),qdMB(m.size||0))).join(''))}
+ ${S?qdUiX(S):''}
  ${S?sec('📖 آخر جلسة قراءة'+(L.live?'':' (محفوظة)'),qdRow('الكتاب',esc(S.name.slice(0,28)))+qdRow('الحجم / الصفحات',qdMB(S.size)+(S.np?' / '+S.np:''))+qdRow('فتح المستند',qdMs(S.open.doc))+qdRow('الصفحة الأولى',qdMs(S.open.p1))+qdRow('جاهزية القارئ',qdMs(S.open.ready))+qdRow('رسم أصلي (عدد / وسيط / الأبطأ)',n.length+' / '+qdMs(qdPct(n,.5))+' / '+qdMs(n.length?Math.max(...n):null))+qdRow('إجمالي الصفحات المرسومة',S.draws.length)+qdRow('بلاطات التكبير',S.tileN)+qdRow('تجمّد الواجهة',S.jank.length+' مرة'+(S.jank.length?' (الأطول '+qdMs(Math.max(...S.jank.map(j=>j.g)))+')':''))+qdRow('ذروة ذاكرة JS',S.heap?qdMB(S.heap):'—')+qdRow('أخطاء',S.errs.length),1):sec('📖 آخر جلسة قراءة','<div class="m" style="padding:8px">لا توجد جلسة بعد، افتح كتاباً ثم عد.</div>',1)}
  ${sec('🧪 اختبار سرعة الجهاز','<div id="qdBench" class="m" style="padding:6px 2px">يقيس سرعة الرسم والتخزين وجسر الإضافة الأصلية (نحو 3 ثوانٍ).</div><button type="button" class="g" style="width:100%;margin-top:6px" onclick="qdBench()">ابدأ الاختبار</button>')}
  ${L&&L.ev.length?sec('🕒 آخر الأحداث','<div class="qdev">'+L.ev.slice(-40).reverse().map(e=>`<div><i>${(e.t/1000).toFixed(1)}ث</i> <b>${esc(e.tag)}</b> ${esc(e.d||'')}</div>`).join('')+'</div>'):''}
@@ -3370,3 +3373,38 @@ function qdFull(){const B=window._qdB;if(!B)return'';let t=qdText(B);if(B.bench)
 async function qdCopy(){toast(await qdClip(qdFull())?'تم نسخ التقرير':'تعذّر النسخ')}
 async function qdShare(){const t=qdFull();try{if(navigator.share){await navigator.share({title:'تقرير تشخيص مُثبِّت القرآن',text:t});return}}catch(e){if(e&&e.name=='AbortError')return}toast(await qdClip(t)?'تم نسخ التقرير، الصقه في أي محادثة':'تعذّرت المشاركة')}
 function qdReset(){QD.sess=null;QD.ev=[];try{localStorage.removeItem('qmDiag')}catch(e){}toast('تم مسح سجل التشخيص');qDiagOpen()}
+
+/* ============ قياسات دقيقة: استجابة الأدوات، أسباب التوقف، كلفة طبقة الرسم ============ */
+const qdTn={pen:'قلم',hl:'تحديد',ul:'تسطير',er:'ممحاة',txt:'نص','?':'أخرى'};
+function qdT(S,k){S.tl=S.tl||{};return S.tl[k]||(S.tl[k]={n:0,pts:0,dn:[],fr:[],mv:[],cm:[]})}
+function qdCap(a,v){a.push(Math.round(v*10)/10);if(a.length>150)a.shift()}
+function qdIn(k,ts){try{const S=QD.sess;if(!S||!k)return;const T=qdT(S,k);T.n++;qdCap(T.dn,performance.now()-ts);requestAnimationFrame(()=>requestAnimationFrame(()=>qdCap(T.fr,performance.now()-ts)))}catch(e){}}
+function qdMv(k,e){try{const S=QD.sess;if(!S||!k)return;const T=qdT(S,k);T.k=(T.k||0)+1;if(T.k%2)qdCap(T.mv,performance.now()-e.timeStamp)}catch(e){}}
+function qdEnd(k,pts){try{const S=QD.sess;if(S&&k)qdT(S,k).pts+=pts||0}catch(e){}}
+function qdCm(ms){try{const S=QD.sess;if(!S)return;const k=typeof LV!='undefined'&&LV&&LV.tool||'?';qdCap(qdT(S,k).cm,ms)}catch(e){}}
+function qdRn(ms,l){try{const S=QD.sess;if(!S)return;const r=S.rn||(S.rn={n:0,ms:0,max:0,items:0});r.n++;r.ms+=ms;if(ms>r.max)r.max=ms;const n=l?l.length:(typeof LV!='undefined'&&LV&&LV.m&&LV.m.an&&LV.cur&&LV.m.an[LV.cur]?LV.m.an[LV.cur].length:0);if(n>r.items)r.items=n}catch(e){}}
+function qdCx(S,c,ms,w){const x=S.ctx||(S.ctx={}),r=x[c]||(x[c]={l:0,lm:0,lx:0,j:0,jm:0,jx:0});if(w=='l'){r.l++;r.lm+=ms;if(ms>r.lx)r.lx=ms}else{r.j++;r.jm+=ms;if(ms>r.jx)r.jx=ms}}
+function qdCtx(a,b){try{const E=QD.ev;let tag='';for(let i=E.length-1;i>=0;i--){const t=E[i].t+QD.t0;if(t<a-250)break;if(t<=b+30&&/^(draw|render|nat|tile|layout|open)/.test(E[i].tag)){tag=E[i].tag;break}}
+ if(/^tile/.test(tag))return'بلاطة تكبير';if(/^(draw|render|nat)/.test(tag))return'رسم صفحة';if(/^(layout|open)/.test(tag))return'فتح/ترتيب الصفحات';
+ if(typeof LV!='undefined'&&LV){if(LV.live)return'أثناء الرسم ('+({s:'قلم/تحديد',e:'ممحاة',d:'سحب نص'}[LV.live.k]||LV.live.k)+')';if(LV.tool)return'وضع التعديل بدون لمس';if((LV.fz||1)>1.05)return'تكبير/تحريك';return'تمرير/قراءة'}return'خارج القارئ'}catch(e){return'غير معروف'}}
+try{if(typeof lvDo=='function'){const o=lvDo;lvDo=function(){const t0=performance.now();try{return o.apply(this,arguments)}finally{qdCm(performance.now()-t0)}}}
+ if(typeof lvAnRender=='function'){const o2=lvAnRender;lvAnRender=function(p,l){const t0=performance.now();try{return o2.apply(this,arguments)}finally{qdRn(performance.now()-t0,l)}}}}catch(e){}
+function qdAnX(S,add){const tl=S.tl||{};
+ Object.keys(tl).forEach(k=>{const T=tl[k],nm=qdTn[k]||k;if(T.n<2&&T.mv.length<6)return;const m95=qdPct(T.mv,.95),f95=qdPct(T.fr,.95),c95=qdPct(T.cm,.95);
+  if(m95>100)add(2,'تأخر استجابة اللمس في أداة «'+nm+'» ('+qdMs(m95)+')','95% من حركات الإصبع وصلت بعد هذا الزمن، أي أن المعالج كان مشغولاً بشيء آخر وقت الرسم.','انظر قسم «أسباب التوقف» لمعرفة ما كان يعمل وقتها.');
+  else if(m95>45)add(1,'استجابة «'+nm+'» أبطأ من المطلوب ('+qdMs(m95)+')','الهدف أقل من 45 م.ث ليبدو الرسم لحظياً.','أغلق التطبيقات الخلفية وقلّل التكبير أثناء الرسم.');
+  if(f95>140)add(1,'ظهور أول خط بعد اللمس متأخر في «'+nm+'» ('+qdMs(f95)+')','الزمن من لمس الشاشة حتى ظهور أول إطار.','قد يكون الجهاز مشغولاً برسم الصفحات المجاورة.');
+  if(c95>150)add(1,'حفظ الخط بعد رفع الإصبع بطيء في «'+nm+'» ('+qdMs(c95)+')','إعادة بناء طبقة الرسم بعد كل خط تأخذ وقتاً'+(S.rn?'، وأكبر عدد عناصر بالصفحة '+S.rn.items:'')+'.','ما في إجراء عندك. سأُحسّنها إن تكرر.')});
+ const r=S.rn;if(r&&r.n>5&&(r.max>120||r.ms/r.n>35))add(1,'إعادة رسم طبقة الكتابة ثقيلة (متوسط '+qdMs(r.ms/r.n)+'، أقصى '+qdMs(r.max)+')','تتكرر '+r.n+' مرة، وأكبر عدد عناصر بصفحة واحدة '+r.items+'.','الصفحات المزدحمة بالخطوط تبطؤ أكثر؛ سأدمج الخطوط القديمة إن تأكد هذا.');
+ const cx=S.ctx||{},ks=Object.keys(cx).sort((a,b)=>(cx[b].lm+cx[b].jm)-(cx[a].lm+cx[a].jm));
+ if(ks.length){const k=ks[0],c=cx[k],tot=ks.reduce((a,x)=>a+cx[x].lm,0)||1;if(c.lm/tot>.4&&c.lm>400)add(1,'أكبر سبب لتوقف الواجهة: «'+k+'»','عدد '+c.l+' توقف مجموعها '+qdMs(c.lm)+' (أطولها '+qdMs(c.lx)+') وهي '+Math.round(c.lm/tot*100)+'% من كل التوقفات.',k.indexOf('رسم صفحة')==0?'رسم الصفحات بالخلفية يستهلك المعالج؛ يخف بتقليل الصفحات المفتوحة بالتمرير السريع.':k.indexOf('أثناء الرسم')==0?'ثقل أثناء الكتابة نفسها. أرسل التقرير لأحسّنه.':k.indexOf('بلاطة')==0?'التكبير العالي يرسم بلاطات دقيقة؛ قلّل التكبير.':'')}
+ if(S.zMax>6)add(0,'تكبير شديد أثناء الرسم ('+S.zMax+'×)','كلما زاد التكبير زاد حجم ما يُرسم على الشاشة.','');
+ if(S.spMax>700)add(0,'صفحة بنص كثيف جداً ('+S.spMax+' عنصر نص)','طبقة النص الشفافة كثيفة وتثقل التخطيط.','')}
+function qdTextX(S,o,h){const tl=S.tl||{},ks=Object.keys(tl);if(ks.length){h('زمن الاستجابة حسب الأداة');ks.forEach(k=>{const T=tl[k];o.push((qdTn[k]||k)+': '+T.n+' لمسة • استقبال الحركة وسيط '+qdMs(qdPct(T.mv,.5))+' / 95% '+qdMs(qdPct(T.mv,.95))+' / أقصى '+qdMs(T.mv.length?Math.max(...T.mv):null)+' • أول ظهور وسيط '+qdMs(qdPct(T.fr,.5))+' / 95% '+qdMs(qdPct(T.fr,.95))+' • حفظ وسيط '+qdMs(qdPct(T.cm,.5))+' / أقصى '+qdMs(T.cm.length?Math.max(...T.cm):null)+' • نقاط/خط '+(T.n?Math.round(T.pts/T.n):0))})}
+ const cx=S.ctx||{},ck=Object.keys(cx);if(ck.length){h('أسباب التوقف (حسب السياق)');ck.sort((a,b)=>cx[b].lm-cx[a].lm).forEach(k=>{const c=cx[k];o.push(k+': مهام طويلة '+c.l+' ('+qdMs(c.lm)+'، أطولها '+qdMs(c.lx)+') • تجمّد إطارات '+c.j+' (أطولها '+qdMs(c.jx)+')')})}
+ const r=S.rn;if(r){h('طبقة الكتابة');o.push('إعادة الرسم: '+r.n+' مرة • متوسط '+qdMs(r.ms/r.n)+' • أقصى '+qdMs(r.max)+' • أكبر عدد عناصر بصفحة '+r.items+(S.spMax?' • عناصر النص '+S.spMax:'')+(S.zMax?' • أعلى تكبير '+S.zMax+'×':''))}}
+function qdUiX(S){const tl=S.tl||{},ks=Object.keys(tl),cx=S.ctx||{},ck=Object.keys(cx).sort((a,b)=>cx[b].lm-cx[a].lm),r=S.rn;let b='';
+ if(ks.length)b+=ks.map(k=>{const T=tl[k],m=qdPct(T.mv,.95);return qdRow((qdTn[k]||k)+' ('+T.n+')','استقبال '+qdMs(qdPct(T.mv,.5))+' / '+qdMs(m)+' • ظهور '+qdMs(qdPct(T.fr,.5))+' • حفظ '+qdMs(qdPct(T.cm,.5)))}).join('');
+ if(r)b+=qdRow('إعادة رسم الطبقة',r.n+' • متوسط '+qdMs(r.ms/r.n)+' • أقصى '+qdMs(r.max));
+ if(ck.length)b+='<div style="margin:8px 0 2px;opacity:.7;font-size:12px">أسباب التوقف</div>'+ck.map(k=>qdRow(k,cx[k].l+' توقف • '+qdMs(cx[k].lm)+' • أطوله '+qdMs(cx[k].lx))).join('');
+ return b?`<details class="qds" open><summary>⏱️ الاستجابة وأسباب التوقف</summary>${b}</details>`:''}
