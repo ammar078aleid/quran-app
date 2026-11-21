@@ -2,6 +2,21 @@ name: Build APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'app.css'
+      - 'index.html'
+      - 'sw.js'
+      - 'i18n-en.js'
+      - 'PdfScanPlugin.java'
+      - 'MainActivity.java'
+      - 'patch.py'
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
 
 permissions:
   contents: write
