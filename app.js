@@ -2366,7 +2366,7 @@ async function libNatDraw(L,i,c,x,o){if(L.natOff||!L.natP)return false;try{let p
  catch(e){L.natBad=(L.natBad||0)+1;dbg(e,'natdraw');qlog('nat:fail',String(e&&e.message||e));if(L.natBad>=2)L.natOff=true;return false}}
 async function lvDraw(i){const L=LV,g=L.els[i-1];if(!g||g._nx>Date.now())return;L.run.add(i);L.busy++;const k=g._k=(g._k||0)+1;qlog('draw:s',i);
  try{const pg=await Promise.race([L.pdf.getPage(i),new Promise((_,no)=>setTimeout(()=>no(new Error('page timeout')),30000))]);if(LV!==L||g._k!==k)return;const v1=pg.getViewport({scale:1}),S=$('#lvS'),h=lvFit();if(!h)lvRatio(g,i,v1);else g._r=v1.height/v1.width;g._pw=v1.width;
-  const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=(libLowMem()?2.2e6:3.2e6)*libCapK;if(px>cap)sc*=Math.sqrt(cap/px);
+  const cssW=h?Math.max(50,Math.min(lvTw()?S.clientWidth/2:S.clientWidth,(S.clientHeight-L.padT-L.padB)*v1.width/v1.height)):g.clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);let sc=cssW/v1.width*dpr;const bz=1;const px=v1.width*v1.height*sc*sc,cap=(libLowMem()?2.2e6:3.2e6)*libCapK*((innerWidth>innerHeight&&libLowMem())?.62:1);if(px>cap)sc*=Math.sqrt(cap/px);
   const vp=pg.getViewport({scale:sc}),[c,x]=libCanvas(vp.width,vp.height);if(h){c.style.width=Math.round(cssW)+'px';c.style.height='auto'}
   qlog('render:s',i+' '+c.width+'x'+c.height);const t0=performance.now(),nd=await libNatDraw(L,i,c,x,{width:c.width});if(LV!==L||g._k!==k)return;if(!nd){const t=pg.render({canvasContext:x,viewport:vp});g._t=t;await Promise.race([t.promise,new Promise((_,no)=>setTimeout(()=>{try{t.cancel()}catch(x2){}no(new Error('render timeout'))},30000))]);if(LV!==L||g._k!==k)return}
   libSlow('draw',i,performance.now()-t0,c.width+'x'+c.height);qlog('draw:e',i+' '+Math.round(performance.now()-t0)+'ms');g._fail=0;g._nx=0;const rb=g._i.querySelector('.lvrt');if(rb)rb.remove();lvPut(g,c);g.classList.add('ok');lvAnRender(i);L.done.add(i);L.stale.delete(i);lvTrim();await lvTL(L,pg,g,v1,cssW,k);try{pg.cleanup()}catch(e){}}
@@ -3276,7 +3276,7 @@ try{const y=+sessionStorage.getItem('qmY')||0;if(y){[120,700].forEach(d=>setTime
 /* ============ التشخيص الاحترافي للمكتبة والقارئ ============
    يجمع ما حدث فعلاً (أحداث الفتح والرسم والتجمّد والذاكرة والأخطاء) ويحلّله إلى تقرير وتوصيات.
    لا يرسل شيئاً خارج الجهاز. الدوال qlog/libSlow/qJank تُستدعى من القارئ (12-library.js). */
-var libCapK=1;
+var libCapK=(()=>{try{const v=parseFloat(localStorage.getItem('qmCapK'));return v>=.5&&v<=1?v:1}catch(e){return 1}})();
 const QD={t0:performance.now(),ev:[],sess:null,jOn:0,heap:0,last:null};
 const qdMs=v=>v==null||isNaN(v)?'—':v>=1000?(v/1000).toFixed(1)+' ث':Math.round(v)+' م.ث';
 const qdPct=(a,p)=>{if(!a.length)return null;const b=[...a].sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.floor(p*b.length))]};
@@ -3292,7 +3292,7 @@ function qlog(tag,d){try{const t=Math.round(performance.now()-QD.t0);QD.ev.push(
   else if(tag=='draw:fail')S.drawFail++;else if(tag=='tile:s')S.tileN++;else if(tag=='layout')S.layout=String(d);
   else if(tag.indexOf('err:')==0&&S.errs.length<8)S.errs.push(tag.slice(4)+': '+String(d).slice(0,120))}
  qdSave()}catch(e){}}
-function libSlow(k,i,ms,sz){try{const S=QD.sess;if(!S)return;const a=k=='tile'?S.tiles:S.draws;a.push(Math.round(ms));if(a.length>300)a.shift()}catch(e){}}
+function libSlow(k,i,ms,sz){try{const S=QD.sess;if(!S)return;const a=k=='tile'?S.tiles:S.draws;a.push(Math.round(ms));if(a.length>300)a.shift();if(k!='tile'){const r=S.draws.slice(-6);if(r.length>=5){const av=r.reduce((x,y)=>x+y,0)/r.length,o=libCapK;if(av>420&&libCapK>.5)libCapK=Math.max(.5,+(libCapK*.85).toFixed(2));else if(av<150&&libCapK<1)libCapK=Math.min(1,+(libCapK*1.08).toFixed(2));if(libCapK!==o){S.capK=libCapK;qlog('cap',o+'→'+libCapK);try{localStorage.setItem('qmCapK',String(libCapK))}catch(e){}}}}}catch(e){}}
 function qJank(){if(QD.jOn)return;QD.jOn=1;try{let last=performance.now(),vis=0;document.addEventListener('visibilitychange',()=>{vis=performance.now();last=vis});const tick=()=>{const n=performance.now(),g=n-last;last=n;if(g>250&&n-vis>3000&&document.visibilityState=='visible'&&QD.sess&&typeof LV!='undefined'&&LV){const S=QD.sess;if(S.jank.length<60){const ev=QD.ev[QD.ev.length-1];S.jank.push({t:Math.round(n-QD.t0),g:Math.round(g),a:ev?ev.tag:'',c:qdCtx(n-g,n)});qdCx(S,qdCtx(n-g,n),g,'j')}}requestAnimationFrame(tick)};requestAnimationFrame(tick)}catch(e){}
  try{new PerformanceObserver(l=>{const S=QD.sess;if(!S)return;l.getEntries().forEach(en=>{S.longtask++;S.ltSum=(S.ltSum||0)+en.duration;qdCx(S,qdCtx(en.startTime,en.startTime+en.duration),en.duration,'l')})}).observe({entryTypes:['longtask']})}catch(e){}
  setInterval(()=>{try{const m=performance.memory;if(m&&QD.sess&&typeof LV!='undefined'&&LV){const u=m.usedJSHeapSize;if(u>QD.sess.heap)QD.sess.heap=u}}catch(e){}},2000)}

@@ -862,3 +862,14 @@ iframe,embed,object{max-width:100%}
 .lvlv{contain:paint}
 .lver{min-width:0;max-width:100%;gap:6px}.lvcs{gap:5px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none}.lvcs::-webkit-scrollbar{display:none}.lvcs button{width:22px;height:22px;flex:none}.lvzs{flex:none}.lvzs button{width:26px}
 .lvs.ed,.lvs.ed .lvg,.lvs.ed .lvi,.lvs.ed canvas,.lvs.ed .lva{touch-action:none}
+
+/* ===== أفقي: شريط التعديل في صف واحد (يوفّر مساحة الصفحة) ===== */
+@media (orientation:landscape) and (max-height:520px){
+ .lved .lve{display:flex;align-items:center;gap:6px}
+ .lved .lvet{margin:0;flex:0 0 auto;gap:0;justify-content:flex-start}
+ .lved .lvet button{flex:0 0 auto;flex-direction:row;padding:5px 9px;min-width:0;border-radius:12px}
+ .lved .lvet button span:not(.ic){display:none}.lved .lvet button .ic{width:22px;height:22px}
+ .lved .lver{flex:1 1 auto;min-width:0;justify-content:flex-end;overflow-x:auto;scrollbar-width:none}.lved .lver::-webkit-scrollbar{display:none}
+ .lved .lvb{padding:4px 8px 3px}
+ .lved .lvrg{min-width:120px;max-width:260px}
+}
