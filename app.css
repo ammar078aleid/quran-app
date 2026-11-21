@@ -859,6 +859,6 @@ iframe,embed,object{max-width:100%}
 .qdr .ok{color:#2e7d32}.qdr .bad{color:#d32f2f}.qdr .wr{color:#e08a00}.qdev{font:11px/1.8 ui-monospace,monospace;direction:ltr;text-align:left;max-height:240px;overflow:auto;padding:6px 0}.qdev i{opacity:.55;font-style:normal}
 
 
-.lvl{will-change:transform;contain:strict}
+.lvl{contain:paint}
 .lver{min-width:0;max-width:100%;gap:6px}.lvcs{gap:5px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none}.lvcs::-webkit-scrollbar{display:none}.lvcs button{width:22px;height:22px;flex:none}.lvzs{flex:none}.lvzs button{width:26px}
 .lvs.ed,.lvs.ed *{touch-action:none}
