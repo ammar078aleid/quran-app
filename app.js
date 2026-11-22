@@ -1,6 +1,9 @@
 /*! © 2026 عمار العيد — جميع الحقوق محفوظة. مُثبِّت القرآن. انظر ملف LICENSE */
 /* ===== إعدادات Firebase: الصق هنا بيانات مشروعك ===== */
 const FB={apiKey:"AIzaSyDU-xm0U4NFXFa57Auv10967REt8n5PB3Y",authDomain:"quran-app-a042f.firebaseapp.com",projectId:"quran-app-a042f",storageBucket:"quran-app-a042f.firebasestorage.app",messagingSenderId:"353485701859",appId:"1:353485701859:web:f5096b38b998de6adefbd6"};
+/* App Check (حماية من الطلبات الدخيلة): يعمل فقط عند وضع مفتاح reCAPTCHA v3 في RC_KEY؛ فارغ = معطّل */
+const RC_KEY='';
+function fbAC(ap){try{if(RC_KEY&&ap&&firebase.appCheck)firebase.appCheck(ap).activate(RC_KEY,true)}catch(e){try{dbg(e)}catch(_){}}return ap}
 const L=[1,3,7,30],D=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const SUR='الفاتحة البقرة آل_عمران النساء المائدة الأنعام الأعراف الأنفال التوبة يونس هود يوسف الرعد إبراهيم الحجر النحل الإسراء الكهف مريم طه الأنبياء الحج المؤمنون النور الفرقان الشعراء النمل القصص العنكبوت الروم لقمان السجدة الأحزاب سبأ فاطر يس الصافات ص الزمر غافر فصلت الشورى الزخرف الدخان الجاثية الأحقاف محمد الفتح الحجرات ق الذاريات الطور النجم القمر الرحمن الواقعة الحديد المجادلة الحشر الممتحنة الصف الجمعة المنافقون التغابن الطلاق التحريم الملك القلم الحاقة المعارج نوح الجن المزمل المدثر القيامة الإنسان المرسلات النبأ النازعات عبس التكوير الانفطار المطففين الانشقاق البروج الطارق الأعلى الغاشية الفجر البلد الشمس الليل الضحى الشرح التين العلق القدر البينة الزلزلة العاديات القارعة التكاثر العصر الهمزة الفيل قريش الماعون الكوثر الكافرون النصر المسد الإخلاص الفلق الناس'.split(' ').map(x=>x.replace('_',' '));
 const MSG=['حبيب القرآن، موعدك الآن مع وردك 🌿','خيركم من تعلّم القرآن وعلّمه 📖','دقائق قليلة تثبّت حفظك لأيام طويلة ✨','ورتّل القرآن ترتيلاً.. جلستك بانتظارك'];
@@ -605,7 +608,7 @@ function accAttach(key,au){
   else{fu=null;const o=(key!==addKey)?accNext():null;if(o){accSwitch(o.uid,true);return}if(!awG()||key===addKey)awShow()}
   if(tab=='se')draw()})}
 function accBoot(dA,dF){const L=accList(),want=L.find(a=>a.uid===accAct());fa=dA;fs=dF;
- L.filter(a=>a.k!=='[DEFAULT]').forEach(a=>{try{const ap=firebase.initializeApp(FB,a.k);if(want&&want.k===a.k){fa=ap.auth();fs=ap.firestore()}accAttach(a.k,ap.auth())}catch(e){dbg(e)}});
+ L.filter(a=>a.k!=='[DEFAULT]').forEach(a=>{try{const ap=firebase.initializeApp(FB,a.k);fbAC(ap);if(want&&want.k===a.k){fa=ap.auth();fs=ap.firestore()}accAttach(a.k,ap.auth())}catch(e){dbg(e)}});
  accAttach('[DEFAULT]',dA)}
 async function accSwitch(uid,noPush){
  const a=accList().find(x=>x.uid==uid);if(!a||(fu&&fu.uid==uid&&!noPush))return;
@@ -619,7 +622,7 @@ async function accSwitch(uid,noPush){
 function accTap(uid){$('#sh').innerHTML='';if(!fu||fu.uid!=uid)accSwitch(uid)}
 async function accAdd(){if(!fbOK||!fu||busy)return;
  try{clearTimeout(pt);await pushNow()}catch(e){dbg(e)}accCacheSave();
- const k='a'+Date.now().toString(36),ap=firebase.initializeApp(FB,k);
+ const k='a'+Date.now().toString(36),ap=firebase.initializeApp(FB,k);fbAC(ap);
  addPrev={fa,fs,fu};addKey=k;fa=ap.auth();fs=ap.firestore();fu=null;accAttach(k,fa);
  $('#sh').innerHTML='';sync('');awMode='in';awAdd=true;awShow()}
 function accCancelAdd(){if(!addKey)return;const k=addKey;addKey='';awAdd=false;const p=addPrev||{};fa=p.fa;fs=p.fs;fu=p.fu;try{firebase.app(k).delete()}catch(e){dbg(e)}sync('');awHide();draw()}
@@ -631,7 +634,7 @@ function accCard(){const L=accList();if(!fu)return '';
 function fbInit(){
  if(!FB.apiKey||!window.firebase)return;
     if(!awG()){awSplash();setTimeout(()=>{const a=document.getElementById('aw');if(a&&a.querySelector&&a.querySelector('.awspin'))awHide()},6000)}
-    try{firebase.initializeApp(FB);const dA=firebase.auth(),dF=firebase.firestore();fbOK=true;accBoot(dA,dF)}catch(e){dbg(e)}}
+    try{fbAC(firebase.initializeApp(FB));const dA=firebase.auth(),dF=firebase.firestore();fbOK=true;accBoot(dA,dF)}catch(e){dbg(e)}}
 /* ===== المزامنة: تلقائية دائماً + تتجدد لحالها ===== */
 const INL=300000,PART=300000;let pushing=false,again=false,pushFail=0,unsub=null,dnTry=0;
 function cutParts(d){const a=[];let i=0;while(i<d.length){let j=Math.min(d.length,i+PART);if(j<d.length){const c=d.charCodeAt(j-1);if(c>=0xD800&&c<=0xDBFF)j--}a.push(d.slice(i,j));i=j}return a}
