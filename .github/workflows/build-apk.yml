@@ -44,29 +44,35 @@ jobs:
           test -f patch.py || { echo "patch.py غير موجود"; exit 1; }
 
       - name: Signing key
+        env:
+          APK_KS_B64: ${{ secrets.APK_KS_B64 }}
+          APK_KS_PASS: ${{ secrets.APK_KS_PASS }}
         run: |
-          if [ ! -f apk-keystore.jks ]; then
-            keytool -genkeypair -keystore apk-keystore.jks -alias qm -keyalg RSA -keysize 2048 -validity 36500 \
-              -storepass qmpass123 -keypass qmpass123 -dname "CN=Quran Muthabbit"
-            git config user.name "apk-bot"
-            git config user.email "apk-bot@users.noreply.github.com"
-            git add apk-keystore.jks
-            git commit -m "add apk signing key"
-            git push || true
-          fi
           mkdir -p /tmp/apk/www
-          cp apk-keystore.jks /tmp/apk/ks.jks
+          if [ -n "$APK_KS_B64" ] && [ -n "$APK_KS_PASS" ]; then
+            echo "$APK_KS_B64" | base64 -d > /tmp/apk/ks.jks
+            echo "KS_PASS=$APK_KS_PASS" >> $GITHUB_ENV
+            echo "المفتاح من GitHub Secrets (آمن)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::مفتاح التوقيع غير موجود في Secrets؛ يُستخدم المفتاح القديم من المستودع. انقله إلى Secrets (APK_KS_B64 و APK_KS_PASS) واجعل المستودع Private."
+            if [ ! -f apk-keystore.jks ]; then
+              keytool -genkeypair -keystore apk-keystore.jks -alias qm -keyalg RSA -keysize 2048 -validity 36500 \
+                -storepass qmpass123 -keypass qmpass123 -dname "CN=Quran Muthabbit"
+            fi
+            cp apk-keystore.jks /tmp/apk/ks.jks
+            echo "KS_PASS=qmpass123" >> $GITHUB_ENV
+          fi
 
       - name: Key fingerprint
         id: fp
         run: |
-          FP=$(keytool -list -v -keystore apk-keystore.jks -storepass qmpass123 | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
+          FP=$(keytool -list -v -keystore /tmp/apk/ks.jks -storepass "$KS_PASS" | grep "SHA1:" | head -1 | sed 's/.*SHA1: *//')
           echo "sha1=$FP" >> $GITHUB_OUTPUT
           echo "SHA-1: $FP" >> $GITHUB_STEP_SUMMARY
 
       - name: Copy site into app
         run: |
-          rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='apk-keystore.jks' --exclude='*.apk' --exclude='*.java' --exclude='patch.py' ./ /tmp/apk/www/
+          rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='apk-keystore.jks' --exclude='*.jks' --exclude='*.md' --exclude='*.zip' --exclude='build-apk.yml' --exclude='*.rules' --exclude='firebase.json' --exclude='*.apk' --exclude='*.java' --exclude='patch.py' ./ /tmp/apk/www/
 
       - name: Bundle PDF reader resources
         run: |
