@@ -61,9 +61,9 @@ sign = '''android {
     signingConfigs {
         debug {
             storeFile file("/tmp/apk/ks.jks")
-            storePassword "qmpass123"
+            storePassword System.getenv("KS_PASS") ?: "qmpass123"
             keyAlias "qm"
-            keyPassword "qmpass123"
+            keyPassword System.getenv("KS_PASS") ?: "qmpass123"
         }
     }'''
 assert 'android {' in t

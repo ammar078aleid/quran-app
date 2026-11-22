@@ -1024,6 +1024,8 @@ public class PdfScanPlugin extends Plugin {
   public static class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent in) {
+      String ac = in == null ? null : in.getAction();
+      if (!Intent.ACTION_BOOT_COMPLETED.equals(ac) && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(ac) && !"android.intent.action.LOCKED_BOOT_COMPLETED".equals(ac) && !"android.intent.action.QUICKBOOT_POWERON".equals(ac) && !Intent.ACTION_TIME_CHANGED.equals(ac) && !"android.intent.action.TIME_SET".equals(ac) && !Intent.ACTION_TIMEZONE_CHANGED.equals(ac)) return;
       try {
         JSONArray a = loadItems(c);
         for (int i = 0; i < a.length(); i++) {
