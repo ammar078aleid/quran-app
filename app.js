@@ -3375,3 +3375,4 @@ try{const y=+sessionStorage.getItem('qmY')||0;if(y){[120,700].forEach(d=>setTime
 
 /* بدائل فارغة: التشخيص أُزيل، وبقيت هذه الدوال لأن كود القارئ يستدعيها */
 function qlog(){}function qJank(){}function libSlow(){}function qdIn(){}function qdMv(){}function qdEnd(){}
+var libCapK=(()=>{try{const v=parseFloat(localStorage.getItem('qmCapK'));return v>=.5&&v<=1?v:1}catch(e){return 1}})();
